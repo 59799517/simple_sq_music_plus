@@ -108,7 +108,7 @@ public class Music  implements Serializable {
     /**
      *音乐时长（单位 毫秒）
      */
-    private Integer musicDuration;
+    private Long musicDuration;
 
     /**
      * 专辑编号
@@ -142,7 +142,7 @@ public class Music  implements Serializable {
     private String plugName;
     private Album album;
     private Artists artists;
-    @EnumValue(intValues = {128,192,320,1000,2000},message = "仅支持 128,192,320,1000,2000,3000(QQ) 码率")
+    @EnumValue(intValues = {128,192,320,1000,2000,3000},message = "仅支持 128,192,320,1000,2000,3000(QQ) 码率")
     private Integer bit;
     private String PlayUrl;
     /**

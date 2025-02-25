@@ -12,6 +12,7 @@ import com.sqmusicplus.config.AjaxResult;
 import com.sqmusicplus.base.entity.SqConfig;
 import com.sqmusicplus.plug.base.PlugBrType;
 import com.sqmusicplus.base.service.SqConfigService;
+import com.sqmusicplus.plug.kg.hander.KGHander;
 import com.sqmusicplus.plug.utils.FreeCookieUtil;
 import com.sqmusicplus.utils.DownloadUtils;
 import com.sqmusicplus.utils.StringUtils;
@@ -38,6 +39,8 @@ public class SetController {
     private SqConfigService configService;
     @Value("${version}")
     private String version;
+    @Autowired
+    private KGHander kGHander;
 
     /**
      * 查询全部设置
@@ -142,6 +145,7 @@ public class SetController {
     @GetMapping("selectOption")
     public AjaxResult selectOption(){
         SqConfig qqopenconfigKey = configService.getOne(new QueryWrapper<SqConfig>().eq("config_key", "plug.qqvip.open"));
+        SqConfig kgplugopen = configService.getOne(new QueryWrapper<SqConfig>().eq("config_key", "plug.kg.open"));
 
         ArrayList<HashMap<String, String>> hashMaps = new ArrayList<>();
         if (qqopenconfigKey!=null&&Boolean.parseBoolean(qqopenconfigKey.getConfigValue())){
@@ -150,6 +154,14 @@ public class SetController {
             QQVIPoption.put("label","鹅厂VIP下载（自动同步喜欢的去设置开启）");
             hashMaps.add(QQVIPoption);
         }
+        if (kgplugopen!=null&&Boolean.parseBoolean(kgplugopen.getConfigValue())){
+            HashMap<String, String> KGoption = new HashMap<>();
+            KGoption.put("value","kg");
+            KGoption.put("label","某狗-概念版");
+            hashMaps.add(KGoption);
+        }
+
+
         HashMap<String, String> kwoption = new HashMap<>();
         kwoption.put("value","kw");
         kwoption.put("label","某我");
@@ -174,6 +186,89 @@ public class SetController {
     public AjaxResult getVersion(){
         return AjaxResult.success("成功", version);
     }
+
+
+    /*
+      酷狗特殊设置
+     */
+    /**
+     * 是否开启酷狗插件/driver/record/
+     * @return
+     */
+    @GetMapping("/kg/plugopen")
+    public AjaxResult  getKGplugopen(){
+        SqConfig kgplugopen = configService.getOne(new QueryWrapper<SqConfig>().eq("config_key", "plug.kg.open"));
+        return AjaxResult.success("成功", kgplugopen.getConfigValue());
+    }
+
+    /**
+     * 获取酷狗二维码
+     * @return
+     */
+    @GetMapping("/kg/getQrImage")
+    public AjaxResult  getKGQrimage(){
+       return AjaxResult.success("成功", kGHander.getQrImage());
+    }
+
+    /**
+     * 获取酷狗扫码信息
+     */
+    @GetMapping("/kg/checkQrCodeStatus")
+    public AjaxResult  getKGcheckQrCodeStatus(){
+        SqConfig kgplugopen = configService.getOne(new QueryWrapper<SqConfig>().eq("config_key", "plug.kg.open"));
+        if (kgplugopen.getConfigValue().equals("true")){
+            return AjaxResult.success("成功", kGHander.checkQrCodeStatus());
+        }
+        return AjaxResult.error("酷狗插件未开启");
+    }
+    /**
+     * 微信扫酷狗登录二维码生成
+     */
+    @GetMapping("/kg/getWxQrImage")
+    public AjaxResult  getWxQrImage(){
+        SqConfig kgplugopen = configService.getOne(new QueryWrapper<SqConfig>().eq("config_key", "plug.kg.open"));
+        if (kgplugopen.getConfigValue().equals("true")){
+            return AjaxResult.success("成功", kGHander.getWxQrImage());
+        }
+        return AjaxResult.error("酷狗插件未开启");
+    }
+    /**
+     * 微信扫酷狗登录二维码检测
+     */
+    @GetMapping("/kg/checkWxQrCodeStatus")
+    public AjaxResult  checkWxQrCodeStatus(){
+        SqConfig kgplugopen = configService.getOne(new QueryWrapper<SqConfig>().eq("config_key", "plug.kg.open"));
+        if (kgplugopen.getConfigValue().equals("true")){
+            return AjaxResult.success("成功", kGHander.checkWxQrCodeStatus());
+        }
+        return AjaxResult.error("酷狗插件未开启");
+    }
+
+
+
+    /**
+     * 刷新酷狗token
+     */
+    @GetMapping("/kg/refreshToken")
+    public AjaxResult refreshKGToken(){
+        SqConfig kgplugopen = configService.getOne(new QueryWrapper<SqConfig>().eq("config_key", "plug.kg.open"));
+        if (kgplugopen.getConfigValue().equals("true")){
+            kGHander.refreshToken();
+            return AjaxResult.success("成功");
+        }
+        return AjaxResult.error("酷狗插件未开启");
+    }
+
+    @GetMapping("/kg/signIn")
+    public AjaxResult  kgSignIn(){
+        SqConfig kgplugopen = configService.getOne(new QueryWrapper<SqConfig>().eq("config_key", "plug.kg.open"));
+        if (kgplugopen.getConfigValue().equals("true")){
+            kGHander.signIn();
+            return AjaxResult.success("成功");
+        }
+        return AjaxResult.error("酷狗插件未开启");
+    }
+
 
 
 }

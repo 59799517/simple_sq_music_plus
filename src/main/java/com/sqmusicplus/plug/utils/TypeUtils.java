@@ -53,6 +53,10 @@ public class TypeUtils {
         if (plugTypeName.equals(PlugBrType.NETEASE_FLAC_2000.getPlugName())&&br==null){
             return PlugBrType.NETEASE_FLAC_2000;
         }
+        if (plugTypeName.equals(PlugBrType.KG_Flac_2000.getPlugName())&&br==null){
+            return PlugBrType.KG_Flac_2000;
+        }
+
 
         List<PlugBrType> collect = Arrays.stream(PlugBrType.values()).filter(e -> e.getPlugName().equals(plugTypeName) && e.getBit().intValue() == br.intValue()).collect(Collectors.toList());
 

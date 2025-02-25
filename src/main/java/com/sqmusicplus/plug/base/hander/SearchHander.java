@@ -85,11 +85,11 @@ public interface SearchHander {
     String queryLyric(String SongId);
 
     /**
-     * 根据歌手搜索专辑
+     * 根据歌手搜索专辑 （不需要专辑内歌曲信息）
      *
      * @param artistId  歌手一次
-     * @param pageIndex 页码
-     * @param pageSize  每页长度
+     * @param pageIndex 页码 最好是不用这参数一次获取全部的
+     * @param pageSize  每页长度 最好是不用这参数一次获取全部的
      * @return 专辑信息
      */
     List<Album> getAlbumsByArtist(String artistId, Integer pageIndex, Integer pageSize);

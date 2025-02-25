@@ -10,7 +10,7 @@ import com.sqmusicplus.base.entity.vo.DownloadInfoSearch;
 import com.sqmusicplus.base.service.DownloadInfoService;
 import com.sqmusicplus.config.AjaxResult;
 import com.sqmusicplus.download.DownloadStatus;
-import com.sqmusicplus.task.ScanQQVIPLikeMusic;
+import com.sqmusicplus.task.ScanQQVIPLikeMusicTask;
 import com.sqmusicplus.utils.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -28,7 +28,7 @@ import org.springframework.web.bind.annotation.*;
 public class DownloadInfoController {
 
     @Autowired
-    private ScanQQVIPLikeMusic scanQQVIPLikeMusic;
+    private ScanQQVIPLikeMusicTask scanQQVIPLikeMusic;
 
 
     @Autowired

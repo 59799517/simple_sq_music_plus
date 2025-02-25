@@ -371,7 +371,7 @@ public class QQSearchEntity {
                 .setAlbumId(albumid)
                 .setArtistsId(artistId)
                 .setBits(longs)
-                .setMusicDuration(mapper1.getInt("interval")*1000);
+                .setMusicDuration(mapper1.getInt("interval") * 1000L);
         return  music;
     }
 

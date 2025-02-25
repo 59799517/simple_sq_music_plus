@@ -2,7 +2,6 @@ package com.sqmusicplus.plug.kw.hander;
 
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.ejlchina.okhttps.HttpUtils;
 import com.sqmusicplus.base.entity.*;
 import com.sqmusicplus.plug.base.PlugBrType;
 import com.sqmusicplus.plug.base.hander.SearchHanderAbstract;
@@ -16,6 +15,7 @@ import com.sqmusicplus.plug.utils.LrcUtils;
 import com.sqmusicplus.utils.DownloadUtils;
 import com.sqmusicplus.utils.StringUtils;
 import lombok.extern.slf4j.Slf4j;
+import okio.ByteString;
 import org.apache.commons.lang3.tuple.ImmutableTriple;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -54,10 +54,7 @@ public class NKwSearchHander extends SearchHanderAbstract {
                 .replaceAll("#\\{searchKey}", searchKeyData.getSearchkey())
                 .replaceAll("#\\{pagesize}", searchKeyData.getPageSize().toString())
                 .replaceAll("#\\{searchType}", KwSearchType.MUSIC.getValue());
-        SearchMusicResult searchMusicResult = DownloadUtils.getHttp().sync(s)
-                .get()                          // GET请求
-                .getBody()                      // 响应报文体
-                .toBean(SearchMusicResult.class);
+        SearchMusicResult searchMusicResult = DownloadUtils.get(s, SearchMusicResult.class);
         ArrayList<PlugSearchMusicResult> plugSearchMusicResults = new ArrayList<>();
         searchMusicResult.getAbslist().forEach(e -> {
                     String duration = "0";
@@ -99,13 +96,10 @@ public class NKwSearchHander extends SearchHanderAbstract {
                 .replaceAll("#\\{pagesize}", searchKeyData.getPageSize().toString())
                 .replaceAll("#\\{searchKey}", searchKeyData.getSearchkey())
                 .replaceAll("#\\{searchType}", KwSearchType.ARTIST.getValue());
-        SearchArtistResult searchArtistResult = DownloadUtils.getHttp().sync(searchUrl)
-                .get()                          // GET请求
-                .getBody()                      // 响应报文体
-                .toBean(SearchArtistResult.class);
+        SearchArtistResult searchArtistResult = DownloadUtils.get(searchUrl, SearchArtistResult.class);
         ArrayList<PlugSearchArtistResult> plugSearchArtistResults = new ArrayList<>();
-
-        searchArtistResult.getAbslist().forEach(e -> plugSearchArtistResults.add(new PlugSearchArtistResult().setArtistName(e.getArtist())
+        searchArtistResult.getAbslist().forEach(e -> plugSearchArtistResults.add(
+                new PlugSearchArtistResult().setArtistName(e.getArtist())
                 .setArtistid(e.getArtistid())
                 .setSearchType(getPlugName())
                 .setPic(e.getHtsPicpath().replaceAll("/240", "/500"))
@@ -131,10 +125,7 @@ public class NKwSearchHander extends SearchHanderAbstract {
                 .replaceAll("#\\{pagesize}", searchKeyData.getPageSize().toString())
                 .replaceAll("#\\{searchKey}", searchKeyData.getSearchkey())
                 .replaceAll("#\\{searchType}", KwSearchType.ALBUM.getValue());
-        SearchAlbumResult searchAlbumResult = DownloadUtils.getHttp().sync(searchUrl)
-                .get()                          // GET请求
-                .getBody()                      // 响应报文体
-                .toBean(SearchAlbumResult.class);
+        SearchAlbumResult searchAlbumResult = DownloadUtils.get(searchUrl,SearchAlbumResult.class);
         ArrayList<PlugSearchAlbumResult> plugSearchAlbumResults = new ArrayList<>();
         searchAlbumResult.getAlbumlist().forEach(e -> plugSearchAlbumResults.add(new PlugSearchAlbumResult().setAlbumName(e.getName())
                 .setAlbumid(e.getAlbumid())
@@ -156,10 +147,7 @@ public class NKwSearchHander extends SearchHanderAbstract {
     @Override
     public Music querySongById(String SongId) {
         String searchUrl = config.getSongInfoUrl().replaceAll("#\\{musicId}", SongId);
-        MusicInfoResult musicInfoResult = DownloadUtils.getHttp().sync(searchUrl)
-                .get()
-                .getBody()                      // 响应报文体
-                .toBean(MusicInfoResult.class);
+        MusicInfoResult musicInfoResult = DownloadUtils.get(searchUrl, MusicInfoResult.class);
         MusicInfoResult.DataDTO data = musicInfoResult.getData();
         MusicInfoResult.DataDTO.SonginfoDTO songinfo = data.getSonginfo();
         String album = songinfo.getAlbum();
@@ -182,16 +170,13 @@ public class NKwSearchHander extends SearchHanderAbstract {
         if (lrclist != null && lrclist.size() > 0) {
             Lrc = LrcUtils.krcTolrc(lrclist, album, artist, songName);
         }
-        return new Music().setId(songinfo.getId()).setMusicImage(s).setMusicLyric(Lrc).setMusicAlbum(album).setMusicArtists(artist).setMusicName(songName).setMusicDuration(Integer.parseInt(duration)).setAlbumId(albumId).setArtistsId(artistId);
+        return new Music().setId(songinfo.getId()).setMusicImage(s).setMusicLyric(Lrc).setMusicAlbum(album).setMusicArtists(artist).setMusicName(songName).setMusicDuration(Long.parseLong(duration)).setAlbumId(albumId).setArtistsId(artistId);
     }
 
     @Override
     public Artists queryArtistById(String artistId) {
         String url = config.getArtistInfoUrl().replaceAll("#\\{artistid}", artistId);
-        ArtisInfoResult artisInfoResult = DownloadUtils.getHttp().sync(url)
-                .get()                          // GET请求
-                .getBody()                      // 响应报文体
-                .toBean(ArtisInfoResult.class);
+        ArtisInfoResult artisInfoResult = DownloadUtils.get(url,ArtisInfoResult.class);
         Artists artists = new Artists();
         artists.setMusicArtistsName(artisInfoResult.getName())
                 .setMusicArtistsAlias(artisInfoResult.getAartist())
@@ -203,11 +188,10 @@ public class NKwSearchHander extends SearchHanderAbstract {
 
     @Override
     public Album queryAlbumById(String albumId) {
-        String searchUrl = config.getAlbumInfoUrl().replaceAll("#\\{albumid}", albumId);
-        AlbumInfoResult albumInfoResult = DownloadUtils.getHttp().sync(searchUrl)
-                .get()                          // GET请求
-                .getBody()                      // 响应报文体
-                .toBean(AlbumInfoResult.class);
+        String searchUrl = config.getAlbumInfoUrl().replaceAll("#\\{albumid}", albumId)
+       .replaceAll("#\\{pn}", "1")
+                .replaceAll("#\\{pagesize}", "10000");
+        AlbumInfoResult albumInfoResult = DownloadUtils.get(searchUrl, AlbumInfoResult.class);
         List<AlbumInfoResult.MusiclistDTO> musiclist = albumInfoResult.getMusiclist();
         List<Music> collect = musiclist.stream().map(abslistDTO -> {
             String album = albumInfoResult.getName();
@@ -239,10 +223,7 @@ public class NKwSearchHander extends SearchHanderAbstract {
     public List<Album> getAlbumsByArtist(String artistId, Integer pageIndex, Integer pageSize) {
         try {
             String url = config.getArtistAlbumListUrl().replaceAll("#\\{artistid}", artistId);
-            ArtisAlbumListResult artisAlbumListResult = HttpUtils.sync(url)
-                    .get()                          // GET请求
-                    .getBody()                      // 响应报文体
-                    .toBean(ArtisAlbumListResult.class);
+            ArtisAlbumListResult artisAlbumListResult = DownloadUtils.get(url, ArtisAlbumListResult.class);
             List<ArtisAlbumListResult.AlbumlistDTO> albumlist = artisAlbumListResult.getAlbumlist();
             ArrayList<Album> albums = new ArrayList<>();
             albumlist.forEach(e -> {
@@ -266,12 +247,7 @@ public class NKwSearchHander extends SearchHanderAbstract {
 
         //下载池对象
         String searchUrl = config.getAlbumInfoUrl().replaceAll("#\\{albumid}", albumsId);
-        AlbumInfoResult albumInfoResult = DownloadUtils.getHttp().sync(searchUrl)
-                .get()                          // GET请求
-                .getBody()                      // 响应报文体
-                .toBean(AlbumInfoResult.class);
-
-//        AtomicReference<String> artist = new AtomicReference<>(albumInfoResult.getArtist());
+        AlbumInfoResult albumInfoResult = DownloadUtils.get(searchUrl, AlbumInfoResult.class);
         List<AlbumInfoResult.MusiclistDTO> musiclist = albumInfoResult.getMusiclist();
         ArrayList<Music> music = new ArrayList<>();
         musiclist.forEach(e -> {
@@ -354,7 +330,7 @@ public class NKwSearchHander extends SearchHanderAbstract {
             return null;
         }
         try {
-            Download2Result bean = DownloadUtils.getHttp().sync(downloadurl).get().getBody().toBean(Download2Result.class);
+            Download2Result bean = DownloadUtils.get(downloadurl, Download2Result.class);
             String bitrate = bean.getData().getBitrate()+"";
             String format = bean.getData().getFormat();
             downloadurl = bean.getData().getUrl();
@@ -478,7 +454,7 @@ public class NKwSearchHander extends SearchHanderAbstract {
         String s = config.getArtistSongListUrl().replaceAll("#\\{pn}", pageIndex.toString())
                 .replaceAll("#\\{pagesize}", pageSize.toString())
                 .replaceAll("#\\{artistid}", artistid);
-        ArtistSongListResult artistSongListResult = DownloadUtils.getHttp().sync(s).get().getBody().toBean(ArtistSongListResult.class);
+        ArtistSongListResult artistSongListResult = DownloadUtils.get(s, ArtistSongListResult.class);
         String total = artistSongListResult.getTotal();
         String pn = artistSongListResult.getPn();
         List<ArtistSongListResult.MusiclistDTO> musiclist = artistSongListResult.getMusiclist();
@@ -525,7 +501,7 @@ public class NKwSearchHander extends SearchHanderAbstract {
         String s = config.getArtistSongListUrl().replaceAll("#\\{pn}", pn.toString())
                 .replaceAll("#\\{pagesize}", "1000")
                 .replaceAll("#\\{artistid}", artistid);
-        ArtistSongListResult artistSongListResult = DownloadUtils.getHttp().sync(s).get().getBody().toBean(ArtistSongListResult.class);
+        ArtistSongListResult artistSongListResult = DownloadUtils.get(s, ArtistSongListResult.class);
         pn = Integer.valueOf(artistSongListResult.getPn());
         Integer total = Integer.valueOf(artistSongListResult.getTotal());
         Integer getSize = (total % 1000) == 0 ? total / 1000 : (total / 1000) + 1;
@@ -552,11 +528,7 @@ public class NKwSearchHander extends SearchHanderAbstract {
         String searchUrl = playListInfo.replaceAll("#\\{pn}", pageIndex.toString())
                 .replaceAll("#\\{pagesize}", pageSize.toString())
                 .replaceAll("#\\{id}", id);
-
-        PlayListInfoResult playListInfoResult = DownloadUtils.getHttp().sync(searchUrl)
-                .get()                          // GET请求
-                .getBody()                      // 响应报文体
-                .toBean(PlayListInfoResult.class);
+        PlayListInfoResult playListInfoResult = DownloadUtils.get(searchUrl, PlayListInfoResult.class);
         String total = playListInfoResult.getTotal();
         String pn = playListInfoResult.getPn();
         List<PlayListInfoResult.MusiclistDTO> musiclist = playListInfoResult.getMusiclist();
@@ -596,10 +568,7 @@ public class NKwSearchHander extends SearchHanderAbstract {
         String searchUrl = config.getAlbumInfoUrl().replaceAll("#\\{albumid}", albumsId);
         searchUrl = searchUrl.replaceAll("#\\{pn}", pageNumber.toString());
         searchUrl = searchUrl.replaceAll("#\\{pagesize}", pageSize.toString());
-        AlbumInfoResult albumInfoResult = DownloadUtils.getHttp().sync(searchUrl)
-                .get()                          // GET请求
-                .getBody()                      // 响应报文体
-                .toBean(AlbumInfoResult.class);
+        AlbumInfoResult albumInfoResult = DownloadUtils.get(searchUrl, AlbumInfoResult.class);
         List<AlbumInfoResult.MusiclistDTO> musiclist = albumInfoResult.getMusiclist();
         String songnum = albumInfoResult.getSongnum();
         //判断是否需分页查询
@@ -609,10 +578,7 @@ public class NKwSearchHander extends SearchHanderAbstract {
                 String addsearchUrl = config.getAlbumInfoUrl().replaceAll("#\\{albumid}", albumsId);
                 addsearchUrl = addsearchUrl.replaceAll("#\\{pn}", i+"");
                 addsearchUrl = addsearchUrl.replaceAll("#\\{pagesize}", pageSize.toString());
-                AlbumInfoResult addalbumInfoResult = DownloadUtils.getHttp().sync(addsearchUrl)
-                        .get()                          // GET请求
-                        .getBody()                      // 响应报文体
-                        .toBean(AlbumInfoResult.class);
+                AlbumInfoResult addalbumInfoResult = DownloadUtils.get(addsearchUrl, AlbumInfoResult.class);
                 musiclist.addAll(addalbumInfoResult.getMusiclist());
             }
         }

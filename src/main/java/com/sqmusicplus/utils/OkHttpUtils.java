@@ -106,7 +106,19 @@ public class OkHttpUtils {
         return this;
     }
 
-
+    /**
+     * 添加参数
+     *
+     * @param param   参数名
+     * @return
+     */
+    public OkHttpUtils addParam(Map<String, String> param) {
+        if (paramMap == null) {
+            paramMap = new LinkedHashMap<>(16);
+        }
+        paramMap.putAll(param);
+        return this;
+    }
 
     /**
      * 添加请求头

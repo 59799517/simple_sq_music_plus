@@ -1,45 +1,202 @@
 package com.sqmusicplus;
 
-import ch.qos.logback.core.encoder.ByteArrayUtil;
 import cn.hutool.crypto.digest.DigestUtil;
 import com.alibaba.fastjson.JSONObject;
-import com.ejlchina.data.Mapper;
-import com.ejlchina.okhttps.*;
 
-import com.ejlchina.okhttps.Process;
-import com.sqmusicplus.plug.qq.config.QQConfig;
-import com.sqmusicplus.plug.qq.entity.QQSearchEntity;
-import com.sqmusicplus.plug.qq.enums.QQSearchType;
-import com.sqmusicplus.plug.utils.NeteaseEncryptionUtils;
-import com.sqmusicplus.utils.DateUtils;
+import com.ejlchina.okhttps.OkHttps;
 import com.sqmusicplus.utils.DownloadUtils;
-import com.sqmusicplus.utils.OkHttpUtils;
-import com.sqmusicplus.utils.ZLibUtils;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import top.yumbo.util.music.MusicEnum;
-import top.yumbo.util.music.musicImpl.netease.NeteaseCloudMusicInfo;
 
-import javax.script.Invocable;
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
+import javax.crypto.Cipher;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 import javax.script.ScriptException;
-import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Consumer;
+import java.util.Random;
 
 import static cn.hutool.crypto.digest.DigestUtil.md5;
 
 //@SpringBootTest
 class SimpleSqMusucPlusApplicationTests {
+
+    @Test
+    void testKgSongUrl() throws IOException, ScriptException {
+//
+
+
+    }
+
+//@Test
+//    void testkg() throws IOException {
+//        String keyword = "陈奕迅";
+//        int page = 1;
+//        int pageSize = 20;
+//        String timeStemp = System.currentTimeMillis() + "";
+//        ArrayList<String> strings = new ArrayList<>();
+//        strings.add("bitrate=0");
+//        strings.add("clienttime=" + timeStemp);
+//        strings.add("clientver=2000");
+//        strings.add("dfid=-");
+//        strings.add("inputtype=0");
+//        strings.add("iscorrection=1");
+//        strings.add("isfuzzy=0");
+//        strings.add("keyword=" + keyword);
+//        strings.add("mid=" + timeStemp);
+//        strings.add("page=" + page);
+//        strings.add("pagesize=" + pageSize);
+//        strings.add("platform=WebFilter");
+//        strings.add("privilege_filter=0");
+//        strings.add("srcappid=2919");
+//        strings.add("tag=em");
+//        strings.add("userid=-1");
+//        strings.add("uuid=" + timeStemp);
+//        strings.sort(String::compareTo);
+//        StringBuilder md5Builder = new StringBuilder();
+//        md5Builder.append("NVPh5oo715z5DIWAeQlhMDsWXXQV4hwt");
+//        for (String s : strings) {
+//            md5Builder.append(s);
+//        }
+//        md5Builder.append("NVPh5oo715z5DIWAeQlhMDsWXXQV4hwt");
+//        StringBuilder stringBuilder = new StringBuilder();
+//        for (String s : strings) {
+//            stringBuilder.append(s).append("&");
+//        }
+//
+//        String s = DigestUtil.md5Hex(md5Builder.toString());
+//        stringBuilder.append("signature=" + s);
+//
+//        String s1 = DownloadUtils.getHttp().sync("https://complexsearch.kugou.com/v2/search/song?" + stringBuilder.toString()).get().getBody().toByteString().utf8();
+//
+//        System.out.println(s1);
+//    }
+
+
+//    /**
+//     * AES 加密
+//     * @param data 需要加密的数据
+//     * @param opt 包含key和iv的选项
+//     * @return 加密后的字符串或包含加密字符串和临时密钥的Map
+//     * @throws Exception 加密过程中可能抛出的异常
+//     */
+//    public static Map<String, String> cryptoAesEncrypt(String data, Map<String, String> opt) throws Exception {
+//        byte[] buffer;
+//        if (data == null) {
+//            throw new IllegalArgumentException("Data cannot be null");
+//        }
+//        buffer = data.getBytes(StandardCharsets.UTF_8);
+//
+//        String key;
+//        byte[] iv;
+//        String tempKey = "";
+//
+//        if (opt != null && opt.containsKey("key") && opt.containsKey("iv")) {
+//            key = opt.get("key");
+//            iv = opt.get("iv").getBytes(StandardCharsets.UTF_8);
+//        } else {
+//            tempKey = opt != null && opt.containsKey("key") ? opt.get("key") : generateRandomString(16).toLowerCase();
+//            key = DigestUtil.md5Hex(tempKey).substring(0, 32);
+//            iv = key.substring(key.length() - 16).getBytes(StandardCharsets.UTF_8);
+//        }
+//
+//        SecretKeySpec secretKey = new SecretKeySpec(key.getBytes(StandardCharsets.UTF_8), "AES");
+//        IvParameterSpec ivSpec = new IvParameterSpec(iv);
+//
+//        Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+//        cipher.init(Cipher.ENCRYPT_MODE, secretKey, ivSpec);
+//
+//        byte[] encrypted = cipher.doFinal(buffer);
+//        String encryptedHex = bytesToHex(encrypted);
+//        Map<String, String> result = new HashMap<>();
+//
+//        if (opt != null && opt.containsKey("key")) {
+//            result.put("str", encryptedHex);
+//        } else {
+//            result.put("str", encryptedHex);
+//            result.put("key", tempKey);
+//        }
+//        return result;
+//
+//    }
+//    private static String bytesToHex(byte[] bytes) {
+//        StringBuilder hexString = new StringBuilder();
+//        for (byte b : bytes) {
+//            String hex = Integer.toHexString(0xff & b);
+//            if (hex.length() == 1) hexString.append('0');
+//            hexString.append(hex);
+//        }
+//        return hexString.toString();
+//    }
+//    @Test
+//    void trstkglogin() throws Exception {
+//
+//        String key = "";
+//        String timeStemp = System.currentTimeMillis() + "";
+//        String userName = "123";
+//        String password = "123";
+//
+//        HashMap<String, String> dataMap  = new HashMap<>();
+//        dataMap.put("plat", "1");
+//        dataMap.put("support_multi", "1");
+//        dataMap.put("clienttime_ms", timeStemp);
+//        dataMap.put("t1", "0");
+//        dataMap.put("t2", "0");
+//        dataMap.put("t3", "MCwwLDAsMCwwLDAsMCwwLDA");
+//        dataMap.put("username", userName);
+//
+//
+//        HashMap<String, String> map = new HashMap<>();
+//        map.put("pwd", password);
+//        map.put("code", "");
+//        map.put("clienttime_ms", timeStemp);
+//        String data = JSONObject.toJSONString(map);
+//
+//        Map<String, String> o = CryptoUtil.cryptoAesEncrypt(data, null);
+//        String encryptedData = o.get("str");
+//        dataMap.put("params", encryptedData);
+//        HashMap<String, String> cryptoRSAEncryptMap = new HashMap<>();
+//        cryptoRSAEncryptMap.put("clienttime_ms", timeStemp);
+//        cryptoRSAEncryptMap.put("key", o.get("key"));
+//
+//        String s = CryptoUtil.cryptoRSAEncrypt(cryptoRSAEncryptMap, null);
+//        dataMap.put("params", encryptedData);
+//        dataMap.put("pk", s);
+//
+//        System.out.println(s);
+//
+//        String baseyrl = "http://login.user.kugou.com/v9/login_by_pwd";
+//        String s1 = DownloadUtils.getHttp().sync(baseyrl).bodyType(OkHttps.JSON)
+//                .addHeader("x-router", "login.user.kugou.com")
+//                .setBodyPara(dataMap)
+//                .post().getBody().toByteString().utf8();
+//        System.out.println(s1);
+//
+//
+////        byte[] buffer = data.getBytes(StandardCharsets.UTF_8);
+////        AES aes = new AES(Mode.CBC, Padding.PKCS5Padding, key.getBytes(), iv);
+////        String encryptedData = aes.decryptStr(buffer);
+////        System.out.println(encryptedData);
+//
+//
+//    }
+
+//    private static String generateRandomString(int length) {
+//        String characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+//        Random random = new Random();
+//        StringBuilder sb = new StringBuilder(length);
+//        for (int i = 0; i < length; i++) {
+//            int index = random.nextInt(characters.length());
+//            sb.append(characters.charAt(index));
+//        }
+//        return sb.toString();
+//    }
+
 //    @Autowired
 //    private QQConfig qqConfig;
 

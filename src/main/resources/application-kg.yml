@@ -1,0 +1,49 @@
+kg:
+#  图片大小  480,400,240,150,135,120,110,100,93,64
+  image-size: 480
+#  刷新登录
+  refreshTokenUrl: /login/token
+#  搜索
+  searchUrl: /search
+#  歌曲详情（真垃圾只有名字没ID 名字还是拼接好的）
+  songinfoUrl: /privilege/lite
+#  歌曲信息补充
+  songinfoAddUrl: /krm/audio
+#  歌词id查询
+  lyricIdUrl: /search/lyric
+#  歌词详情
+  lyricUrl: /lyric
+#  歌手专辑
+  singerAlbumUrl: /artist/albums
+#  歌手详情
+  singerInfoUrl: /artist/detail
+#  专辑信息
+  albumInfoUrl: /album
+#  专辑歌曲
+  albumSongUrl: /album/songs
+#  获取下载链接
+  downloadUrl: /song/url
+
+
+
+#  登录二维码（酷狗的）
+#  ①先获取key
+  qrCodeKeyUrl: /login/qr/key
+#  ②用第一步的key获取二维码
+  qrCodeUrl: /login/qr/create
+#  ③检测扫码状态
+  qrCodeCheckUrl: /login/qr/check
+
+
+#  登录微信二维码（微信的）
+#  ①获取微信二维码
+  wxQrCodeUrl: /login/wx/create
+#  ②检测扫码状态
+  wxQrCodeCheckUrl: /login/wx/check
+#  返回token获取登录信息
+  wxQropenplatUrl: /login/openplat
+
+#  签到
+  signUrl: /youth/vip
+
+

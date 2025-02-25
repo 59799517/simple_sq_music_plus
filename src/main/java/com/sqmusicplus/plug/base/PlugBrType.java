@@ -40,7 +40,16 @@ public enum PlugBrType {
     QQVIP_M4A_2000("m4a","m4a",3000,"qqvip","qqvipHander"),
 
 
-    Free_Download_2000("flac","flac",2000,"free","freeMp3Hander");
+    Free_Download_2000("flac","flac",2000,"free","freeMp3Hander"),
+
+    KG_MP3_128("128", "mp3", 128,"kg","kgHander"),
+    KG_MP3_320("320", "mp3", 320,"kg","kgHander"),
+    KG_Flac_890("flac", "flac", 890,"kg","kgHander"),
+    KG_Flac_2000("flac", "flac", 2000,"kg","kgHander"),
+    KG_Flac_3000("high", "flac", 3000,"kg","kgHander"),
+    KG_Flac_4000("viper_atmos", "flac", 4000,"kg","kgHander"),
+    KG_Flac_5000("viper_tape", "flac", 5000,"kg","kgHander");
+
 
 
     String value;
@@ -79,5 +88,11 @@ public enum PlugBrType {
 
     public String getSpringName() {
         return springName;
+    }
+
+
+    @Override
+    public String toString() {
+        return super.toString();
     }
 }

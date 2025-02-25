@@ -1,12 +1,12 @@
 package com.sqmusicplus.utils;
 
-import com.ejlchina.okhttps.Process;
+import com.alibaba.fastjson.JSONObject;
 import com.ejlchina.okhttps.*;
+import com.ejlchina.okhttps.Process;
 import com.sqmusicplus.config.GlobalStatic;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.*;
 import okhttp3.logging.HttpLoggingInterceptor;
-import org.jsoup.Jsoup;
 
 import javax.net.ssl.*;
 import java.io.*;
@@ -94,7 +94,7 @@ public class DownloadUtils {
     }
 
     //下载其他的
-   public static void download(String url, String path, String fileName, Consumer<Process> onProcess,Consumer<File> onSuccess) {
+   public static void download(String url, String path, String fileName, Consumer<Process> onProcess, Consumer<File> onSuccess) {
        HTTP http = getHttp();
        HttpResult.Body body = http.async(url)
                 .tag("music")
@@ -240,12 +240,54 @@ public class DownloadUtils {
 
     public static  OkHttpClient getOkHttpClient() {
         if(okHttpClient==null){
-            okHttpClient = new OkHttpClient();
+            SSLContext sslCtx = null;
+            try {
+                sslCtx = SSLContext.getInstance("TLS");
+                sslCtx.init(null, new TrustManager[] { myTrustManager }, new SecureRandom());
+            } catch (NoSuchAlgorithmException e) {
+                throw new RuntimeException(e);
+            } catch (KeyManagementException e) {
+                throw new RuntimeException(e);
+            }
+//            builder.sslSocketFactory(mySSLSocketFactory, myTrustManager);
+//            builder.hostnameVerifier(myHostnameVerifier);
+            SSLSocketFactory mySSLSocketFactory = sslCtx.getSocketFactory();
+            okHttpClient = new OkHttpClient().newBuilder()
+                    .sslSocketFactory(mySSLSocketFactory, myTrustManager)
+                    .hostnameVerifier(myHostnameVerifier).build();
         }
         return okHttpClient;
     }
 
+    public  static <T> T get(String url,HashMap<String,String> params,Class<T> clazz){
+        OkHttpUtils builder = OkHttpUtils.builder().url(url);
 
+        if (params!=null){
+            builder.addParam(params);
+        }
+        String sync =builder
+                .get().sync();
+        return (T)JSONObject.parseObject(sync,clazz);
+
+    }
+    public static JSONObject getToJsonObject(String url,HashMap<String,String> params){
+        OkHttpUtils builder = OkHttpUtils.builder().url(url);
+
+        if (params!=null){
+            builder.addParam(params);
+        }
+        String sync =builder
+                .get().sync();
+        return JSONObject.parseObject(sync);
+
+    }
+    public static <T> T get(String url ,Class<T> clazz){
+        return get(url,null,clazz);
+    }
+
+    public static JSONObject getToJsonObject(String url){
+        return getToJsonObject(url,null);
+    }
 
 
 }

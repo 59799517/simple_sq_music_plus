@@ -144,7 +144,7 @@
             <artifactId>okhttps-xml</artifactId>
             <version>3.5.3</version>
         </dependency>
-        <!-- 若使用的是 Oracle JDK 9+ 或 OpenJDK 则还需要添加一个依赖 -->
+<!--         若使用的是 Oracle JDK 9+ 或 OpenJDK 则还需要添加一个依赖 -->
         <dependency>
             <groupId>com.sun.xml.bind</groupId>
             <artifactId>jaxb-impl</artifactId>
@@ -200,13 +200,20 @@
         <dependency>
             <groupId>com.baomidou</groupId>
             <artifactId>mybatis-plus-boot-starter</artifactId>
-            <version>3.5.7</version>
+            <version>3.5.10.1</version>
+        </dependency>
+
+        <!-- jdk 11+ 引入可选模块 -->
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-jsqlparser</artifactId>
+            <version>3.5.10.1</version>
         </dependency>
 
         <dependency>
             <groupId>com.baomidou</groupId>
             <artifactId>mybatis-plus-generator</artifactId>
-            <version>3.5.7</version>
+            <version>3.5.10.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>

@@ -12,5 +12,6 @@ import com.sqmusicplus.base.entity.SqConfig;
  */
 public interface SqConfigService extends IService<SqConfig> {
 
+    SqConfig selectByKeyAndValue(String key);
 
 }

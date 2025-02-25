@@ -203,7 +203,7 @@ public class NeteaseHander extends SearchHanderAbstract {
                     .setMusicAlbum(songsDTO.getAl().getName())
                     .setMusicArtists(songsDTO.getAr().stream().map(e -> e.getName()).collect(Collectors.joining(",")))
                     .setMusicName(songsDTO.getName())
-                    .setMusicDuration(songsDTO.getDt().intValue())
+                    .setMusicDuration(songsDTO.getDt())
                     .setAlbumId(songsDTO.getAl().getId().toString())
                     .setArtistsId(songsDTO.getAr().get(0).getId().toString());
         }
@@ -244,7 +244,7 @@ public class NeteaseHander extends SearchHanderAbstract {
                 Music music = new Music();
                 music.setId(songsInfoDTO.getId().toString())
                         .setMusicName(songsInfoDTO.getName())
-                        .setMusicDuration(songsInfoDTO.getDt().intValue())
+                        .setMusicDuration(songsInfoDTO.getDt())
                         .setMusicAlbum(songsInfoDTO.getAl().getName())
                         .setMusicArtists(songsInfoDTO.getAr().stream().map(e -> e.getName()).collect(Collectors.joining(",")))
                         .setMusicImage(songsInfoDTO.getAl().getPicUrl())
@@ -320,7 +320,7 @@ public class NeteaseHander extends SearchHanderAbstract {
                 Music music = new Music();
                 music.setId(songsInfoDTO.getId().toString())
                         .setMusicName(songsInfoDTO.getName())
-                        .setMusicDuration(songsInfoDTO.getDt().intValue())
+                        .setMusicDuration(songsInfoDTO.getDt())
                         .setMusicAlbum(songsInfoDTO.getAl().getName())
                         .setMusicArtists(songsInfoDTO.getAr().stream().map(e -> e.getName()).collect(Collectors.joining(",")))
                         .setMusicImage(songsInfoDTO.getAl().getPicUrl())

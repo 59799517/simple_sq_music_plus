@@ -16,4 +16,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class SqConfigServiceImpl extends ServiceImpl<SqConfigMapper, SqConfig> implements SqConfigService {
 
+    @Override
+    public SqConfig selectByKeyAndValue(String key) {
+        return getBaseMapper().selectByKeyAndValue(key);
+    }
 }

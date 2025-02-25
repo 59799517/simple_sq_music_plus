@@ -34,7 +34,6 @@ public class Album  implements Serializable {
      * 专辑时间
      */
     private String albumTime;
-
     /**
      * 专辑简介
      */
