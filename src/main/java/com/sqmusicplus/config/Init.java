@@ -75,7 +75,11 @@ public class Init implements ApplicationRunner {
             downloadExcute.getDownloadInfo();
         }
 
-        neteaseHander.initPlug();
+        try {
+            neteaseHander.initPlug();
+        } catch (Exception e) {
+            log.error("网易未开启插件！:{}", e.getMessage());
+        }
         qqvipHander.initPlug();
         log.info("当前服务版本->{}", version);
        SqConfig qqopenconfigKey = configService.getOne(new QueryWrapper<SqConfig>().eq("config_key", "plug.qqvip.open"));

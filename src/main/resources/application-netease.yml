@@ -4,7 +4,8 @@ netease:
   anonymousLogin: true
 #  baseUrl: http://cloud-music.pl-fe.cn
 #  baseUrl: https://mu-api.yuk0.com
-  baseUrl: https://netease.happyking.top
+#  baseUrl: https://netease.happyking.top
+  baseUrl: http://plugin.changsheng.space:3000
   cookieUrl: ${netease.baseUrl}/register/anonimous
   cookie:
   downloadUrl: https://csm.sayqz.com/api/?type=apiSongUrlV1&level=#{level}&id=#{id}
