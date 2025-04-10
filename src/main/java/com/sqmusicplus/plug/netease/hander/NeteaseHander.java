@@ -1,10 +1,12 @@
 package com.sqmusicplus.plug.netease.hander;
 
+import cn.hutool.core.date.DateUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.ejlchina.data.Mapper;
 import com.ejlchina.okhttps.HTTP;
 import com.ejlchina.okhttps.HttpResult;
+import com.ejlchina.okhttps.SHttpTask;
 import com.sqmusicplus.base.entity.*;
 import com.sqmusicplus.plug.base.PlugBrType;
 import com.sqmusicplus.plug.base.hander.SearchHanderAbstract;
@@ -15,6 +17,7 @@ import com.sqmusicplus.plug.netease.config.NeteaseConfig;
 import com.sqmusicplus.plug.netease.entity.*;
 import com.sqmusicplus.plug.netease.enums.SearchEnums;
 import com.sqmusicplus.plug.qq.entity.QQSearchEntity;
+import com.sqmusicplus.utils.DateUtils;
 import com.sqmusicplus.utils.DownloadUtils;
 import com.sqmusicplus.utils.StringUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -338,19 +341,54 @@ public class NeteaseHander extends SearchHanderAbstract {
 
     @Override
     public HashMap<String, String> getDownloadUrl(String musicId, PlugBrType brType) {
-        String downloadUrl = getConfig().getDownloadUrl();
-        HttpResult.Body body = DownloadUtils.getHttp().sync(downloadUrl.replaceAll("#\\{id}", musicId).replaceAll("#\\{level}", brType.getValue())).get().getBody();
-        Mapper mapper = body.toMapper();
-        HashMap<String, String> resmap = new HashMap<>();
-        try {
-            if (mapper.getInt("code")==200){
-                resmap.put("url", mapper.getArray("data").getMapper(0).getString("url"));
-                resmap.put("type", mapper.getArray("data").getMapper(0).getString("type"));
-                resmap.put("bit", mapper.getArray("data").getMapper(0).getString("br"));
-            }
-        } catch (Exception e) {
+//        String downloadUrl = getConfig().getDownloadUrl();
+//        SHttpTask sync = DownloadUtils.getHttp().sync(downloadUrl.replaceAll("#\\{id}", musicId).replaceAll("#\\{level}", brType.getValue()).replaceAll("#\\{timestamp}", DateUtils.getTimeStamp().toString()).replaceAll("#\\{cookie}", neteaseCloudMusicInfo.getCookieString()));
+//        sync.addUrlPara("cookie", );
+
+
+
+        HTTP http = DownloadUtils.getHttp();
+        SHttpTask sync = http.sync("https://music-api.gdstudio.xyz/api.php");
+        sync.addUrlPara("types", "url");
+        sync.addUrlPara("source", "netease");
+
+        sync.addUrlPara("id", musicId);
+
+        Integer bit = brType.getBit();
+        if (bit.intValue()>320){
+            sync.addUrlPara("br", "999");
+        }else{
+            sync.addUrlPara("br", bit.toString());
         }
-        return resmap;
+
+        HttpResult get = sync.get();
+        Mapper mapper = get.getBody().toMapper();
+        if (StringUtils.isBlank(mapper.getString("url"))){
+            return null;
+        }else{
+            HashMap<String, String> stringStringHashMap = new HashMap<>();
+            stringStringHashMap.put("url", mapper.getString("url"));
+            stringStringHashMap.put("type", brType.getType());
+            stringStringHashMap.put("bit", brType.getBit().toString());
+            return stringStringHashMap;
+        }
+
+
+
+
+//
+//        HttpResult.Body body =  sync.get().getBody();
+//        Mapper mapper = body.toMapper();
+//        HashMap<String, String> resmap = new HashMap<>();
+//        try {
+//            if (mapper.getInt("code")==200){
+//                resmap.put("url", mapper.getArray("data").getMapper(0).getString("url"));
+//                resmap.put("type", mapper.getArray("data").getMapper(0).getString("type"));
+//                resmap.put("bit", mapper.getArray("data").getMapper(0).getString("br"));
+//            }
+//        } catch (Exception e) {
+//        }
+//        return resmap;
 
 
     }

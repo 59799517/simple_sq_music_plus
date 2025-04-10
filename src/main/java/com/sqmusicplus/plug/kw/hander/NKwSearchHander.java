@@ -188,9 +188,47 @@ public class NKwSearchHander extends SearchHanderAbstract {
 
     @Override
     public Album queryAlbumById(String albumId) {
+
+
         String searchUrl = config.getAlbumInfoUrl().replaceAll("#\\{albumid}", albumId)
-       .replaceAll("#\\{pn}", "1")
-                .replaceAll("#\\{pagesize}", "10000");
+       .replaceAll("#\\{pn}", "0")
+                .replaceAll("#\\{pagesize}", "100");
+        AlbumInfoResult albumInfoResult = DownloadUtils.get(searchUrl, AlbumInfoResult.class);
+        List<AlbumInfoResult.MusiclistDTO> musiclist = albumInfoResult.getMusiclist();
+        List<Music> collect = musiclist.stream().map(abslistDTO -> {
+            String album = albumInfoResult.getName();
+            String aartist = abslistDTO.getAartist();
+            String url = (config.getSongCoverUrl() + abslistDTO.getWebAlbumpicShort()).replaceAll("/120", "/500");
+            return new Music().setMusicName(abslistDTO.getName()).setMusicAlbum(album).setMusicArtists(aartist).setMusicImage(url);
+        }).collect(Collectors.toList());
+        String alubimage = null;
+        try {
+            alubimage = albumInfoResult.getImg().replaceAll("/120", "/500");
+        } catch (Exception e) {
+        }
+        //分页找全部专辑
+        String songnum = albumInfoResult.getSongnum();
+        if (StringUtils.isNotBlank(songnum)){
+            int i = Integer.parseInt(songnum);
+            //查看需要剩余多少页
+            int page = i / 100;
+            if (i % 100 > 0) {
+                page++;
+            }
+            for (int j = 1; j <= page; j++) {
+                Album album = queryAlbumByIdAndPage(albumId, j + "");
+                collect.addAll(album.getMusics());
+            }
+        }
+        return new Album().setMusics(collect).setAlbumTime(albumInfoResult.getPub()).setAlbumArtists(albumInfoResult.getArtist()).setAlbumName(albumInfoResult.getName()).setAlbumDescribe(albumInfoResult.getInfo()).setAlbumImg(alubimage).setAlbumId(albumInfoResult.getAlbumid()).setAlbumArtistId(albumInfoResult.getArtistid());
+    }
+
+
+
+    public Album queryAlbumByIdAndPage(String albumId,String pn ) {
+        String searchUrl = config.getAlbumInfoUrl().replaceAll("#\\{albumid}", albumId)
+                .replaceAll("#\\{pn}", pn)
+                .replaceAll("#\\{pagesize}", "100");
         AlbumInfoResult albumInfoResult = DownloadUtils.get(searchUrl, AlbumInfoResult.class);
         List<AlbumInfoResult.MusiclistDTO> musiclist = albumInfoResult.getMusiclist();
         List<Music> collect = musiclist.stream().map(abslistDTO -> {
@@ -206,6 +244,8 @@ public class NKwSearchHander extends SearchHanderAbstract {
         }
         return new Album().setMusics(collect).setAlbumTime(albumInfoResult.getPub()).setAlbumArtists(albumInfoResult.getArtist()).setAlbumName(albumInfoResult.getName()).setAlbumDescribe(albumInfoResult.getInfo()).setAlbumImg(alubimage).setAlbumId(albumInfoResult.getAlbumid()).setAlbumArtistId(albumInfoResult.getArtistid());
     }
+
+
 
     /**
      * 在歌曲详情中已经拥有

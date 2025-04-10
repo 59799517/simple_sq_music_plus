@@ -9,3 +9,4 @@ netease:
   cookieUrl: ${netease.baseUrl}/register/anonimous
   cookie:
   downloadUrl: https://csm.sayqz.com/api/?type=apiSongUrlV1&level=#{level}&id=#{id}
+

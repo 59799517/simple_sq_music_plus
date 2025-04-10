@@ -18,10 +18,7 @@ import com.sqmusicplus.plug.qq.config.QQConfig;
 import com.sqmusicplus.plug.qq.entity.QQSearchEntity;
 import com.sqmusicplus.plug.qq.enums.QQSearchType;
 import com.sqmusicplus.plug.utils.QSignHelper;
-import com.sqmusicplus.utils.DateUtils;
-import com.sqmusicplus.utils.DownloadUtils;
-import com.sqmusicplus.utils.MusicUtils;
-import com.sqmusicplus.utils.ZLibUtils;
+import com.sqmusicplus.utils.*;
 import com.twelvemonkeys.lang.StringUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -201,45 +198,67 @@ public class QQHander extends SearchHanderAbstract {
 //        return stringStringHashMap;
 
 
-
-
-
-
-
-
-
-
-
-
-        String platform = "qq";
-        String t2 = brType.getValue().split("_")[0];
-        String device = "MI 14 Pro Max";
-        String osVersion = "13" ;
-         String time = DateUtils.getNowDate().getTime()/1000+"";
-        String  lowerCase = DigestUtil.md5Hex("6d849adb2f3e00d413fe48efbb18d9bb" + time + "6562653262383463363633646364306534333668");
-        String   s6 = "{\\\"method\\\":\\\"GetMusicUrl\\\",\\\"platform\\\":\\\"" + platform + "\\\",\\\"t1\\\":\\\"" + musicId + "\\\",\\\"t2\\\":\\\"" + t2 + "\\\"}";
-        String s7 = "{\\\"uid\\\":\\\"\\\",\\\"token\\\":\\\"\\\",\\\"deviceid\\\":\\\"84ac82836212e869dbeea73f09ebe52b\\\",\\\"appVersion\\\":\\\"4.1.2\\\",\\\"vercode\\\":\\\"4120\\\",\\\"device\\\":\\\"" + device + "\\\",\\\"osVersion\\\":\\\"" + osVersion + "\\\"}";
-        String  s8 = "{\n\t\"text_1\":\t\"" + s6 + "\",\n\t\"text_2\":\t\"" + s7 + "\",\n\t\"sign_1\":\t\"" + lowerCase + "\",\n\t\"time\":\t\"" + time + "\",\n\t\"sign_2\":\t\"" + DigestUtil.md5Hex(
-                s6.replace("\\", "") + s7.replace("\\", "") + lowerCase + time + "NDRjZGIzNzliNzEe") + "\"\n}" ;
-        byte[] utf8Bytes = s8.getBytes(StandardCharsets.UTF_8);
-        String hexString = ByteArrayUtil.toHexString(utf8Bytes);
-        String upperHexString = hexString.toUpperCase();
-        byte[] encodedBytes = upperHexString.getBytes(StandardCharsets.UTF_8);
-        byte[] compress = ZLibUtils.compress(encodedBytes);
         HTTP http = DownloadUtils.getHttp();
-//        SHttpTask sync = http.sync(config.getDownloadUrl());
-        SHttpTask sync = http.sync("http://gcsp.kzti.top:1030/client/cgi-bin/api.fcg");
-        sync.setBodyPara(compress);
-        HttpResult post = sync.post();
-        byte[] decompress = ZLibUtils.decompress(post.getBody().toBytes());
-        String s = new String(decompress);
-        JSONObject jsonObject = JSONObject.parseObject(s);
-        String downloadurl = jsonObject.getString("data");
-        HashMap<String, String> stringStringHashMap = new HashMap<>();
-        stringStringHashMap.put("url", downloadurl);
-        stringStringHashMap.put("type", brType.getType());
-        stringStringHashMap.put("bit", brType.getBit().toString());
-        return stringStringHashMap;
+        SHttpTask sync = http.sync("https://music-api.gdstudio.xyz/api.php");
+        sync.addUrlPara("types", "url");
+        sync.addUrlPara("source", "tencent");
+
+        sync.addUrlPara("id", musicId);
+
+        Integer bit = brType.getBit();
+        if (bit.intValue()>320){
+            sync.addUrlPara("br", "999");
+        }else{
+            sync.addUrlPara("br", bit.toString());
+        }
+
+
+        HttpResult get = sync.get();
+        Mapper mapper = get.getBody().toMapper();
+        if (StringUtils.isBlank(mapper.getString("url"))){
+            return null;
+        }else{
+            HashMap<String, String> stringStringHashMap = new HashMap<>();
+            stringStringHashMap.put("url", mapper.getString("url"));
+            stringStringHashMap.put("type", brType.getType());
+            stringStringHashMap.put("bit", brType.getBit().toString());
+            return stringStringHashMap;
+        }
+
+//
+//        String platform = "qq";
+//        String t2 = brType.getValue().split("_")[0];
+//        String device = "MI 14 Pro Max";
+//        String osVersion = "13" ;
+//         String time = DateUtils.getNowDate().getTime()/1000+"";
+//        String  lowerCase = DigestUtil.md5Hex("6d849adb2f3e00d413fe48efbb18d9bb" + time + "6562653262383463363633646364306534333668");
+//        String   s6 = "{\\\"method\\\":\\\"GetMusicUrl\\\",\\\"platform\\\":\\\"" + platform + "\\\",\\\"t1\\\":\\\"" + musicId + "\\\",\\\"t2\\\":\\\"" + t2 + "\\\"}";
+//        String s7 = "{\\\"uid\\\":\\\"\\\",\\\"token\\\":\\\"\\\",\\\"deviceid\\\":\\\"84ac82836212e869dbeea73f09ebe52b\\\",\\\"appVersion\\\":\\\"4.1.2\\\",\\\"vercode\\\":\\\"4120\\\",\\\"device\\\":\\\"" + device + "\\\",\\\"osVersion\\\":\\\"" + osVersion + "\\\"}";
+//        String  s8 = "{\n\t\"text_1\":\t\"" + s6 + "\",\n\t\"text_2\":\t\"" + s7 + "\",\n\t\"sign_1\":\t\"" + lowerCase + "\",\n\t\"time\":\t\"" + time + "\",\n\t\"sign_2\":\t\"" + DigestUtil.md5Hex(
+//                s6.replace("\\", "") + s7.replace("\\", "") + lowerCase + time + "NDRjZGIzNzliNzEe") + "\"\n}" ;
+//        byte[] utf8Bytes = s8.getBytes(StandardCharsets.UTF_8);
+//        String hexString = ByteArrayUtil.toHexString(utf8Bytes);
+//        String upperHexString = hexString.toUpperCase();
+//        byte[] encodedBytes = upperHexString.getBytes(StandardCharsets.UTF_8);
+//        byte[] compress = ZLibUtils.compress(encodedBytes);
+//        HTTP http = DownloadUtils.getHttp();
+////        SHttpTask sync = http.sync(config.getDownloadUrl());
+//        SHttpTask sync = http.sync("http://gcsp.kzti.top:1030/client/cgi-bin/api.fcg");
+//        sync.setBodyPara(compress);
+//        HttpResult post = sync.post();
+//        byte[] decompress = ZLibUtils.decompress(post.getBody().toBytes());
+//        String s = new String(decompress);
+//        JSONObject jsonObject = JSONObject.parseObject(s);
+//        String downloadurl = jsonObject.getString("data");
+//        HashMap<String, String> stringStringHashMap = new HashMap<>();
+//        stringStringHashMap.put("url", downloadurl);
+//        stringStringHashMap.put("type", brType.getType());
+//        stringStringHashMap.put("bit", brType.getBit().toString());
+//        return stringStringHashMap;
+
+
+
+
 //        String deonloadType = "flac";
 //        Integer bit = brType.getBit();
 //        if (bit == 128) {
