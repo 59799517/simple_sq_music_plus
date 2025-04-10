@@ -51,7 +51,7 @@ mybatis-plus:
   mapperLocations: classpath*:mapper/*Mapper.xml
   # 加载全局的配置文件
   configuration:
-    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
+    log-impl: org.apache.ibatis.logging.nologging.NoLoggingImpl
     cache-enabled: true
   global-config:
     db-config:
@@ -81,5 +81,5 @@ sa-token:
   is-log: false
   is-print: false
 
-version: 2.15.3
+version: 2.15.4
 
