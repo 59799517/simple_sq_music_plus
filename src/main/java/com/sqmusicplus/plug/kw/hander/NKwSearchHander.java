@@ -408,7 +408,7 @@ public class NKwSearchHander extends SearchHanderAbstract {
 
     @Override
     public ArrayList<DownloadEntity> downloadAlbum(String albumsId, PlugBrType brType, String addSubsonicPlayListName, String artist, Boolean isAudioBook, String albumName) {
-       return downloadAlbum(albumsId, brType, addSubsonicPlayListName, artist, isAudioBook, albumName,0, 1000);
+       return downloadAlbum(albumsId, brType, addSubsonicPlayListName, artist, isAudioBook, albumName,0, 100);
     }
 
 //    @Override
@@ -601,7 +601,7 @@ public class NKwSearchHander extends SearchHanderAbstract {
         if (pageNumber==null){
             pageNumber=0;
         }
-        pageSize=pageSize==null?1000:pageSize;
+        pageSize=pageSize==null?100:pageSize;
 
         ArrayList<DownloadEntity> downloadEntities = new ArrayList<>();
         AtomicReference<String> change = new AtomicReference<>(artist);
@@ -619,7 +619,9 @@ public class NKwSearchHander extends SearchHanderAbstract {
                 addsearchUrl = addsearchUrl.replaceAll("#\\{pn}", i+"");
                 addsearchUrl = addsearchUrl.replaceAll("#\\{pagesize}", pageSize.toString());
                 AlbumInfoResult addalbumInfoResult = DownloadUtils.get(addsearchUrl, AlbumInfoResult.class);
-                musiclist.addAll(addalbumInfoResult.getMusiclist());
+                if (addalbumInfoResult!=null&&addalbumInfoResult.getMusiclist()!=null){
+                    musiclist.addAll(addalbumInfoResult.getMusiclist());
+                }
             }
         }
 
