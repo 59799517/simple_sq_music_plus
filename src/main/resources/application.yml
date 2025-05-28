@@ -44,6 +44,12 @@ spring:
   main:
     allow-circular-references: true
     banner-mode: off
+  task:
+    execution:
+      pool:
+        size: 20
+        core-size: 20
+        max-size: 40
 mybatis-plus:
   # 搜索指定包别名
   typeAliasesPackage: com.sqmusicplus.*.entity
@@ -81,5 +87,5 @@ sa-token:
   is-log: false
   is-print: false
 
-version: 2.15.8
+version: 2.15.9
 

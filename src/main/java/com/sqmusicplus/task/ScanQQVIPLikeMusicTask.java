@@ -20,8 +20,10 @@ import com.sqmusicplus.plug.qq.hander.QQHander;
 import com.sqmusicplus.plug.qqvip.QQvipHander;
 import com.sqmusicplus.utils.MusicUtils;
 import com.sqmusicplus.utils.StringUtils;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -51,7 +53,7 @@ public class ScanQQVIPLikeMusicTask {
     @Autowired
     private DownloadInfoService downloadInfoService;
 
-    @Scheduled(cron = "0 0/10 * * * ? ")
+    @Scheduled(cron = "0 */10 * * * ? ")
     public void excute() {
         SqConfig qqopenconfigKey = configService.getOne(new QueryWrapper<SqConfig>().eq("config_key", "plug.qqvip.open"));
 
@@ -380,8 +382,8 @@ public class ScanQQVIPLikeMusicTask {
             ArrayList<String> finalAddSongIds1 = addSongIds;
             ArrayList<DownloadInfo> downloadInfos = new ArrayList<>();
             songlist.forEach((item) -> {
-                String songid = item.getMid();
-                if (finalAddSongIds1.contains(songid)) {
+                Long id = item.getId();
+                if (finalAddSongIds1.contains(id.toString())) {
                     String songmid = item.getMid();
 
                     Long sizeflac = item.getFile().getSizeFlac();
