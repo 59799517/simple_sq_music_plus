@@ -1,44 +1,70 @@
-2.15.0
-1. 增加酷狗概念版支持
-2. 修复框架导致的下载失败问题
+qq获取url示例:
 
-2.12.14.2
-1. 修复酷我超长专辑下载不全问题（主要是有声书下载不全问题）
-
-
-2.12.14.1
-1. docker和其他服务受防火墙影响太严重了有的jar加速都下载不下来 制作了sh脚本能够一键部署docker
-2. 做了新版本带上上传自动部署脚本
-
-2.13.x
-1. 将数据库配置改为mysql
-2. 修改自动脚本
-3. 自动打包jar
-4. 在线预览增加设置
-5. 重写下载管理功能页面
-
-
-2.12.x
-## 更新
-1. 增加QQvip自动同步 我喜欢的歌单收藏专辑等功能需要启动后再设置中开启
-2. 增加自动同步配置参数需要修改文设置 （设置中进行开启）参考下图 插件开启  定时开启  然后开启需要的功能 qq和url必须写
-
-![10.png](img%2F10.png)
-
-2.11.x
-## 更新
-修复QQvip下载部分问题
-
-1.增加QQvip下载需要买了vip并且部署了 https://github.com/jsososo/QQMusicApi 服务 登录账号密码后使用application-qqvip.yml配置url即可（如没配置请不要在网页中使用此功能！）
-
-2.增加freeMp3的插件下载支持  
-使用方法
-1. 部署此项目
-2. 安装插件（在free_plug中有安装教程）
-3. 项目搜索选择freeMP3根据配置设置（url写你服务器地址   http://{你的服务器IP:端口}）
-4. 打开https://tool.liumingye.cn/music/#/
-5. 在下载页面下方出现红色的 根据自身情况点击推送即可
-   token获取：
-6.
-![free3.png](img%2Ffree3.png)
-## 感谢https://lz.qaiu.top/提供的蓝奏云转直连
+{
+"code": 0,
+"ts": 1748068869612,
+"start_ts": 1748068869577,
+"traceid": "2867ac7009313562",
+"music.vkey.GetVkey.UrlGetVkey": {
+"code": 0,
+"data": {
+"uin": "",
+"retcode": 0,
+"verify_type": 0,
+"login_key": "",
+"msg": "221.11.21.170;fnameHitCache_200",
+"sip": [],
+"thirdip": [
+"",
+""
+],
+"testfile2g": "",
+"testfilewifi": "",
+"midurlinfo": [
+{
+"songmid": "0009BCJK1nRaad",
+"filename": "F0000009BCJK1nRaad0009BCJK1nRaad.flac",
+"purl": "F000001ndYJ83Nmalf.flac?guid=6b79437a463ca9ef79f65760643e591b&vkey=DA845C26F4CDED600521BE67DAA843C18C137D0199D4809F3C7802BC22CE95BE7DD216A56A7997C798B06228D96FC600C692E1C6EE19D12C__v21ebdc52c&uin=59799517&redirect=1",
+"errtype": "",
+"p2pfromtag": 0,
+"qmdlfromtag": 0,
+"common_downfromtag": 0,
+"vip_downfromtag": 0,
+"pdl": 0,
+"premain": 0,
+"hisdown": 0,
+"hisbuy": 0,
+"uiAlert": 0,
+"isbuy": 0,
+"pneedbuy": 0,
+"pneed": 0,
+"isonly": 0,
+"onecan": 0,
+"result": 0,
+"tips": "",
+"opi48kurl": "",
+"opi96kurl": "",
+"opi192kurl": "",
+"opiflackurl": "",
+"opi128kurl": "",
+"opi192koggurl": "",
+"wififromtag": "111114",
+"flowfromtag": "111114",
+"wifiurl": "F000001ndYJ83Nmalf.flac?guid=6b79437a463ca9ef79f65760643e591b&vkey=DA845C26F4CDED600521BE67DAA843C18C137D0199D4809F3C7802BC22CE95BE7DD216A56A7997C798B06228D96FC600C692E1C6EE19D12C__v21ebdc52c&uin=59799517&redirect=1&fromtag=111114",
+"flowurl": "F000001ndYJ83Nmalf.flac?guid=6b79437a463ca9ef79f65760643e591b&vkey=DA845C26F4CDED600521BE67DAA843C18C137D0199D4809F3C7802BC22CE95BE7DD216A56A7997C798B06228D96FC600C692E1C6EE19D12C__v21ebdc52c&uin=59799517&redirect=1&fromtag=111114",
+"vkey": "DA845C26F4CDED600521BE67DAA843C18C137D0199D4809F3C7802BC22CE95BE7DD216A56A7997C798B06228D96FC600C692E1C6EE19D12C__v21ebdc52c",
+"opi30surl": "",
+"ekey": "",
+"auth_switch": 24248079,
+"subcode": 1,
+"opi96koggurl": "",
+"auth_switch2": 524288,
+"xcdnurl": ""
+}
+],
+"servercheck": "ef245353e0557b67960998455e39c54c",
+"expiration": 80400,
+"deviceResult": ""
+}
+}
+}

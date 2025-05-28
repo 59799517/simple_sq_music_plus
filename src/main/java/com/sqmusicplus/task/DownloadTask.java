@@ -1,8 +1,6 @@
 package com.sqmusicplus.task;
 
-import cn.hutool.log.Log;
 import com.sqmusicplus.download.DownloadExcute;
-import com.sqmusicplus.plug.qqvip.QQvipHander;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;

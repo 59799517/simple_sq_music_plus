@@ -1,32 +1,35 @@
 package com.sqmusicplus.plug.qq.hander;
 
-import ch.qos.logback.core.encoder.ByteArrayUtil;
-import cn.hutool.crypto.digest.DigestUtil;
 import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.serializer.SimplePropertyPreFilter;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.ejlchina.data.Array;
 import com.ejlchina.data.Mapper;
-import com.ejlchina.okhttps.HTTP;
-import com.ejlchina.okhttps.HttpResult;
 import com.ejlchina.okhttps.OkHttps;
-import com.ejlchina.okhttps.SHttpTask;
 import com.sqmusicplus.base.entity.*;
+import com.sqmusicplus.base.service.SqConfigService;
+import com.sqmusicplus.config.GlobalStatic;
 import com.sqmusicplus.plug.base.PlugBrType;
+import com.sqmusicplus.plug.base.QQSongType;
 import com.sqmusicplus.plug.base.hander.SearchHanderAbstract;
 import com.sqmusicplus.plug.entity.*;
-import com.sqmusicplus.plug.kw.entity.SearchMusicResult;
 import com.sqmusicplus.plug.qq.config.QQConfig;
-import com.sqmusicplus.plug.qq.entity.QQSearchEntity;
+import com.sqmusicplus.plug.qq.entity.*;
+import com.sqmusicplus.plug.qq.entity.getfollowsingerlist.GetFollowSingerList;
+import com.sqmusicplus.plug.qq.enums.LoginType;
 import com.sqmusicplus.plug.qq.enums.QQSearchType;
-import com.sqmusicplus.plug.utils.QSignHelper;
+import com.sqmusicplus.plug.qq.enums.QRCodeLoginEvents;
 import com.sqmusicplus.utils.*;
-import com.twelvemonkeys.lang.StringUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
-
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -36,12 +39,21 @@ import java.util.concurrent.atomic.AtomicReference;
  * @Date 2023/8/25 9:18
  * @Created by Administrator
  */
-
+@Slf4j
 @Service("qqHander")
 public class QQHander extends SearchHanderAbstract {
 
     @Autowired
     private QQConfig config;
+
+    @Autowired
+    @Qualifier("qqQrthreadPoolTaskExecutor")
+    private ThreadPoolExecutor threadPoolExecutor;
+
+    //二维码检查线程
+    private Future<QQMusicQrEventResult> qrCodeCheckFuture;
+
+
     @Override
     public  QQConfig getConfig() {
         return  config;
@@ -103,6 +115,10 @@ public class QQHander extends SearchHanderAbstract {
 
     @Override
     public Music querySongById(String SongId) {
+        //查看字符是否包含,
+        if (SongId.contains(",")) {
+            SongId = SongId.split(",")[0];
+        }
         String searchUrl = config.getSearchUrl();
         String s = getqqSearchEntity().musicInfoRequestParam(SongId);
         Mapper mapper = DownloadUtils.getHttp().sync(searchUrl).setBodyPara(s).post().getBody().toMapper();
@@ -155,6 +171,85 @@ public class QQHander extends SearchHanderAbstract {
 
     @Override
     public HashMap<String, String> getDownloadUrl(String musicId, PlugBrType brType) {
+        if (musicId.contains(",")){
+            musicId = musicId.split(",")[0];
+        }
+        QQSongType qqSongType=  QQSongType.FLAC;
+        String musickey ="";
+        String qq ="";
+        String loginType ="";
+        if (brType.getValue().equalsIgnoreCase("HQ_M500")){
+            qqSongType = QQSongType.MP3_128;
+        }else  if (brType.getValue().equalsIgnoreCase("HQ_M800")){
+            qqSongType = QQSongType.MP3_320;
+
+        }else if (brType.getValue().equalsIgnoreCase("SQ_F000")){
+            qqSongType = QQSongType.FLAC;
+        }else  if (brType.getValue().equalsIgnoreCase("HR_RS01")){
+            qqSongType = QQSongType.FLAC;
+
+        }else  if (brType.getValue().equalsIgnoreCase("HR_Q000")){
+            qqSongType = QQSongType.FLAC;
+        }else  if (brType.getValue().equalsIgnoreCase("HR_AI00")){
+            qqSongType = QQSongType.FLAC;
+        }
+
+        SqConfigService configService = getConfigService();
+        SqConfig sqConfig = configService.getOne(new QueryWrapper<SqConfig>().eq("config_key", GlobalStatic.QQ_LOGIN_COOKIE_KEY));
+        if (sqConfig!=null&&StringUtils.isNotBlank(sqConfig.getConfigValue())){
+            QQMusicCookieInfo qqMusicCookieInfo = JSONObject.parseObject(sqConfig.getConfigValue(), QQMusicCookieInfo.class);
+            if (qqMusicCookieInfo != null){
+                musickey= qqMusicCookieInfo.getMusickey();
+                qq= qqMusicCookieInfo.getMusicid();
+                loginType = qqMusicCookieInfo.getLoginType().toString();
+            }
+
+        }
+        if (StringUtils.isBlank(musickey)||StringUtils.isBlank(qq)||StringUtils.isBlank(loginType)||StringUtils.isBlank(musicId)){
+            return null;
+        }
+        String fileName = qqSongType.getPrefix()+musicId+musicId+"."+qqSongType.getSuffix();
+
+
+        String  url= "";
+        String ekey="";
+        String s = getqqSearchEntity().downloadRequestParam(qq,musickey,loginType,fileName,musicId);
+        String searchUrl = config.getSearchUrl();
+
+        Mapper mapper = DownloadUtils.getHttp().sync(searchUrl).setBodyPara(s).post().getBody().toMapper();
+
+        Mapper mapper1 = mapper.getMapper("music.vkey.GetVkey.UrlGetVkey");
+        long code = mapper1.getLong("code");
+        if (code != 0) {
+            return null;
+        }
+        Array array = mapper1.getMapper("data").getArray("midurlinfo");
+        for (int i = 0; i < array.size(); i++) {
+            Mapper mapper2 = array.getMapper(i);
+            url = mapper2.getString("wifiurl");
+            //有此参数则需要解密
+            ekey = mapper2.getString("ekey");
+        }
+        if (StringUtils.isNotBlank(url)){
+            String baseUrl = "https://isure.stream.qqmusic.qq.com/";
+            url = baseUrl +url;
+        }
+        HashMap<String, String> stringStringHashMap = new HashMap<>();
+        stringStringHashMap.put("url", url);
+        stringStringHashMap.put("type", brType.getType());
+        stringStringHashMap.put("bit", brType.getBit().toString());
+        stringStringHashMap.put("ekey", ekey);
+        return stringStringHashMap;
+
+
+
+
+
+
+
+
+
+
 
 //        HashMap<String, String> stringStringHashMap = new HashMap<>();
 //        stringStringHashMap.put("url", "");
@@ -197,33 +292,33 @@ public class QQHander extends SearchHanderAbstract {
 //
 //        return stringStringHashMap;
 
-
-        HTTP http = DownloadUtils.getHttp();
-        SHttpTask sync = http.sync("https://music-api.gdstudio.xyz/api.php");
-        sync.addUrlPara("types", "url");
-        sync.addUrlPara("source", "tencent");
-
-        sync.addUrlPara("id", musicId);
-
-        Integer bit = brType.getBit();
-        if (bit.intValue()>320){
-            sync.addUrlPara("br", "999");
-        }else{
-            sync.addUrlPara("br", bit.toString());
-        }
-
-
-        HttpResult get = sync.get();
-        Mapper mapper = get.getBody().toMapper();
-        if (StringUtils.isBlank(mapper.getString("url"))){
-            return null;
-        }else{
-            HashMap<String, String> stringStringHashMap = new HashMap<>();
-            stringStringHashMap.put("url", mapper.getString("url"));
-            stringStringHashMap.put("type", brType.getType());
-            stringStringHashMap.put("bit", brType.getBit().toString());
-            return stringStringHashMap;
-        }
+//
+//        HTTP http = DownloadUtils.getHttp();
+//        SHttpTask sync = http.sync("https://music-api.gdstudio.xyz/api.php");
+//        sync.addUrlPara("types", "url");
+//        sync.addUrlPara("source", "tencent");
+//
+//        sync.addUrlPara("id", musicId);
+//
+//        Integer bit = brType.getBit();
+//        if (bit.intValue()>320){
+//            sync.addUrlPara("br", "999");
+//        }else{
+//            sync.addUrlPara("br", bit.toString());
+//        }
+//
+//
+//        HttpResult get = sync.get();
+//        Mapper mapper = get.getBody().toMapper();
+//        if (StringUtils.isBlank(mapper.getString("url"))){
+//            return null;
+//        }else{
+//            HashMap<String, String> stringStringHashMap = new HashMap<>();
+//            stringStringHashMap.put("url", mapper.getString("url"));
+//            stringStringHashMap.put("type", brType.getType());
+//            stringStringHashMap.put("bit", brType.getBit().toString());
+//            return stringStringHashMap;
+//        }
 
 //
 //        String platform = "qq";
@@ -371,6 +466,306 @@ public class QQHander extends SearchHanderAbstract {
         }
         return downloadEntitys;
     }
+
+
+
+
+
+
+    /**
+     * 获取 qq登录二维码
+     * @param
+     * @return 二维码信息
+     */
+    public QQMusicQr getQQLoginQr() {
+        QQMusicQr qqLoginQr = QQLoginHelp.getQQLoginQr();
+        SimplePropertyPreFilter filter = new SimplePropertyPreFilter();
+        filter.getExcludes().add("LoginType");
+        String jsonString = JSONObject.toJSONString(qqLoginQr, filter);
+        getConfigService().remove(Wrappers.<SqConfig>lambdaUpdate().eq(SqConfig::getConfigKey, GlobalStatic.QQ_LOGIN_QR_KEY));
+        SqConfig sqConfig = new SqConfig();
+        sqConfig.setConfigKey(GlobalStatic.QQ_LOGIN_QR_KEY);
+        sqConfig.setConfigValue(jsonString);
+        sqConfig.setConfigName("QQ登录二维码key");
+        sqConfig.setType("input");
+        sqConfig.setConfigShow("N");
+        getConfigService().save(sqConfig);
+        //异步监听
+        syncCheckQrCodeStatus();
+
+
+        return qqLoginQr;
+    }
+    /**
+     * 获取二维码状态
+     */
+    public  QQMusicQrEventResult checkQQQr(QQMusicQr qqMusicQr) {
+        return QQLoginHelp.checkQQQr(qqMusicQr);
+    }
+
+    public  QQMusicQrEventResult checkQQQr() {
+        SqConfig sqConfig = getConfigService().selectByKeyAndValue(GlobalStatic.QQ_LOGIN_QR_KEY);
+        QQMusicQr qqMusicQr = JSONObject.parseObject(sqConfig.getConfigValue(), QQMusicQr.class);
+        qqMusicQr.setQrType(LoginType.getByType(qqMusicQr.getQrTypeStr()));
+        QQMusicQrEventResult qqMusicQrEventResult = QQLoginHelp.checkQQQr(qqMusicQr);
+        if (qqMusicQrEventResult.getQrCodeLoginEvents() == QRCodeLoginEvents.DONE){
+            return qqMusicQrEventResult;
+        }
+        return null;
+
+    }
+
+    /**
+     * 获取授权code
+     */
+    public  QQMusicQrEventResult getAuthorizeByQQMusicQrEventResult(QQMusicQrEventResult eventResult) {
+        return QQLoginHelp.getAuthorizeByQQMusicQrEventResult(eventResult);
+    }
+    /**
+     * 根据code获得cookie
+     */
+    public QQMusicCookieInfo getCookieByCode(String code) {
+        String cookieByCodeParam = qqSearchEntity.getCookieByCodeParam(code);
+        String searchUrl = getConfig().getSearchUrl();
+        String string = DownloadUtils.getHttp().sync(searchUrl).setBodyPara(cookieByCodeParam).post().getBody().toString();
+        QQMusicCookieInfo cookieByCode = qqSearchEntity.getCookieByCode(string);
+        if (cookieByCode != null){
+            saveCookie(cookieByCode);
+        }
+        return cookieByCode;
+    }
+    /**
+     * cookies保存数据库
+     */
+    public void saveCookie(QQMusicCookieInfo qqMusicCookieInfo) {
+        getConfigService().remove(new QueryWrapper<SqConfig>().eq("config_key", GlobalStatic.QQ_LOGIN_COOKIE_KEY));
+        SqConfig sqConfig = new SqConfig();
+        sqConfig.setConfigKey(GlobalStatic.QQ_LOGIN_COOKIE_KEY);
+        sqConfig.setConfigValue(JSONObject.toJSONString(qqMusicCookieInfo));
+        sqConfig.setConfigName("QQ登录Cookie请勿做任何操作");
+        sqConfig.setType("input");
+        sqConfig.setConfigShow("N");
+        getConfigService().save(sqConfig);
+    }
+
+
+
+
+    /**
+     * 监听二维码的扫码状态
+     */
+    public void syncCheckQrCodeStatus() {
+        new Thread(() -> {
+            // 关闭以前的全部任务
+            if (qrCodeCheckFuture != null && !qrCodeCheckFuture.isDone()) {
+                qrCodeCheckFuture.cancel(true);
+            }
+
+            long startTime = System.currentTimeMillis();
+            long timeout = 5 * 60 * 1000; // 5 minutes in milliseconds
+            // 异步监控二维码超5分钟自动放弃
+            Callable<QQMusicQrEventResult> task = this::checkQQQr;
+            qrCodeCheckFuture = threadPoolExecutor.submit(task);
+            while (System.currentTimeMillis() - startTime < timeout) {
+                try {
+                    // 每次等待1秒
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    log.error("线程在等待二维码检查任务时被中断", e);
+                    Thread.currentThread().interrupt(); // 恢复中断状态
+                    break;
+                }
+
+                if (qrCodeCheckFuture.isDone()) {
+                    try {
+                        QQMusicQrEventResult result = qrCodeCheckFuture.get();
+                        if (result != null) {
+                            log.info("QQ二维码检查任务成功完成。");
+                            //开始获取授权code
+                            QQMusicQrEventResult authorizeByQQMusicQrEventResult = getAuthorizeByQQMusicQrEventResult(result);
+                            if (authorizeByQQMusicQrEventResult.getQrCodeLoginEvents() == QRCodeLoginEvents.CODE_SUCCESS){
+                                getCookieByCode(authorizeByQQMusicQrEventResult.getCode());
+                            }
+                            break; // 任务成功完成，终止循环
+                        }else{
+                            // 任务失败，重新提交任务
+                            qrCodeCheckFuture = threadPoolExecutor.submit(task);
+                        }
+                    } catch (InterruptedException | ExecutionException e) {
+                        log.error("获取QQ二维码检查任务结果时发生错误", e);
+                        Thread.currentThread().interrupt(); // 恢复中断状态
+                        break; // 发生错误，终止循环
+                    }
+                }
+            }
+
+            if (!qrCodeCheckFuture.isDone()) {
+                qrCodeCheckFuture.cancel(true);
+                log.warn("QQ二维码检查任务在5分钟内未完成并已被取消。");
+            }
+
+        }).start();
+    }
+    /**
+     * 获取登录状态四否有效
+     */
+    public Boolean getLoginStatus() {
+        SqConfig sqConfig = getConfigService().selectByKeyAndValue(GlobalStatic.QQ_LOGIN_COOKIE_KEY);
+        if (sqConfig!=null&&StringUtils.isNotBlank(sqConfig.getConfigValue())){
+            QQMusicCookieInfo qqMusicCookieInfo = JSONObject.parseObject(sqConfig.getConfigValue(), QQMusicCookieInfo.class);
+            if (qqMusicCookieInfo != null){
+                String checkCookieParam = qqSearchEntity.checkCookieParam(qqMusicCookieInfo);
+                String searchUrl = getConfig().getSearchUrl();
+                String string = DownloadUtils.getHttp().sync(searchUrl).setBodyPara(checkCookieParam).post().getBody().toString();
+                QQMuserUserInfo qqMuserUserInfo = qqSearchEntity.checkCookie(string);
+                if (qqMuserUserInfo != null&&qqMuserUserInfo.getCode().longValue()==0L){
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+    /**
+     * 刷新token
+     */
+    public QQMusicCookieInfo refreshToken() {
+        SqConfig sqConfig = getConfigService().selectByKeyAndValue(GlobalStatic.QQ_LOGIN_COOKIE_KEY);
+        if (sqConfig!=null&&StringUtils.isNotBlank(sqConfig.getConfigValue())){
+            QQMusicCookieInfo qqMusicCookieInfo = JSONObject.parseObject(sqConfig.getConfigValue(), QQMusicCookieInfo.class);
+            if (qqMusicCookieInfo != null){
+                String refreshTokenParam = qqSearchEntity.refreshCookieParam(qqMusicCookieInfo);
+                String searchUrl = getConfig().getSearchUrl();
+                String string = DownloadUtils.getHttp().sync(searchUrl).setBodyPara(refreshTokenParam).post().getBody().toString();
+                QQMusicCookieInfo qqMusicCookieInfo1 = qqSearchEntity.refreshCookie(string);
+                if (qqMusicCookieInfo1 != null){
+                    saveCookie(qqMusicCookieInfo1);
+                }
+                return qqMusicCookieInfo1;
+            }
+        }
+        return null;
+
+    }
+    /**
+     * 获取用户收藏歌单
+     * 页码从1开始
+     */
+    public CgiGetPlaylistFavInfo getUserFavSongList(int page) {
+        SqConfig sqConfig = getConfigService().selectByKeyAndValue(GlobalStatic.QQ_LOGIN_COOKIE_KEY);
+        if (sqConfig!=null&&StringUtils.isNotBlank(sqConfig.getConfigValue())){
+            QQMusicCookieInfo qqMusicCookieInfo = JSONObject.parseObject(sqConfig.getConfigValue(), QQMusicCookieInfo.class);
+            if (qqMusicCookieInfo != null){
+                String musicid = qqMusicCookieInfo.getMusicid();
+                String musickey = qqMusicCookieInfo.getMusickey();
+                String loginType = qqMusicCookieInfo.getLoginType().toString();
+                String encryptUin = qqMusicCookieInfo.getEncryptUin();
+                String getUserFavSongListParam = qqSearchEntity.followSongListParam(musicid,musickey,loginType,encryptUin,50,  page);
+                String searchUrl = getConfig().getSearchUrl();
+                OkHttpUtils builder = OkHttpUtils.builder();
+                String sync = builder.url(searchUrl)
+                        .post(true, getUserFavSongListParam).sync();
+                JSONObject jsonObject = JSONObject.parseObject(sync);
+                JSONObject req = jsonObject.getJSONObject("req");
+                CgiGetPlaylistFavInfo cgiGetPlaylistFavInfo = qqSearchEntity.followSongList(req);
+                return cgiGetPlaylistFavInfo;
+            }
+        }
+        return null;
+    }
+    /**
+     * 获取用户自己窗户建的歌单
+     */
+    public PlaylistBaseRead getUserSelfSongList() {
+        SqConfig sqConfig = getConfigService().selectByKeyAndValue(GlobalStatic.QQ_LOGIN_COOKIE_KEY);
+        if (sqConfig!=null&&StringUtils.isNotBlank(sqConfig.getConfigValue())){
+            QQMusicCookieInfo qqMusicCookieInfo = JSONObject.parseObject(sqConfig.getConfigValue(), QQMusicCookieInfo.class);
+            if (qqMusicCookieInfo != null){
+                String musicid = qqMusicCookieInfo.getMusicid();
+                String musickey = qqMusicCookieInfo.getMusickey();
+                String loginType = qqMusicCookieInfo.getLoginType().toString();
+                String s = qqSearchEntity.userSelfSongListParam(musicid, musickey, loginType);
+                String searchUrl = getConfig().getSearchUrl();
+                OkHttpUtils builder = OkHttpUtils.builder();
+                String sync = builder.url(searchUrl)
+                        .post(true, s).sync();
+                JSONObject jsonObject = JSONObject.parseObject(sync);
+                JSONObject req = jsonObject.getJSONObject("req");
+                PlaylistBaseRead playlistBaseRead = qqSearchEntity.userSelfSongList(req);
+                return playlistBaseRead;
+            }
+        }
+        return null;
+    }
+    /**
+     * 收藏的专辑
+     */
+    public  CgiGetAlbumFavInfo userALbymList( int page) {
+        SqConfig sqConfig = getConfigService().selectByKeyAndValue(GlobalStatic.QQ_LOGIN_COOKIE_KEY);
+        if (sqConfig!=null&&StringUtils.isNotBlank(sqConfig.getConfigValue())){
+            QQMusicCookieInfo qqMusicCookieInfo = JSONObject.parseObject(sqConfig.getConfigValue(), QQMusicCookieInfo.class);
+            if (qqMusicCookieInfo != null){
+                String encryptUin = qqMusicCookieInfo.getEncryptUin();
+                String s = qqSearchEntity.userALbymListParam(encryptUin, 50, page);
+                String searchUrl = getConfig().getSearchUrl();
+                OkHttpUtils builder = OkHttpUtils.builder();
+                String sync = builder.url(searchUrl)
+                        .post(true, s).sync();
+                JSONObject jsonObject = JSONObject.parseObject(sync);
+                JSONObject req = jsonObject.getJSONObject("req");
+                CgiGetAlbumFavInfo albumFavRead = qqSearchEntity.userALbymList(req);
+                return albumFavRead;
+            }
+        }
+
+    return null;
+    }
+    /**
+     * 查询歌单歌曲详情
+     */
+    public  DissInfo songListInfo(String mid,String dirid,Long page) {
+        SqConfig sqConfig = getConfigService().selectByKeyAndValue(GlobalStatic.QQ_LOGIN_COOKIE_KEY);
+        if (sqConfig!=null&&StringUtils.isNotBlank(sqConfig.getConfigValue())){
+            QQMusicCookieInfo qqMusicCookieInfo = JSONObject.parseObject(sqConfig.getConfigValue(), QQMusicCookieInfo.class);
+            if (qqMusicCookieInfo != null){
+//                String encryptUin = qqMusicCookieInfo.getEncryptUin();
+                String s = qqSearchEntity.songListInfoRequestParam(mid, dirid, page,50L);
+                String searchUrl = getConfig().getSearchUrl();
+                OkHttpUtils builder = OkHttpUtils.builder();
+                String sync = builder.url(searchUrl)
+                        .post(true, s).sync();
+                JSONObject jsonObject = JSONObject.parseObject(sync);
+                JSONObject req = jsonObject.getJSONObject("req");
+                DissInfo dissInfo = qqSearchEntity.songListInfo(req);
+                return dissInfo;
+            }
+        }
+        return null;
+    }
+
+    //用户关注的歌手
+    public GetFollowSingerList likeArtists(int page) {
+        SqConfig sqConfig = getConfigService().selectByKeyAndValue(GlobalStatic.QQ_LOGIN_COOKIE_KEY);
+        if (sqConfig!=null&&StringUtils.isNotBlank(sqConfig.getConfigValue())){
+            QQMusicCookieInfo qqMusicCookieInfo = JSONObject.parseObject(sqConfig.getConfigValue(), QQMusicCookieInfo.class);
+            if (qqMusicCookieInfo != null){
+                String s = qqSearchEntity.followSingerParam(qqMusicCookieInfo.getMusicid(), qqMusicCookieInfo.getMusickey(), qqMusicCookieInfo.getLoginType().toString(), qqMusicCookieInfo.getEncryptUin(),50,page);
+                String searchUrl = getConfig().getSearchUrl();
+                OkHttpUtils builder = OkHttpUtils.builder();
+                String sync = builder.url(searchUrl)
+                        .post(true, s).sync();
+                JSONObject jsonObject = JSONObject.parseObject(sync);
+                JSONObject req = jsonObject.getJSONObject("req");
+                GetFollowSingerList followSingerList = qqSearchEntity.followSingerList(req);
+                return followSingerList;
+            }
+        }
+        return null;
+    }
+
+
+
+
+
 
 
 }

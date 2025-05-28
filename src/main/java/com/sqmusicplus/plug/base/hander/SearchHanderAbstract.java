@@ -79,7 +79,7 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
             }
             if (StringUtils.isEmpty(stringStringHashMap.get("url"))) {
                 log.debug("下载失败{}", music.getMusicName());
-                throw new RuntimeException("下载失败:" + music.getMusicName());
+                throw new RuntimeException("下载失败(未获取到播放链接):" + music.getMusicName());
             }
             DownloadUtils.download(stringStringHashMap.get("url"), type, onSuccess ->
             {
@@ -175,7 +175,7 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
                     extracted(music, onSuccess, albumfile, downloadEntity);
                 }
             }, onFailure -> {
-                log.debug("下载失败{}", music.getMusicName());
+                log.debug("下载失败(文件写入异常){}", music.getMusicName());
                 throw new RuntimeException("下载失败:" + music.getMusicName());
             });
 
@@ -215,10 +215,10 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
             MusicUtils.setMediaFileInfo(onSuccess, music.getMusicName(), music.getMusicAlbum(), music.getMusicArtists(), "SqMusic", music.getMusicLyric(), albumfile);
             log.debug("下载成功{}", music.getMusicName());
         } catch (Exception e) {
-            log.debug("下载错误{}  ----------> {}", music.getMusicName(), e.getMessage());
+            log.debug("下载错误（标签写入错误）{}  ----------> {}", music.getMusicName(), e.getMessage());
             log.error(e.getMessage());
             e.printStackTrace();
-            throw new RuntimeException("下载失败:" + downloadEntity.getMusicname() + "------->" + e.getMessage());
+            throw new RuntimeException("下载失败（标签写入错误）:" + downloadEntity.getMusicname() + "------->" + e.getMessage());
         }
     }
 

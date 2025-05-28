@@ -290,4 +290,14 @@ public class DownloadUtils {
     }
 
 
+    public static JSONObject postToJsonObject(String url,String body){
+        OkHttpUtils builder = OkHttpUtils.builder().url(url);
+        String sync =builder
+                .post(true,body)
+                .sync();
+                return JSONObject.parseObject(sync);
+
+    }
+
+
 }

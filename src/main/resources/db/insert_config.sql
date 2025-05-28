@@ -12,7 +12,7 @@ INSERT INTO `sq_config` (`config_name`, `config_value`, `config_key`, `type`, `c
 INSERT INTO `sq_config` (`config_name`, `config_value`, `config_key`, `type`, `config_show`) VALUES ('酷我mp3类型', '320kmp3', 'plug.kw.mp3.type', 'input', 'Y');
 INSERT INTO `sq_config` (`config_name`, `config_value`, `config_key`, `type`, `config_show`) VALUES ('咪咕flac类型', 'ZQ', 'plug.mg.flac.type', 'input', 'Y');
 INSERT INTO `sq_config` (`config_name`, `config_value`, `config_key`, `type`, `config_show`) VALUES ('咪咕mp3类型', 'HQ', 'plug.mg.mp3.type', 'input', 'Y');
-INSERT INTO `sq_config` (`config_name`, `config_value`, `config_key`, `type`, `config_show`) VALUES ('使用aria2下载', 'true', 'plug.download.type', 'switch', 'Y');
+INSERT INTO `sq_config` (`config_name`, `config_value`, `config_key`, `type`, `config_show`) VALUES ('使用aria2下载', 'false', 'plug.download.type', 'switch', 'Y');
 INSERT INTO `sq_config` (`config_name`, `config_value`, `config_key`, `type`, `config_show`) VALUES ('QQvip基础url', 'http://127.0.0.1', 'plug.qqvip.baseurl', 'input', 'Y');
 INSERT INTO `sq_config` (`config_name`, `config_value`, `config_key`, `type`, `config_show`) VALUES ('QQvip插件是否启用开关', 'false', 'plug.qqvip.open', 'switch', 'Y');
 INSERT INTO `sq_config` (`config_name`, `config_value`, `config_key`, `type`, `config_show`) VALUES ('QQVIP插件同步开关（开启后才能开启其他同步功能）', 'false', 'plug.qqvip.sync', 'switch', 'Y');

@@ -6,19 +6,21 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
-import com.ejlchina.data.Mapper;
-import com.ejlchina.okhttps.HTTP;
 import com.sqmusicplus.config.AjaxResult;
 import com.sqmusicplus.base.entity.SqConfig;
 import com.sqmusicplus.plug.base.PlugBrType;
 import com.sqmusicplus.base.service.SqConfigService;
 import com.sqmusicplus.plug.kg.hander.KGHander;
+import com.sqmusicplus.plug.qq.entity.QQMusicCookieInfo;
+import com.sqmusicplus.plug.qq.entity.QQMusicQr;
+import com.sqmusicplus.plug.qq.entity.QQMusicQrEventResult;
+import com.sqmusicplus.plug.qq.hander.QQHander;
 import com.sqmusicplus.plug.utils.FreeCookieUtil;
-import com.sqmusicplus.utils.DownloadUtils;
 import com.sqmusicplus.utils.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.util.Base64Utils;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
@@ -41,6 +43,8 @@ public class SetController {
     private String version;
     @Autowired
     private KGHander kGHander;
+    @Autowired
+    private QQHander qqHander;
 
     /**
      * 查询全部设置
@@ -114,14 +118,6 @@ public class SetController {
         return AjaxResult.success("成功", b);
     }
 
-    @SaCheckLogin
-    @PostMapping("/refreshQQvipCookie")
-    public AjaxResult refreshQQvipCookies(){
-        SqConfig qqconfig = configService.getOne(new QueryWrapper<SqConfig>().eq(SqConfig.COL_CONFIG_KEY, "plug.qqvip.qq"));
-        SqConfig urlconfig = configService.getOne(new QueryWrapper<SqConfig>().eq(SqConfig.COL_CONFIG_KEY, "plug.qqvip.baseurl"));
-        ArrayList<String> strings = FreeCookieUtil.refreshCookies(qqconfig.getConfigValue(), urlconfig.getConfigValue());
-        return AjaxResult.success("成功", strings);
-    }
 
     @GetMapping("/getSearchType")
     public AjaxResult getSearchType(){
@@ -267,6 +263,49 @@ public class SetController {
             return AjaxResult.success("成功");
         }
         return AjaxResult.error("酷狗插件未开启");
+    }
+
+
+    /**
+     * qqVIP登录相关
+     * @return
+     */
+    @GetMapping("/qqvip/getQrImage")
+    public AjaxResult  getQQvipQrimage(){
+            QQMusicQr qqLoginQr = qqHander.getQQLoginQr();
+            String image ="data:"+qqLoginQr.getMimeType()+";base64,"+ Base64Utils.encodeToString(qqLoginQr.getData());
+            return AjaxResult.success("成功", image);
+    }
+    /**
+     * QQ二维码检测
+     */
+    @GetMapping("/qqvip/checkQrCodeStatus")
+    public AjaxResult  getQQvipcheckQrCodeStatus() {
+        SqConfig kgplugopen = configService.getOne(new QueryWrapper<SqConfig>().eq("config_key", "plug.qqlogin.cookie"));
+        if (kgplugopen != null && !StringUtils.isEmpty(kgplugopen.getConfigValue())) {
+            QQMusicCookieInfo qqMusicCookieInfo = qqHander.refreshToken();
+            if (qqMusicCookieInfo != null) {
+                return AjaxResult.success("成功", "扫码成功");
+            }else{
+                return AjaxResult.error("失败请稍等或者重新扫码");
+            }
+        } else {
+            return AjaxResult.error("失败请稍等或者重新扫码");
+        }
+
+    }
+
+    /**
+     * 手动刷新QQ登录cookie
+     */
+    @SaCheckLogin
+    @GetMapping("/qqvip/refreshQQvipCookie")
+    public AjaxResult refreshQQvipCookies(){
+            QQMusicCookieInfo qqMusicCookieInfo = qqHander.refreshToken();
+            if (qqMusicCookieInfo != null) {
+                return AjaxResult.success("成功", "刷新成功");
+            }
+        return AjaxResult.error("登录信息失效请重新扫码登录！");
     }
 
 

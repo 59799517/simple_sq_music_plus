@@ -2,21 +2,23 @@ package com.sqmusicplus.utils;
 
 import com.alibaba.fastjson.JSON;
 import okhttp3.*;
+import org.jetbrains.annotations.NotNull;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
+import java.io.File;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @Classname OkHttpUtils
@@ -33,14 +35,21 @@ public class OkHttpUtils {
     private Map<String, String> paramMap;
     private String url;
     private Request.Builder request;
+    private static HashMap<String, List<Cookie>> cookieStore = new HashMap<>();
+
 
     /**
      * 初始化okHttpClient，并且允许https访问
      */
-    private OkHttpUtils() {
+    private OkHttpUtils(boolean followRedirects) {
         if (okHttpClient == null) {
             synchronized (OkHttpUtils.class) {
                 if (okHttpClient == null) {
+                    File cacheDirectory = new File(System.getProperty("java.io.tmpdir"), "OkHttpCache");
+                    Cache cache = new Cache(cacheDirectory, 10 * 1024 * 1024); // 10MB 缓存
+
+
+
                     TrustManager[] trustManagers = buildTrustManagers();
                     okHttpClient = new OkHttpClient.Builder()
                             .connectTimeout(15, TimeUnit.SECONDS)
@@ -49,8 +58,36 @@ public class OkHttpUtils {
                             .sslSocketFactory(createSSLSocketFactory(trustManagers), (X509TrustManager) trustManagers[0])
                             .hostnameVerifier((hostName, session) -> true)
                             .retryOnConnectionFailure(true)
+                            .followRedirects(followRedirects)
+                            .followSslRedirects(followRedirects)
+                            .cache(cache)
+                            .cookieJar(new CookieJar() {
+
+                                @Override
+                                public void saveFromResponse(HttpUrl url, List<Cookie> cookies) {
+                                    cookieStore.put(url.host(), cookies);
+                                }
+
+                                @Override
+                                public List<Cookie> loadForRequest(HttpUrl url) {
+                                    return cookieStore.getOrDefault(url.host(), new ArrayList<>());
+                                }
+                            })
+//                            .addInterceptor(chain -> {
+//                                Request request = chain.request();
+//                                Response response = chain.proceed(request);
+//                                System.out.println("Request URL: " + request.url());
+//                                System.out.println("Response Code: " + response.code());
+//                                System.out.println("Response URL: " + response.request().url());
+//                                if (response.isRedirect()) {
+//                                    System.out.println("Redirected to: " + response.header("Location"));
+//                                }
+//                                return response;
+//                            })
+
                             .build();
                     addHeader("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.132 Safari/537.36");
+//                    System.out.println("OkHttpClient created with followRedirects: " + followRedirects); // 调试信息
                 }
             }
         }
@@ -77,8 +114,25 @@ public class OkHttpUtils {
      * @return
      */
     public static OkHttpUtils builder() {
-        return new OkHttpUtils();
+        return new OkHttpUtils(true);
     }
+    /**
+     * 创建OkHttpUtils禁止重定向
+     */
+    public static OkHttpUtils builder(boolean followRedirects) {
+        return new OkHttpUtils(followRedirects);
+    }
+
+    /**
+     * 添加 cookie
+     *
+     */
+    public OkHttpUtils addCookie(String cookie) {
+
+        addHeader("Cookie", cookie);
+        return this;
+    }
+
 
     /**
      * 添加url
@@ -141,8 +195,11 @@ public class OkHttpUtils {
      * @return
      */
     public OkHttpUtils get() {
-        request = new Request.Builder().get();
-        StringBuilder urlBuilder = new StringBuilder(url);
+        request = new Request.Builder().get()
+                .cacheControl(new CacheControl.Builder()
+                        .maxAge(10, TimeUnit.MINUTES) // 新增：缓存有效期10分钟
+                        .build());
+        StringBuilder urlBuilder = new StringBuilder(this.url);
         if (paramMap != null) {
             urlBuilder.append("?");
             try {
@@ -183,9 +240,20 @@ public class OkHttpUtils {
             }
             requestBody = formBody.build();
         }
-        request = new Request.Builder().post(requestBody).url(url);
+        request = new Request.Builder().post(requestBody)
+                .url(url)  .cacheControl(new CacheControl.Builder()
+                        .maxAge(10, TimeUnit.MINUTES) // 新增：缓存有效期10分钟
+                        .build());
         return this;
     }
+    public OkHttpUtils post(RequestBody requestBody) {
+        request = new Request.Builder().post(requestBody).url(url).cacheControl(new CacheControl.Builder()
+                .maxAge(10, TimeUnit.MINUTES) // 新增：缓存有效期10分钟
+                .build());
+        return this;
+    }
+
+
     /**
      * 初始化post方法
      *
@@ -198,13 +266,17 @@ public class OkHttpUtils {
         if (isJsonPost) {
             requestBody = RequestBody.create(MediaType.parse("application/json; charset=utf-8"), bodyStr);
         } else {
-            FormBody.Builder formBody = new FormBody.Builder();
-            if (paramMap != null) {
-                paramMap.forEach(formBody::add);
-            }
-            requestBody = formBody.build();
+//            FormBody.Builder formBody = new FormBody.Builder();
+//            if (paramMap != null) {
+//                paramMap.forEach(formBody::add);
+//            }
+            requestBody = RequestBody.create(MediaType.parse("application/x-www-form-urlencoded"), bodyStr);
+
+//            requestBody = formBody.build();
         }
-        request = new Request.Builder().post(requestBody).url(url);
+        request = new Request.Builder().post(requestBody).url(url).cacheControl(new CacheControl.Builder()
+                .maxAge(10, TimeUnit.MINUTES) // 新增：缓存有效期10分钟
+                .build());
         return this;
     }
     /**
@@ -223,6 +295,64 @@ public class OkHttpUtils {
             return "请求失败：" + e.getMessage();
         }
     }
+
+    /**
+     * 同步请求
+     *
+     * @return
+     */
+    public Response syncReturnResponse() {
+        setHeader(request);
+        try {
+            Response response = okHttpClient.newCall(request.build()).execute();
+//            System.out.println("Response code: " + response.code());
+//            System.out.println("Response URL: " + response.request().url());
+//            if (response.isRedirect()) {
+//                System.out.println("Redirected to: " + response.header("Location"));
+//            }
+            // 打印所有 Cookie
+//            for (String cookie : response.headers("Set-Cookie")) {
+//                System.out.println("Set-Cookie: " + cookie);
+//            }
+            assert response.body() != null;
+            return response;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+//    /**
+//     * 同步禁止跳转302
+//     */
+//    public Response syncReturnResponseNoRedirect() {
+//        //转为原子类
+//        AtomicReference<Response> resresponse = new AtomicReference<>();
+//        okHttpClient.followUpRequest
+//             okHttpClient.newCall(request.build()).enqueue(new Callback() {
+//
+//                 @Override
+//                public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
+//                     resresponse.set(response);
+//                }
+//
+//                @Override
+//                public void onFailure(@NotNull Call call, @NotNull IOException e) {
+//
+//                }
+//            });
+//             //等待返回值
+//             while (resresponse.get() == null) {
+//                 try {
+//                     Thread.sleep(100);
+//                 } catch (InterruptedException e) {
+//                     e.printStackTrace();
+//                 }
+//             }
+//
+//            return resresponse.get();
+//
+//    }
+
 
     /**
      * 异步请求，有返回值
@@ -408,5 +538,17 @@ public class OkHttpUtils {
         return  response.request().url().toString();
 
     }
+//    获取所有缓存的Cookie
 
+    public static  HashMap<String, List<Cookie>> getAllCookies() {
+       return cookieStore;
+    }
+    //根据url获取Cookie
+    public static List<Cookie> getCookies(String url) {
+        return cookieStore.get(url);
+    }
+    //清空所有缓存
+    public static void clearCookies() {
+        cookieStore.clear();
+    }
 }

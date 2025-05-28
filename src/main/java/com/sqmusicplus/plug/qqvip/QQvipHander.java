@@ -1,80 +1,53 @@
 package com.sqmusicplus.plug.qqvip;
 
-import cn.hutool.http.HttpRequest;
-import cn.hutool.http.HttpUtil;
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.ejlchina.data.Mapper;
-import com.ejlchina.okhttps.HTTP;
-import com.ejlchina.okhttps.HttpResult;
-import com.ejlchina.okhttps.HttpUtils;
-import com.ejlchina.okhttps.OkHttps;
 import com.sqmusicplus.base.entity.*;
-import com.sqmusicplus.base.service.SqConfigService;
 import com.sqmusicplus.plug.base.PlugBrType;
 import com.sqmusicplus.plug.base.hander.SearchHanderAbstract;
 import com.sqmusicplus.plug.entity.*;
-import com.sqmusicplus.plug.qq.config.QQConfig;
-import com.sqmusicplus.plug.qq.entity.QQSearchEntity;
-import com.sqmusicplus.plug.qq.enums.QQSearchType;
+import com.sqmusicplus.plug.qq.entity.CgiGetAlbumFavInfo;
+import com.sqmusicplus.plug.qq.entity.CgiGetPlaylistFavInfo;
+import com.sqmusicplus.plug.qq.entity.DissInfo;
+import com.sqmusicplus.plug.qq.entity.PlaylistBaseRead;
+import com.sqmusicplus.plug.qq.entity.getfollowsingerlist.GetFollowSingerList;
 import com.sqmusicplus.plug.qq.hander.QQHander;
 import com.sqmusicplus.plug.qqvip.config.QQVipConfig;
 import com.sqmusicplus.plug.qqvip.entity.QQVipSearchEntity;
-import com.sqmusicplus.plug.utils.FreeCookieUtil;
 import com.sqmusicplus.utils.DownloadUtils;
-import com.sqmusicplus.utils.StringUtils;
 import lombok.extern.slf4j.Slf4j;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import top.yumbo.util.music.MusicEnum;
-import top.yumbo.util.music.musicImpl.qq.QQMusicInfo;
 
-import java.io.IOException;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
-
 /**
- * @Classname QQvipHander
- * @Description QQVIP处理器
+ * @Classname QQvipHander1
+ * @Description TODO
  * @Version 1.0.0
- * @Date 2024/6/27 16:29
+ * @Date 2025/5/26 17:58
  * @Created by SQ
  */
 @Slf4j
 @Component("qqvipHander")
 public class QQvipHander extends SearchHanderAbstract {
-
-    @Autowired
-    private QQVipConfig qqvipConfig;
-
-
     @Autowired
     private QQHander qqHander;
-
     @Autowired
-    private SqConfigService configService;
-
-
+     private QQVipConfig qqVipConfig;
     public void initPlug() {
         QQVipSearchEntity qqSearchEntity = new QQVipSearchEntity();
         qqSearchEntity.setPlugName("qqvip");
         qqHander.setQqSearchEntity(qqSearchEntity);
-
     }
 
-
     @Override
-    public QQVipConfig getConfig() {
-        return qqvipConfig;
+    public QQVipConfig  getConfig() {
+        return qqVipConfig;
     }
 
     @Override
@@ -84,7 +57,7 @@ public class QQvipHander extends SearchHanderAbstract {
 
     @Override
     public PlugSearchResult<PlugSearchMusicResult> querySongByName(SearchKeyData searchKeyData) {
-        return qqHander.querySongByName(searchKeyData);
+       return qqHander.querySongByName(searchKeyData);
     }
 
     @Override
@@ -99,15 +72,7 @@ public class QQvipHander extends SearchHanderAbstract {
 
     @Override
     public Music querySongById(String SongId) {
-        if (SongId.contains(",")) {
-            SongId = SongId.split(",")[0];
-        }
-        String searchUrl = qqHander.getConfig().getSearchUrl();
-        String s = qqHander.getqqSearchEntity().musicInfoRequestParam(SongId);
-        Mapper mapper = DownloadUtils.getHttp().sync(searchUrl).setBodyPara(s).post().getBody().toMapper();
-        return qqHander.getqqSearchEntity().songInfoToMusic(mapper, qqHander.getConfig());
-
-
+        return qqHander.querySongById(SongId);
     }
 
     @Override
@@ -137,65 +102,7 @@ public class QQvipHander extends SearchHanderAbstract {
 
     @Override
     public HashMap<String, String> getDownloadUrl(String musicId, PlugBrType brType) {
-        String type = brType.getValue();
-        JSONObject jsonObject = new JSONObject();
-        String[] split = musicId.split(",");
-        if (musicId.contains(",")) {
-            jsonObject.put("id", split[0]);
-            jsonObject.put("mediaId", split[1]);
-        } else {
-            jsonObject.put("id", musicId);
-        }
-        jsonObject.put("type", type);
-        SqConfig configKey = configService.getOne(new QueryWrapper<SqConfig>().eq("config_key", "plug.qqvip.baseurl"));
-        String baseUrl = configKey.getConfigValue();
-
-        String url = HttpUtil.urlWithForm(baseUrl + "/song/url", jsonObject, Charset.forName("UTF-8"), true);
-        OkHttpClient client = DownloadUtils.getOkHttpClient();
-        try {
-            Request request = new Request.Builder()
-                    .addHeader("Cookie", FreeCookieUtil.getCookieStr())
-                    .url(url)
-                    .get()
-                    .build();
-            Response response = client.newCall(request).execute();
-            String string = response.body().string();
-            JSONObject jsonObject1 = JSONObject.parseObject(string);
-            Integer code = jsonObject1.getInteger("result");
-            if (code != null && code.intValue() == 100) {
-                HashMap<String, String> stringStringHashMap = new HashMap<>();
-                String downloadurl = jsonObject1.getString("data");
-                if (downloadurl.contains("undefined")) {
-                    JSONObject nestedobject = new JSONObject();
-                    nestedobject.put("id", jsonObject.getString("id"));
-                    nestedobject.put("type", type);
-                    String nestedurl = HttpUtil.urlWithForm(baseUrl + "/song/url", nestedobject, Charset.forName("UTF-8"), true);
-                    Request nestedrequest = new Request.Builder()
-                            .addHeader("Cookie", FreeCookieUtil.getCookieStr())
-                            .url(nestedurl)
-                            .get()
-                            .build();
-                    Response nestedresponse = client.newCall(nestedrequest).execute();
-                    String nestedbody = nestedresponse.body().string();
-                    JSONObject nestedjsonObject1 = JSONObject.parseObject(nestedbody);
-                    Integer nestedcode = nestedjsonObject1.getInteger("result");
-
-                    if (nestedcode != null && nestedcode.intValue() == 100) {
-                        downloadurl = nestedjsonObject1.getString("data");
-                    } else {
-                        log.error("获取下载地址失败music地址:{}", musicId);
-                    }
-                }
-                stringStringHashMap.put("url", downloadurl);
-                stringStringHashMap.put("type", brType.getType());
-                stringStringHashMap.put("bit", brType.getBit().toString());
-                return stringStringHashMap;
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-            log.error("获取下载地址失败music地址:{}", musicId);
-        }
-        return null;
+        return qqHander.getDownloadUrl(musicId, brType);
     }
 
     @Override
@@ -250,7 +157,6 @@ public class QQvipHander extends SearchHanderAbstract {
             if (isAudioBook) {
                 downloadEntities.add(new DownloadEntity("qqvipHander", md.getId(), plugBrType == null ? brType : plugBrType, md.getMusicName(), artist, albumName, isAudioBook));
             } else {
-                //添加到缓存
                 downloadEntities.add(new DownloadEntity("qqvipHander", md.getId(), plugBrType == null ? brType : plugBrType, md.getMusicName(), change.get(), md.getMusicAlbum()));
             }
 
@@ -284,5 +190,25 @@ public class QQvipHander extends SearchHanderAbstract {
             downloadEntitys.addAll(downloadEntities);
         }
         return downloadEntitys;
+    }
+
+    public GetFollowSingerList likeArtists(int i) {
+        return qqHander.likeArtists(i);
+    }
+
+    public CgiGetAlbumFavInfo userALbymList(int i) {
+        return qqHander.userALbymList(i);
+    }
+
+    public PlaylistBaseRead getUserSelfSongList() {
+        return qqHander.getUserSelfSongList();
+    }
+
+    public CgiGetPlaylistFavInfo getUserFavSongList(int i) {
+        return qqHander.getUserFavSongList(i);
+    }
+
+    public DissInfo songListInfo(String tid, String dirid, long l) {
+        return qqHander.songListInfo(tid, dirid, l);
     }
 }

@@ -1,37 +1,503 @@
 package com.sqmusicplus;
-
-import cn.hutool.crypto.digest.DigestUtil;
 import com.alibaba.fastjson.JSONObject;
 
 import com.ejlchina.okhttps.OkHttps;
+import com.sqmusicplus.plug.qq.entity.QQMusicQr;
+import com.sqmusicplus.plug.qq.entity.QQMusicQrEventResult;
+import com.sqmusicplus.plug.qq.enums.LoginType;
+import com.sqmusicplus.plug.qq.enums.QRCodeLoginEvents;
+import com.sqmusicplus.plug.qq.hander.QQHander;
+import com.sqmusicplus.plug.qq.util.QQMusicUtil;
+import com.sqmusicplus.task.ScanQQVIPLikeMusicTask;
 import com.sqmusicplus.utils.DownloadUtils;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
-import org.junit.jupiter.api.Test;
+import com.sqmusicplus.utils.OkHttpUtils;
+import com.sqmusicplus.utils.StringUtils;
+import lombok.extern.slf4j.Slf4j;
+import okhttp3.*;
 
-import javax.crypto.Cipher;
-import javax.crypto.spec.IvParameterSpec;
-import javax.crypto.spec.SecretKeySpec;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.util.Base64Utils;
+
+import java.net.CookieManager;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpHeaders;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.net.http.HttpRequest.BodyPublishers;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import javax.script.ScriptException;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Random;
 
-import static cn.hutool.crypto.digest.DigestUtil.md5;
+import java.util.*;
 
-//@SpringBootTest
+@SpringBootTest
+@Slf4j
 class SimpleSqMusucPlusApplicationTests {
+//    public static final CookieManager manager = new CookieManager();
+//    public static final   HttpClient client = HttpClient.newBuilder()
+//            .followRedirects(HttpClient.Redirect.NEVER)
+//            .cookieHandler(manager)
+//            .build();
 
-    @Test
-    void testKgSongUrl() throws IOException, ScriptException {
+    public  static String downloadRequestParam(String qq,String musicKey,String loginType ,String filename,String songmid,String songtype) {
+//        "QIMEI36": "%s",
+        String msg = """
+                {
+                    "comm": {
+                      "cv": 13020508,
+                      "v": 13020508,
+                      "ct": "11",
+                      "tmeAppID": "qqmusic",
+                      "format": "json",
+                      "inCharset": "utf-8",
+                      "outCharset": "utf-8",
+                      "uid": "3931641530",
+                      "qq": "%s",
+                      "authst": "%s",
+                      "tmeLoginType": "%s"
+                    },
+                    "music.vkey.GetVkey.UrlGetVkey": {
+                      "module": "music.vkey.GetVkey",
+                      "method": "UrlGetVkey",
+                      "param": {
+                        "filename": [
+                          %s
+                        ],
+                        "guid": "%s",
+                        "songmid": [
+                          "%s"
+                        ],
+                        "songtype": [
+                          %s
+                        ]
+                      }
+                    }
+                  }
+               """;
+        String format = String.format(msg,
+                qq,
+                musicKey,
+                loginType,
+                filename,
+                QQMusicUtil.getGuid(),
+                songmid,
+                songtype
+        );
+        return format;
+    }
+
+    public static void main(String[] args) {
+
+
+
+//        String s = String.valueOf(sigHash("MFzb5OFrs0WQflcecG6ILLASd0*UgmQbNAHMTLdWvO4_", 5381));
+//        System.out.println(s);
+//        System.out.println("1980093307".equals(s));
 //
+//
+//        try {
+//            // 1. 获取登录二维码
+//            QQMusicQr qr = getQQLoginQr();
+//            System.out.println("二维码获取成功，Base64长度: " + getQQMusicQrBase64(qr).length());
+//            //转BASE64
+//            String qqMusicQrBase64 = getQQMusicQrBase64(qr);
+//            System.out.println(qqMusicQrBase64);
+//
+//            // 2. 轮询检查二维码状态
+//            QQMusicQrEventResult status = checkQQQr(qr);
+//            while (status.getQrCodeLoginEvents() != QRCodeLoginEvents.DONE) {
+//                System.out.println("当前状态: " + status.getQrCodeLoginEvents());
+//                Thread.sleep(2000); // 2秒轮询一次
+//                status = checkQQQr(qr);
+//            }
+//
+//            // 3. 获取授权码
+//            QQMusicQrEventResult authResult = getAuthorizeByQQMusicQrEventResult(status);
+//            if (authResult.getQrCodeLoginEvents() == QRCodeLoginEvents.SUCCESS) {
+//                System.out.println("登录成功! 授权码: " + authResult.getCode());
+//            } else {
+//                System.out.println("登录失败: " + authResult.getQrCodeLoginEvents());
+//            }
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+    }
 
+
+@Autowired
+private QQHander qqHander;
+    @Autowired
+    private ScanQQVIPLikeMusicTask scanQQVIPLikeMusicTask;
+    @Test
+    public void test()  {
+        scanQQVIPLikeMusicTask.excute();
 
     }
+
+
+
+
+    //    计算qq的hash值
+    private static long sigHash(String qrsig) {
+        long hash = 0;
+        for (char c : qrsig.toCharArray()) {
+            hash = (hash << 5) + hash + c;
+        }
+        return hash & 0x7FFFFFFF;
+    }
+    private static long sigHash(String input, long seed) {
+        long hash = seed;
+        for (char c : input.toCharArray()) {
+            hash = (hash << 5) + hash + c;
+        }
+        return hash & 0x7FFFFFFF;
+    }
+
+
+
+    /**
+     * 获取登录二维码
+     * @return
+     */
+    public static QQMusicQr  getQQLoginQr(){
+        //生成随机小数不能大于1
+        double random = new Random().nextDouble();
+
+        HttpUrl url = new HttpUrl.Builder()
+                .scheme("https")
+                .host("ssl.ptlogin2.qq.com")
+                .addPathSegment("ptqrshow")
+                .addQueryParameter("appid", "716027609")
+                .addQueryParameter("e", "2")
+                .addQueryParameter("l", "M")
+                .addQueryParameter("s", "3")
+                .addQueryParameter("d", "72")
+                .addQueryParameter("v", "4")
+                .addQueryParameter("t", random+"")
+                .addQueryParameter("daid", "383")
+                .addQueryParameter("pt_3rd_aid", "100497308")
+                .build();
+
+        QQSession session = QQSession.getCurrentSession();
+        Map<String, String> printcookies = session.getCookies();
+       //打印
+        System.out.println("获取二维码请求-COOKIES:"+JSONObject.toJSONString(printcookies));
+
+
+        HttpRequest request  = session.buildRequest(url.toString()).GET().build();
+
+        String qrsig = null;
+        HttpResponse<byte[]> response=null;
+
+        try {
+            response = session.getClient().send(request, HttpResponse.BodyHandlers.ofByteArray());
+            System.out.println("获取二维码返回-HEADERS:"+JSONObject.toJSONString(response.headers().map()));
+            session.updateCookies(response);
+            HttpHeaders headers = response.headers();
+            if (headers.map().containsKey("Set-Cookie")) {
+                List<String> cookies = headers.map().get("Set-Cookie");
+                for (String cookie : cookies) {
+                    qrsig = cookie.split(";")[0].split("=")[1];
+                    break;
+                }
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+
+
+//
+//        HttpRequest get = HttpUtil.createGet(url.toString(), false);
+//        get.setFollowRedirects(false);
+//        HashMap<String, String> headers = new HashMap<>();
+//        headers.put("Referer","https://xui.ptlogin2.qq.com/");
+//        get.addHeaders(headers);
+//        HttpResponse execute = get.execute();
+//        Map<String, List<String>> headers1 = execute.headers();
+//        String qrsig = null;
+//
+//        if (headers1.containsKey("Set-Cookie")) {
+//            List<String> cookies = headers1.get("Set-Cookie");
+//            for (String cookie : cookies) {
+//                qrsig = cookie.split(";")[0].split("=")[1];
+//            }
+//        }
+//
+//        if (qrsig == null) {
+//            return null;
+//        }
+//        byte[] qrData = null;
+//        qrData = execute.bodyBytes();
+//
+//        return new QQMusicQr(qrData, LoginType.QQ, "image/png", qrsig,0);
+
+
+
+
+//
+//
+//        OkHttpUtils request  = OkHttpUtils.builder().url(url.toString()).addHeader("Referer", "https://xui.ptlogin2.qq.com/");
+//        Response response = request.get().syncReturnResponse();
+//        if(response!=null){
+//            if (!response.isSuccessful()) {
+//                return null;
+//            }
+//            String qrsig = null;
+//            for (String cookie : response.headers("Set-Cookie")) {
+//                if (cookie.startsWith("qrsig=")) {
+//                    qrsig = cookie.split(";")[0].split("=")[1];
+//                    break;
+//                }
+//            }
+            if (qrsig == null) {
+                return null;
+            }
+            byte[] qrData = response.body();
+
+            return new QQMusicQr(qrData, LoginType.QQ, "image/png", qrsig,0);
+        }
+
+
+    //检测QQ二维码状态
+    public static QQMusicQrEventResult checkQQQr(QQMusicQr qqMusicQr){
+        QQMusicQrEventResult qqMusicQrEventResult = new QQMusicQrEventResult();
+        qqMusicQrEventResult.setQqMusicQr(qqMusicQr);
+        Integer retryCount = qqMusicQr.getRetryCount();
+        //超过100次就停止监听
+        if (retryCount > 100) {
+            qqMusicQrEventResult.setQrCodeLoginEvents(QRCodeLoginEvents.STOP);
+            return qqMusicQrEventResult;
+        }
+        String qrsig = qqMusicQr.getIdentifier();
+
+        if (qrsig == null || qrsig.isEmpty()) {
+            qqMusicQrEventResult.setQrCodeLoginEvents(QRCodeLoginEvents.STOP);
+            return qqMusicQrEventResult;
+        }
+        HttpUrl url = new HttpUrl.Builder()
+                .scheme("https")
+                .host("ssl.ptlogin2.qq.com")
+                .addPathSegment("ptqrlogin")
+                .addQueryParameter("u1", "https://graph.qq.com/oauth2.0/login_jump")
+                .addQueryParameter("ptqrtoken", String.valueOf(sigHash(qrsig)))
+                .addQueryParameter("ptredirect", "0")
+                .addQueryParameter("h", "1")
+                .addQueryParameter("t", "1")
+                .addQueryParameter("g", "1")
+                .addQueryParameter("from_ui", "1")
+                .addQueryParameter("ptlang", "2052")
+                .addQueryParameter("action", "0-0-" + System.currentTimeMillis())
+                .addQueryParameter("js_ver", "20102616")
+                .addQueryParameter("js_type", "1")
+                .addQueryParameter("pt_uistyle", "40")
+                .addQueryParameter("aid", "716027609")
+                .addQueryParameter("daid", "383")
+                .addQueryParameter("pt_3rd_aid", "100497308")
+                .addQueryParameter("has_onekey", "1")
+                .build();
+//
+//        HttpRequest get = HttpUtil.createGet(url.toString(), false);
+//        get.setFollowRedirects(false);
+//        HashMap<String, String> headers = new HashMap<>();
+//        headers.put("Referer","https://xui.ptlogin2.qq.com/");
+//        headers.put("Cookie","qrsig=" + qrsig);
+//
+//        get.addHeaders(headers);
+//        HttpResponse response = get.execute();
+////        Map<String, List<String>> headers1 = response.headers();
+//
+//        if (!response.isOk()) {
+//            qqMusicQrEventResult.setQrCodeLoginEvents(QRCodeLoginEvents.OTHER);
+//            return qqMusicQrEventResult;
+//        }
+//        String responseBody = null;
+//
+//            responseBody = response.body().toString();
+//        Matcher matcher = Pattern.compile("ptuiCB\\((.*?)\\)").matcher(responseBody);
+//        if (!matcher.find()) {
+//            qqMusicQrEventResult.setQrCodeLoginEvents(QRCodeLoginEvents.OTHER);
+//            return qqMusicQrEventResult;
+//
+//        }
+//        Integer code = null;
+//        try {
+//            String[] data = matcher.group(1).replace("'", "").split(",");
+//            code = Integer.parseInt(data[0]);
+//            qqMusicQrEventResult.setUrl(data[2]);
+//
+//        } catch (NumberFormatException e) {
+//            qqMusicQrEventResult.setQrCodeLoginEvents(QRCodeLoginEvents.OTHER);
+//            return qqMusicQrEventResult;
+//        }
+//        QRCodeLoginEvents byValue = QRCodeLoginEvents.getByValue(code);
+//        String sigx = extractValue(responseBody, "&ptsigx=(.+?)&s_url");
+//        String uin = extractValue(responseBody, "&uin=(.+?)&service");
+//        qqMusicQrEventResult.setQrCodeLoginEvents(byValue);
+//        qqMusicQrEventResult.setSigx(sigx);
+//        qqMusicQrEventResult.setUin(uin);
+//        return qqMusicQrEventResult;
+
+
+        QQSession session = QQSession.getCurrentSession();
+        Map<String, String> printcookies = session.getCookies();
+        //打印
+        System.out.println("检测二维码请求-COOKIES:"+JSONObject.toJSONString(printcookies));
+        HttpRequest request = session.buildRequest(url.toString()).GET().build();
+
+        HttpResponse<String> response=null;
+
+        try {
+            response = session.getClient().send(request, HttpResponse.BodyHandlers.ofString());
+            System.out.println("检测二维码返回-HEADERS:"+JSONObject.toJSONString(response.headers().map()));
+            session.updateCookies(response);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+
+
+
+
+
+
+
+
+//
+//
+//
+
+//        OkHttpUtils request  = OkHttpUtils.builder()
+//                .url(url.toString());
+//
+//        request = request.url(url.toString());
+//        request = request.addHeader("Referer", "https://xui.ptlogin2.qq.com/");
+//        request = request.addHeader("Cookie", "qrsig=" + qrsig);
+//
+//        Response response = request.get().syncReturnResponse();
+//        if (!response.isSuccessful()) {
+//            qqMusicQrEventResult.setQrCodeLoginEvents(QRCodeLoginEvents.OTHER);
+//            return qqMusicQrEventResult;
+//        }
+//
+//        String responseBody = null;
+//        try {
+//            responseBody = response.body().string();
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//            qqMusicQrEventResult.setQrCodeLoginEvents(QRCodeLoginEvents.OTHER);
+//            return qqMusicQrEventResult;
+//
+//        }
+        String responseBody = response.body();
+        Matcher matcher = Pattern.compile("ptuiCB\\((.*?)\\)").matcher(responseBody);
+
+        if (!matcher.find()) {
+            qqMusicQrEventResult.setQrCodeLoginEvents(QRCodeLoginEvents.OTHER);
+            return qqMusicQrEventResult;
+
+        }
+        Integer code = null;
+        try {
+            String[] data = matcher.group(1).replace("'", "").split(",");
+            code = Integer.parseInt(data[0]);
+            qqMusicQrEventResult.setUrl(data[2]);
+
+        } catch (NumberFormatException e) {
+            qqMusicQrEventResult.setQrCodeLoginEvents(QRCodeLoginEvents.OTHER);
+            return qqMusicQrEventResult;
+        }
+        QRCodeLoginEvents byValue = QRCodeLoginEvents.getByValue(code);
+        String sigx = extractValue(responseBody, "&ptsigx=(.+?)&s_url");
+        String uin = extractValue(responseBody, "&uin=(.+?)&service");
+        qqMusicQrEventResult.setQrCodeLoginEvents(byValue);
+        qqMusicQrEventResult.setSigx(sigx);
+        qqMusicQrEventResult.setUin(uin);
+        return qqMusicQrEventResult;
+    }
+
+
+
+
+    // 提取特定值的正则匹配方法
+    private static String extractValue(String text, String regex) {
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(text);
+        if (matcher.find()) {
+            return matcher.group(1);
+        }
+        return null;
+    }
+    public static  QQMusicQr  getWechatLoginQr(){
+        HttpUrl uuidUrl = new HttpUrl.Builder()
+                .scheme("https")
+                .host("open.weixin.qq.com")
+                .addPathSegment("connect")
+                .addPathSegment("qrconnect")
+                .addQueryParameter("appid", "wx48db31d50e334801")
+                .addQueryParameter("redirect_uri", "https://y.qq.com/portal/wx_redirect.html?login_type=2&surl=https://y.qq.com/")
+                .addQueryParameter("response_type", "code")
+                .addQueryParameter("scope", "snsapi_login")
+                .addQueryParameter("state", "STATE")
+                .addQueryParameter("href", "https://y.qq.com/mediastyle/music_v17/src/css/popup_wechat.css#wechat_redirect")
+                .build();
+
+        OkHttpUtils request  = OkHttpUtils.builder().url(uuidUrl.toString());
+        Response uuidResponse = request.get().syncReturnResponse();
+        if (!uuidResponse.isSuccessful()) {
+        }
+        String responseBody = null;
+        try {
+            responseBody = uuidResponse.body().string();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        Pattern uuidPattern = Pattern.compile("uuid=(.+?)\"");
+        Matcher uuidMatcher = uuidPattern.matcher(responseBody);
+        if (!uuidMatcher.find()) {
+        }
+
+        String uuid = uuidMatcher.group(1);
+
+        // Step 2: Build the QR Code URL
+        HttpUrl qrCodeUrl = new HttpUrl.Builder()
+                .scheme("https")
+                .host("open.weixin.qq.com")
+                .addPathSegment("connect")
+                .addPathSegment("qrcode")
+                .addPathSegment(uuid)
+                .build();
+        OkHttpUtils qrCodeRequest = OkHttpUtils.builder().url(qrCodeUrl.toString()).addHeader("Referer", "https://open.weixin.qq.com/connect/qrconnect");
+        Response qrCodeResponse = qrCodeRequest.get().syncReturnResponse();
+        if (!qrCodeResponse.isSuccessful()) {
+        }
+        byte[] qrData = null;
+        try {
+            qrData = qrCodeResponse.body().bytes();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return new QQMusicQr(qrData, LoginType.WECHAT, "image/jpeg", uuid,0);
+    }
+
+//    将QQMusicQr转为base64图片并带上mimeType
+
+    public static  String  getQQMusicQrBase64(QQMusicQr qqMusicQr){
+        if(qqMusicQr==null){
+            return null;
+        }
+        return  Base64Utils.encodeToString(qqMusicQr.getData());
+
+    }
+
+
 
 //@Test
 //    void testkg() throws IOException {

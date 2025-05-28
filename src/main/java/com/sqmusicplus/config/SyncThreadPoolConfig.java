@@ -35,15 +35,22 @@ public class SyncThreadPoolConfig  {
                 new ThreadPoolExecutor.CallerRunsPolicy() // 拒绝策略
         );
 
-//        ThreadPoolExecutor taskExecutor = new ThreadPoolExecutor();
-//        taskExecutor.setCorePoolSize(10);
-//        taskExecutor.setMaxPoolSize(20);
-//        taskExecutor.setQueueCapacity(50);
-//        taskExecutor.setThreadNamePrefix("kgsync-");
-//        taskExecutor.setWaitForTasksToCompleteOnShutdown(true);
-////        等待时长强制销毁 5分钟
-//        taskExecutor.setAwaitTerminationSeconds(60 * 5);
-//        taskExecutor.initialize();
+        return executor;
+    }
+    @Bean(name = "qqQrthreadPoolTaskExecutor")
+    public ThreadPoolExecutor getQqAsyncExecutor() {
+
+
+        ThreadPoolExecutor executor = new ThreadPoolExecutor(
+                10, // 核心线程数
+                15, // 最大线程数
+                60*5, // 线程最大空闲时间
+                TimeUnit.SECONDS, // 时间单位
+                new LinkedBlockingQueue<Runnable>(20), // 任务队列
+                Executors.defaultThreadFactory(), // 线程工厂
+                new ThreadPoolExecutor.CallerRunsPolicy() // 拒绝策略
+        );
+
         return executor;
     }
 //

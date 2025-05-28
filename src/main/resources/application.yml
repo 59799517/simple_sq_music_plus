@@ -1,8 +1,8 @@
-DB_IP: 100.122.250.55
-DB_PORT: 7006
-DB_NAME: testsqmusic
-DB_USERNAME: root
-DB_PASSWORD: 11111
+#DB_IP: 100.122.250.55
+#DB_PORT: 7006
+#DB_NAME: testsqmusic
+#DB_USERNAME: root
+#DB_PASSWORD: 11111
 server:
   port: 8099
 spring:
@@ -81,5 +81,5 @@ sa-token:
   is-log: false
   is-print: false
 
-version: 2.15.7
+version: 2.15.8
 

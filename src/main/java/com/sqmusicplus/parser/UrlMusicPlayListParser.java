@@ -16,6 +16,7 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @Classname TextMusicPlayListParser
@@ -44,7 +45,7 @@ public class UrlMusicPlayListParser extends URLParser {
 
         if (downlaodParserUrl.getPlugType().equalsIgnoreCase(PlugBrType.KW_FLAC_2000.getPlugName())) {
             DownloadPlaylistType playlistType = getPlaylistType(url);
-            if (playlistType.getType() == DownloadPlaylistType.playlist.getType()) {
+            if (Objects.equals(playlistType.getType(), DownloadPlaylistType.playlist.getType())) {
                 String[] split = url.split("/");
                 String id = split[split.length - 1];
                 List<Music> musics = kwSearchHander.queryAllPlayInfoList(id, 10000, 1);
@@ -58,7 +59,7 @@ public class UrlMusicPlayListParser extends URLParser {
                 }
                 downloadInfoService.add(downloadInfos);
 
-            } else if (playlistType.getType() == DownloadPlaylistType.album.getType()) {
+            } else if (Objects.equals(playlistType.getType(), DownloadPlaylistType.album.getType())) {
                 String[] split = url.split("/");
                 String id = split[split.length - 1];
                 ArrayList<DownloadEntity> downloadEntities = kwSearchHander.downloadAlbum(id, plugType, downlaodParserUrl.getSubsonicPlayListName(), downlaodParserUrl.getArtist(), downlaodParserUrl.getIsAudioBook(), downlaodParserUrl.getBookName());

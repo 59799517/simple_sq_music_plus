@@ -13,6 +13,8 @@ import com.sqmusicplus.plug.entity.PlugSearchArtistResult;
 import com.sqmusicplus.plug.entity.PlugSearchMusicResult;
 import com.sqmusicplus.plug.entity.PlugSearchResult;
 import com.sqmusicplus.plug.qq.config.QQConfig;
+import com.sqmusicplus.plug.qq.entity.getfollowsingerlist.GetFollowSingerList;
+import com.sqmusicplus.plug.qq.util.QQMusicUtil;
 import com.sqmusicplus.utils.DownloadUtils;
 import com.sqmusicplus.utils.StringUtils;
 import lombok.Data;
@@ -45,6 +47,201 @@ public class QQSearchEntity {
         return plugName;
     }
 
+
+    /**
+     * 用code换cookies
+     * @param code
+     * @return
+     */
+
+    public String getCookieByCodeParam(String  code){
+        String   msg = """
+                {
+                           "comm": {
+                               "g_tk": 5381,
+                               "platform": "yqq",
+                               "ct": 24,
+                               "cv": 0
+                           },
+                           "req": {
+                               "module": "QQConnectLogin.LoginServer",
+                               "method": "QQLogin",
+                               "param": {
+                                   "code": "%s"
+                               }
+                           }
+                       }
+                """;
+
+        String format = String.format(msg, code);
+        return format;
+    }
+
+    /**
+     * 获取下载链接
+     */
+    public  String downloadRequestParam(String qq,String musicKey,String loginType ,String filename,String songmid) {
+//        "QIMEI36": "%s",
+        String msg = """
+                {
+                    "comm": {
+                      "cv": 13020508,
+                      "v": 13020508,
+                      "ct": "11",
+                      "tmeAppID": "qqmusic",
+                      "format": "json",
+                      "inCharset": "utf-8",
+                      "outCharset": "utf-8",
+                      "uid": "3931641530",
+                      "qq": "%s",
+                      "authst": "%s",
+                      "tmeLoginType": "%s"
+                    },
+                    "music.vkey.GetVkey.UrlGetVkey": {
+                      "module": "music.vkey.GetVkey",
+                      "method": "UrlGetVkey",
+                      "param": {
+                        "filename": [
+                          "%s"
+                        ],
+                        "guid": "%s",
+                        "songmid": [
+                          "%s"
+                        ],
+                        "songtype": [
+                          0
+                        ]
+                      }
+                    }
+                  }
+               """;
+        String format = String.format(msg,
+                qq,
+                musicKey,
+                loginType,
+                filename,
+                QQMusicUtil.getGuid(),
+                songmid
+        );
+        return format;
+    }
+
+    /**
+     * 检测cookie是否有效
+     */
+    public  String checkCookieParam(QQMusicCookieInfo cookie){
+        String msg = """
+              {
+                       	"comm": {
+                       		"cv": 13020508,
+                           "v": 13020508,
+                           "ct": "11",
+                           "tmeAppID": "qqmusic",
+                           "format": "json",
+                           "inCharset": "utf-8",
+                           "outCharset": "utf-8",
+                           "qq": "%s",
+                           "authst": "%s",
+                           "tmeLoginType": "%s"
+                       	},
+                       	"req": {
+                       		"module": "music.UserInfo.userInfoServer",
+                       		"method": "GetLoginUserInfo",
+                       		"param": {}
+                       	}
+                       }
+          """;
+        String musicid = cookie.getMusicid();
+        String musickey = cookie.getMusickey();
+        String loginType = cookie.getLoginType().toString();
+        return String.format(msg,musicid,musickey,loginType);
+    }
+    /**
+     * 刷新token
+     */
+    public  String refreshCookieParam(QQMusicCookieInfo cookie){
+        String msg = """
+                {
+                             "comm": {
+                                 "fPersonality": "0",
+                                 "tmeLoginType": "%s",
+                                 "qq": "%s",
+                                 "authst": "%s",
+                                 "ct": "11",
+                                 "cv": "12080008",
+                                 "v": "12080008",
+                                 "tmeAppID": "qqmusic"
+                             },
+                             "req1": {
+                                 "module": "music.login.LoginServer",
+                                 "method": "Login",
+                                 "param": {
+                                     "str_musicid": "%s",
+                                     "musickey": "%s",
+                                     "refresh_key":"%s"
+                                 }
+                             }
+                         }
+          """;
+        return String.format(msg,  cookie.getLoginType().toString(),
+                cookie.getStrMusicid(),
+                cookie.getMusickey(),
+                cookie.getStrMusicid(),
+                cookie.getMusickey(),
+                cookie.getRefreshKey());
+    }
+
+    /**
+     * 喜欢的歌手
+     * @param qq
+     * @param musicKey
+     * @param loginType
+     * @param encryptUin
+     * @param size 每页长度
+     * @param page 页码从1开始
+     * @return
+     */
+    public  String followSingerParam(String qq,String musicKey,String loginType,String encryptUin,int  size, int page) {
+
+        String   msg = """
+                {
+                    "comm": {
+                      "cv": 13020508,
+                      "v": 13020508,
+                      "ct": "11",
+                      "tmeAppID": "qqmusic",
+                      "format": "json",
+                      "inCharset": "utf-8",
+                      "outCharset": "utf-8",
+                      "qq": "%s",
+                      "authst": "%s",
+                      "tmeLoginType": "%s"
+                    },
+                    "req": {
+                        "module": "music.concern.RelationList",
+                        "method": "GetFollowSingerList",
+                        "param": {
+                            "HostUin": "%s",
+                            "From": %s,
+                            "Size": %s
+                        }
+                    }
+                }""";
+        page --;
+        String format = String.format(msg,
+                qq,
+                musicKey,
+                loginType,
+                encryptUin,
+                page,
+                size
+
+        );
+        return format;
+    }
+
+
+
     /**
      * 搜索请求参数
      * @param query
@@ -56,21 +253,6 @@ public class QQSearchEntity {
 
 
     public  String searchRequestParam(String query,String search_type ,Integer page_num,Integer num_per_page) {
-//        String msg = """
-//            {
-//                "music.search.SearchCgiService.DoSearchForQQMusicDesktop": {
-//                    "method": "DoSearchForQQMusicDesktop",
-//                    "module": "music.search.SearchCgiService",
-//                    "param": {
-//                        "search_type": "%s",
-//                        "query": "%s",
-//                        "page_num": "%s",
-//                        "num_per_page": "%s"
-//                    }
-//                }
-//            }
-//
-//            """;
 
      String   msg = """
                 {
@@ -234,6 +416,187 @@ public class QQSearchEntity {
         String format = String.format(msg, albummid);
         return format;
     }
+    /**
+     * 收藏歌单参数
+     */
+    public  String userSelfSongListParam(String qq,String musicKey,String loginType) {
+        String msg = """
+                {
+                    "comm": {
+                        "cv": 13020508,
+                        "v": 13020508,
+                        "ct": "11",
+                        "tmeAppID": "qqmusic",
+                        "format": "json",
+                        "inCharset": "utf-8",
+                        "outCharset": "utf-8",
+                        "qq": "%s",
+                        "authst": "%s",
+                        "tmeLoginType": "%s"
+                    },
+                    "req": {
+                        "module": "music.musicasset.PlaylistBaseRead",
+                        "method": "GetPlaylistByUin",
+                        "param": {
+                          "uni":"%s"
+                        }
+                    }
+                }
+               """;
+        String format = String.format(msg, qq,musicKey,loginType,qq);
+        return format;
+    }
+
+    /**
+     * 收藏的专辑
+     */
+    public  String userALbymListParam(String encryptUin,int  size, int page) {
+        String msg = """
+               
+                {
+                    "comm": {
+                      "cv": 13020508,
+                      "v": 13020508,
+                      "ct": "11",
+                      "tmeAppID": "qqmusic",
+                      "format": "json",
+                      "inCharset": "utf-8",
+                      "outCharset": "utf-8"
+                    },
+                    "req": {
+                      "module": "music.musicasset.AlbumFavRead",
+                      "method": "CgiGetAlbumFavInfo",
+                      "param": {
+                        "euin": "%s",
+                        "offset": 0,
+                        "size": 10
+                      }
+                    }
+                  }
+               """;
+        page--;
+        String format = String.format(msg, encryptUin,page,size);
+        return format;
+
+}
+
+    /**
+     * 获取用户收藏歌单
+     * @param musicid
+     * @param musickey
+     * @param loginType
+     * @param encryptUin
+     * @param size
+     * @param page
+     * @return
+     */
+    public String followSongListParam(String musicid, String musickey, String loginType, String encryptUin, int size, int page) {
+        String format = """
+                {
+                    "comm": {
+                        "cv": 13020508,
+                        "v": 13020508,
+                        "ct": "11",
+                        "tmeAppID": "qqmusic",
+                        "format": "json",
+                        "inCharset": "utf-8",
+                        "outCharset": "utf-8",
+                        "qq": "%s",
+                        "authst": "%s",
+                        "tmeLoginType": "%s"
+                    },
+                    "req": {
+                        "module": "music.musicasset.PlaylistFavRead",
+                        "method": "CgiGetPlaylistFavInfo",
+                        "param": {
+                            "uin": "%s",
+                            "offset": %s,
+                            "size": %s
+                        }
+                    }
+                }
+               """;
+        page --;
+        return String.format(format, musicid,musickey,loginType,encryptUin,page,size);
+    }
+
+    /**
+     * 获取 歌单详情
+     */
+    public  String songListInfoRequestParam(String mid,String dirid,Long page,Long size) {
+        String msg = """
+                {
+                  "comm": {
+                    "cv": 13020508,
+                    "v": 13020508,
+                    "ct": "11",
+                    "tmeAppID": "qqmusic",
+                    "format": "json",
+                    "inCharset": "utf-8",
+                    "outCharset": "utf-8"
+                  },
+                  "req": {
+                    "module": "music.srfDissInfo.DissInfo",
+                    "method": "CgiGetDiss",
+                    "param": {
+                      "disstid": %s,
+                      "dirid": %s,
+                      "tag": 1,
+                      "song_begin": %s,
+                      "song_num": %s,
+                      "userinfo": 1,
+                      "orderlist": 1,
+                      "onlysonglist": 1
+                    }
+                  }
+                }
+                """;
+        long song_begin = size * (page - 1);
+        return String.format(msg, mid,dirid,song_begin,size);
+
+    }
+
+
+//    /**
+//     * 获取全部关注歌手信息
+//     */
+//    public  String likeArtistsParam(String qq,String musicKey,String loginType,String encryptUin,int  size, int page) {
+//        String msg = """
+//                {
+//                    "comm": {
+//                        "cv": 13020508,
+//                        "v": 13020508,
+//                        "ct": "11",
+//                        "tmeAppID": "qqmusic",
+//                        "format": "json",
+//                        "inCharset": "utf-8",
+//                        "outCharset": "utf-8",
+//                        "qq": "%s",
+//                        "authst": "%s",
+//                        "tmeLoginType": "%s"
+//                    },
+//                    "req": {
+//                        "module": "music.concern.RelationList",
+//                        "method": "GetFollowSingerList",
+//                        "param": {
+//                            "HostUin": "%s",
+//                            "From": %s,
+//                            "Size": %s
+//                        }
+//                    }
+//                }
+//                    """;
+//        page --;
+//        String format = String.format(msg,
+//                qq,
+//                musicKey,
+//                loginType,
+//                encryptUin,
+//                page,
+//                size);
+//        return format;
+//}
+
 
     /**
      * 单曲搜索结果转换
@@ -340,7 +703,7 @@ public class QQSearchEntity {
         Long flac = mapper1.getMapper("file").getLong("size_flac");
         Long mp3320 = mapper1.getMapper("file").getLong("size_320mp3");
         Long mp3128 = mapper1.getMapper("file").getLong("size_128mp3");
-        String mediaMid = mapper1.getMapper("file").getString("media_mid");
+//        String mediaMid = mapper1.getMapper("file").getString("media_mid");
         ArrayList<PlugBrType> longs = new ArrayList<>();
         if (flac != null&&flac.longValue()>0){
             longs.add(PlugBrType.QQVIP_Flac_2000);
@@ -358,9 +721,9 @@ public class QQSearchEntity {
         });
         String lyricResult = toPlugLyricResult(mid,qqConfig);
 
-        if (StringUtils.isNotEmpty(mediaMid)){
-            mid=mid+","+mediaMid;
-        }
+//        if (StringUtils.isNotEmpty(mediaMid)){
+//            mid=mid+","+mediaMid;
+//        }
         Music music = new Music().setId(mid)
                 .setMusicImage(albumImage)
                 .setMusicLyric(lyricResult)
@@ -558,4 +921,86 @@ public class QQSearchEntity {
         return albums;
     }
 
+    /**
+     * 获取cookie信息
+     * @param data 返回的字符串信息
+     * @return
+     */
+    public QQMusicCookieInfo getCookieByCode(String data){
+        QQMusicCookie qqMusicCookie = JSONObject.parseObject(data, QQMusicCookie.class);
+        if (qqMusicCookie.getCode()==0){
+            QQMusicCookie.ReqDTO req = qqMusicCookie.getReq();
+            if (req.getCode()==0){
+                return req.getData();
+            }
+        }
+    return null;
+    }
+
+    /**
+     * 检查cookie是否过期
+     */
+    public  QQMuserUserInfo checkCookie(String data){
+        QQMuserUserInfo qqMuserUserInfo = JSONObject.parseObject(data, QQMuserUserInfo.class);
+        if (qqMuserUserInfo==null){
+            return null;
+        }
+        if (qqMuserUserInfo.getCode()==0){
+            QQMuserUserInfo.ReqDTO req = qqMuserUserInfo.getReq();
+            if (req.getCode()==0){
+                return qqMuserUserInfo;
+            }
+        }
+        return null;
+    }
+    /**
+     * 刷新token
+     */
+    public QQMusicCookieInfo refreshCookie(String data){
+        QQMusicCookie qqMusicCookie = JSONObject.parseObject(data, QQMusicCookie.class);
+        if (qqMusicCookie.getCode()==0){
+            QQMusicCookie.ReqDTO req1 = qqMusicCookie.getReq1();
+            if (req1.getCode()==0){
+                return req1.getData();
+            }
+        }
+        return null;
+    }
+
+
+    /**
+     * 获取收藏歌单
+     */
+    public CgiGetPlaylistFavInfo followSongList(JSONObject req) {
+        String jsonString = req.toJSONString();
+        return JSONObject.parseObject(jsonString, CgiGetPlaylistFavInfo.class);
+    }
+
+    /**
+     * 获取用具歌单 id 201是我喜欢
+     * @param req
+     * @return
+     */
+
+    public PlaylistBaseRead userSelfSongList(JSONObject req) {
+        String jsonString = req.toJSONString();
+        return JSONObject.parseObject(jsonString, PlaylistBaseRead.class);
+    }
+
+
+    public CgiGetAlbumFavInfo userALbymList(JSONObject req) {
+        String jsonString = req.toJSONString();
+        return JSONObject.parseObject(jsonString, CgiGetAlbumFavInfo.class);
+    }
+
+    public DissInfo songListInfo(JSONObject req) {
+        String jsonString = req.toJSONString();
+        return JSONObject.parseObject(jsonString, DissInfo.class);
+    }
+
+    public GetFollowSingerList followSingerList(JSONObject req) {
+        String jsonString = req.toJSONString();
+        return JSONObject.parseObject(jsonString, GetFollowSingerList.class);
+
+    }
 }

@@ -27,5 +27,15 @@ public class GlobalStatic {
      */
     public static Integer SUBSONIC_SYNC_MAXIMUM_STATISTICS = 3;
 
+    /**
+     * QQ登录cookie缓存key
+     */
+    public static String QQ_LOGIN_COOKIE_KEY = "plug.qqlogin.cookie";
+    /**
+     * QQ登录QR码
+     */
+    public static String QQ_LOGIN_QR_KEY = "plug.qqlogin.qrcode";
+
+
 
 }

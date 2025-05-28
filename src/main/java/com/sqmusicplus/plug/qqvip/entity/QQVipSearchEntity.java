@@ -52,11 +52,11 @@ public class QQVipSearchEntity extends QQSearchEntity {
                 artistname="未知";
             }
             Mapper filemapper = mapper1.getMapper("file");
-            String mediaMid = filemapper.getString("media_mid");
+//            String mediaMid = filemapper.getString("media_mid");
             String lyricResult = toPlugLyricResult(mid,qqConfig);
-            if (StringUtils.isNotBlank(mediaMid)) {
-                mid  = mid+","+mediaMid;
-            }
+//            if (StringUtils.isNotBlank(mediaMid)) {
+//                mid  = mid+","+mediaMid;
+//            }
             Music music = new Music().setId(mid)
                     .setMusicImage(albumImage)
                     .setMusicLyric(lyricResult)
