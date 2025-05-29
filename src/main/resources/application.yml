@@ -87,5 +87,6 @@ sa-token:
   is-log: false
   is-print: false
 
-version: 2.15.9
+version: 2.15.10
+
 

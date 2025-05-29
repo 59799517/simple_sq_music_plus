@@ -233,6 +233,12 @@ public class QQHander extends SearchHanderAbstract {
         if (StringUtils.isNotBlank(url)){
             String baseUrl = "https://isure.stream.qqmusic.qq.com/";
             url = baseUrl +url;
+        }else{
+            PlugBrType qqMp3320 = PlugBrType.QQ_MP3_320;
+            HashMap<String, String> downloadUrl = getDownloadUrl(musicId, qqMp3320);
+            if (PlugBrType.QQ_MP3_320.getBit().toString().equals(downloadUrl.get("bit"))){
+                return downloadUrl;
+            }
         }
         HashMap<String, String> stringStringHashMap = new HashMap<>();
         stringStringHashMap.put("url", url);
