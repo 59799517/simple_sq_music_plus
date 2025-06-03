@@ -219,7 +219,7 @@ public class QQHander extends SearchHanderAbstract {
 
         try {
             String  sign =  QQMusicUtil.sign(s);
-            searchUrl= searchUrl+"?sign="+sign;
+            searchUrl= searchUrl+"?sign="+sign+"&signature="+sign;
         } catch (Exception e) {
         }
 

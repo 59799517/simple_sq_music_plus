@@ -110,7 +110,10 @@ public class QQSearchEntity {
                         ],
                         "songtype": [
                           0
-                        ]
+                        ],
+                        "uin": "%s"
+                        "loginflag": 1,
+                        "platform": "20"
                       }
                     }
                   }
@@ -121,7 +124,8 @@ public class QQSearchEntity {
                 loginType,
                 filename,
                 QQMusicUtil.getGuid(),
-                songmid
+                songmid,
+                qq
         );
         return format;
     }
