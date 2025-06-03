@@ -8,6 +8,7 @@ import cn.hutool.core.util.ReflectUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.sqmusicplus.base.entity.*;
+import com.sqmusicplus.base.service.DownloadInfoService;
 import com.sqmusicplus.base.service.SqConfigService;
 import com.sqmusicplus.utils.*;
 import lombok.extern.slf4j.Slf4j;
@@ -36,6 +37,12 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
         return configService;
     }
 
+    @Autowired
+    private DownloadInfoService downloadInfoService;
+
+    public DownloadInfoService getDownloadInfoService() {
+        return downloadInfoService;
+    }
 
     @Override
     public void dnonloadAndSaveToFile(DownloadEntity downloadEntity,SearchHander searchHander) {
@@ -64,8 +71,10 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
             }
             //下载位置
             String basepath = music.getMusicArtists().trim() + File.separator + music.getMusicAlbum().trim() + File.separator;
-            HashMap<String, String> stringStringHashMap = searchHander.getDownloadUrl(downloadEntity.getMusicid() + "", downloadEntity.getBrType());
-          if(stringStringHashMap==null){
+//            HashMap<String, String> stringStringHashMap = searchHander.getDownloadUrl(downloadEntity.getMusicid() + "", downloadEntity.getBrType());
+            HashMap<String, String> stringStringHashMap = searchHander.getDownloadUrl(downloadEntity);
+
+            if(stringStringHashMap==null){
               throw new RuntimeException("(未获取到播放链接)下载失败:" + music.getMusicName());
           }
             File type = new File(file, basepath + music.getMusicName().trim() + " - " + music.getMusicArtists().trim() + "." + stringStringHashMap.get("type"));

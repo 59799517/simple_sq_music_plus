@@ -242,11 +242,15 @@ public class QQHander extends SearchHanderAbstract {
             String baseUrl = "https://isure.stream.qqmusic.qq.com/";
             url = baseUrl +url;
         }else{
-            PlugBrType qqMp3320 = PlugBrType.QQ_MP3_320;
-            HashMap<String, String> downloadUrl = getDownloadUrl(musicId, qqMp3320);
-            if (PlugBrType.QQ_MP3_320.getBit().toString().equals(downloadUrl.get("bit"))){
-                return downloadUrl;
-            }
+            return null;
+            //重新生成一个下载
+//            PlugBrType qqMp3320 = PlugBrType.QQ_MP3_320;
+
+//            PlugBrType qqMp3320 = PlugBrType.QQ_MP3_320;
+//            HashMap<String, String> downloadUrl = getDownloadUrl(musicId, qqMp3320);
+//            if (PlugBrType.QQ_MP3_320.getBit().toString().equals(downloadUrl.get("bit"))){
+//                return downloadUrl;
+//            }
         }
         HashMap<String, String> stringStringHashMap = new HashMap<>();
         stringStringHashMap.put("url", url);
@@ -396,6 +400,95 @@ public class QQHander extends SearchHanderAbstract {
 //        stringStringHashMap.put("type", brType.getType());
 //        stringStringHashMap.put("bit", brType.getBit().toString());
 //        return stringStringHashMap;
+    }
+
+    @Override
+    public HashMap<String, String> getDownloadUrl(DownloadEntity downloadEntity) {
+        String musicId = downloadEntity.getMusicid();
+        PlugBrType brType = downloadEntity.getBrType();
+        if (musicId.contains(",")){
+            musicId = musicId.split(",")[0];
+        }
+        QQSongType qqSongType=  QQSongType.FLAC;
+        String musickey ="";
+        String qq ="";
+        String loginType ="";
+        if (brType.getValue().equalsIgnoreCase("HQ_M500")){
+            qqSongType = QQSongType.MP3_128;
+        }else  if (brType.getValue().equalsIgnoreCase("HQ_M800")){
+            qqSongType = QQSongType.MP3_320;
+
+        }else if (brType.getValue().equalsIgnoreCase("SQ_F000")){
+            qqSongType = QQSongType.FLAC;
+        }else  if (brType.getValue().equalsIgnoreCase("HR_RS01")){
+            qqSongType = QQSongType.FLAC;
+
+        }else  if (brType.getValue().equalsIgnoreCase("HR_Q000")){
+            qqSongType = QQSongType.FLAC;
+        }else  if (brType.getValue().equalsIgnoreCase("HR_AI00")){
+            qqSongType = QQSongType.FLAC;
+        }
+
+        SqConfigService configService = getConfigService();
+        SqConfig sqConfig = configService.getOne(new QueryWrapper<SqConfig>().eq("config_key", GlobalStatic.QQ_LOGIN_COOKIE_KEY));
+        if (sqConfig!=null&&StringUtils.isNotBlank(sqConfig.getConfigValue())){
+            QQMusicCookieInfo qqMusicCookieInfo = JSONObject.parseObject(sqConfig.getConfigValue(), QQMusicCookieInfo.class);
+            if (qqMusicCookieInfo != null){
+                musickey= qqMusicCookieInfo.getMusickey();
+                qq= qqMusicCookieInfo.getMusicid();
+                loginType = qqMusicCookieInfo.getLoginType().toString();
+            }
+
+        }
+        if (StringUtils.isBlank(musickey)||StringUtils.isBlank(qq)||StringUtils.isBlank(loginType)||StringUtils.isBlank(musicId)){
+            return null;
+        }
+        String fileName = qqSongType.getPrefix()+musicId+musicId+"."+qqSongType.getSuffix();
+
+
+        String  url= "";
+        String ekey="";
+        String s = getqqSearchEntity().downloadRequestParam(qq,musickey,loginType,fileName,musicId);
+        String searchUrl = config.getSearchUrl();
+
+        try {
+            String  sign =  QQMusicUtil.sign(s);
+            searchUrl= searchUrl+"?sign="+sign+"&signature="+sign;
+        } catch (Exception e) {
+        }
+
+
+        Mapper mapper = DownloadUtils.getHttp().sync(searchUrl).setBodyPara(s).post().getBody().toMapper();
+
+        Mapper mapper1 = mapper.getMapper("music.vkey.GetVkey.UrlGetVkey");
+        long code = mapper1.getLong("code");
+        if (code != 0) {
+            return null;
+        }
+        Array array = mapper1.getMapper("data").getArray("midurlinfo");
+        for (int i = 0; i < array.size(); i++) {
+            Mapper mapper2 = array.getMapper(i);
+            url = mapper2.getString("wifiurl");
+            //有此参数则需要解密
+            ekey = mapper2.getString("ekey");
+        }
+        if (StringUtils.isNotBlank(url)){
+            String baseUrl = "https://isure.stream.qqmusic.qq.com/";
+            url = baseUrl +url;
+        }else{
+            if (!brType.getValue().equalsIgnoreCase("HQ_M800")){
+                DownloadInfo downloadInfo = MusicUtils.downloadEntitytoDownloadInfoTo(downloadEntity);
+                getDownloadInfoService().add(downloadInfo);
+            }
+            return null;
+        }
+        HashMap<String, String> stringStringHashMap = new HashMap<>();
+        stringStringHashMap.put("url", url);
+        stringStringHashMap.put("type", brType.getType());
+        stringStringHashMap.put("bit", brType.getBit().toString());
+        stringStringHashMap.put("ekey", ekey);
+        return stringStringHashMap;
+
     }
 
     @Override

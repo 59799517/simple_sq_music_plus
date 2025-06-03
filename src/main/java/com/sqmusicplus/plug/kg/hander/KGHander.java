@@ -529,6 +529,11 @@ public class KGHander extends SearchHanderAbstract {
 
     }
 
+    @Override
+    public HashMap<String, String> getDownloadUrl(DownloadEntity downloadEntity) {
+        return getDownloadUrl(downloadEntity.getMusicid(),downloadEntity.getBrType());
+    }
+
     public PlugBrType getMaxPlugBrType(PlugBrType brType){
         if (brType==PlugBrType.KG_Flac_2000||brType==PlugBrType.KG_Flac_3000||brType== KG_Flac_890) {
             //flac走flac

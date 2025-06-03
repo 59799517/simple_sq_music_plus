@@ -106,6 +106,11 @@ public class QQvipHander extends SearchHanderAbstract {
     }
 
     @Override
+    public HashMap<String, String> getDownloadUrl(DownloadEntity downloadEntity) {
+        return qqHander.getDownloadUrl(downloadEntity);
+    }
+
+    @Override
     public DownloadEntity downloadSong(String musicid, PlugBrType brType, String musicname, String artistname, String albumname, Boolean isAudioBook, String addSubsonicPlayListName) {
         Music music = querySongById(musicid);
         DownloadEntity downloadEntity = new DownloadEntity("qqvipHander", musicid, brType, music.getMusicName(), music.getMusicArtists(), music.getMusicAlbum(), isAudioBook, isAudioBook ? addSubsonicPlayListName : null);

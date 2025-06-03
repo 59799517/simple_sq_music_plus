@@ -115,6 +115,19 @@ public interface SearchHander {
      * }
      */
     HashMap<String, String> getDownloadUrl(String musicId, PlugBrType brType);
+    /**
+     * 获取下载（播放连接）
+     *
+     * @param downloadEntity 下载信息
+     * @return {
+     * url：连接，
+     * type："类型"，
+     * bit：bit值
+     * }
+     */
+    HashMap<String, String> getDownloadUrl(DownloadEntity downloadEntity);
+
+
 
     /**
      * 下载单曲

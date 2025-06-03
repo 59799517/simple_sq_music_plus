@@ -394,6 +394,11 @@ public class NeteaseHander extends SearchHanderAbstract {
     }
 
     @Override
+    public HashMap<String, String> getDownloadUrl(DownloadEntity downloadEntity) {
+        return getDownloadUrl(downloadEntity.getMusicid(), downloadEntity.getBrType());
+    }
+
+    @Override
     public DownloadEntity downloadSong(String musicid, PlugBrType brType, String musicname, String artistname, String albumname, Boolean isAudioBook, String addSubsonicPlayListName) {
         Music music = querySongById(musicid);
         DownloadEntity downloadEntity = new DownloadEntity("neteaseHander",musicid, brType, music.getMusicName(), music.getMusicArtists(), music.getMusicAlbum(), isAudioBook, isAudioBook?addSubsonicPlayListName:null);
