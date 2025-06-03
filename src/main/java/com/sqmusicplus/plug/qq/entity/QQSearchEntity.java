@@ -111,7 +111,7 @@ public class QQSearchEntity {
                         "songtype": [
                           0
                         ],
-                        "uin": "%s"
+                        "uin": "%s",
                         "loginflag": 1,
                         "platform": "20"
                       }

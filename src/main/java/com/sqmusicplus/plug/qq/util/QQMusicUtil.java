@@ -57,7 +57,7 @@ public class QQMusicUtil {
     /**
      * 获取下载链接
      */
-    public  static String downloadRequestParam(String qq,String musicKey,String loginType ,String filename,String songmid) {
+    public  static  String downloadRequestParam(String qq,String musicKey,String loginType ,String filename,String songmid) {
 //        "QIMEI36": "%s",
         String msg = """
                 {
@@ -87,7 +87,10 @@ public class QQMusicUtil {
                         ],
                         "songtype": [
                           0
-                        ]
+                        ],
+                        "uin": "%s",
+                        "loginflag": 1,
+                        "platform": "20"
                       }
                     }
                   }
@@ -98,7 +101,8 @@ public class QQMusicUtil {
                 loginType,
                 filename,
                 QQMusicUtil.getGuid(),
-                songmid
+                songmid,
+                qq
         );
         return format;
     }
