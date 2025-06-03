@@ -39,43 +39,71 @@ public class QQMusicUtil {
     private static  String  Q36="";
 
     public static void main(String[] args) throws Exception {
-        String data ="{\n" +
-                     "  \"music.vkey.GetVkey.UrlGetVkey\": {\n" +
-                     "      \"module\": \"music.vkey.GetVkey\",\n" +
-                     "      \"method\": \"UrlGetVkey\",\n" +
-                     "      \"param\": {\n" +
-                     "        \"filename\": [\n" +
-                     "          \"F000001ndYJ83Nmalf.mp3\",\n" +
-                     "        ],\n" +
-                     "        \"guid\": \"8a3822baee966123cc53a3da0d282fd4\",\n" +
-                     "        \"songmid\": [\n" +
-                     "          \"0009BCJK1nRaad\"\n" +
-                     "        ],\n" +
-                     "        \"songtype\": [\n" +
-                     "          0\n" +
-                     "        ]\n" +
-                     "      }\n" +
-                     "    },\n" +
-                     "     \"comm\": {\n" +
-                     "       \"cv\": 13020508,\n" +
-                     "      \"v\": 13020508,\n" +
-                     "      \"QIMEI36\": \"2a08b87c75a0e1aca19aa4f1100011f1730c\",\n" +
-                     "      \"ct\": \"11\",\n" +
-                     "      \"tmeAppID\": \"qqmusic\",\n" +
-                     "      \"format\": \"json\",\n" +
-                     "      \"inCharset\": \"utf-8\",\n" +
-                     "      \"outCharset\": \"utf-8\",\n" +
-                     "      \"uid\": \"3931641530\",\n" +
-                     "      \"qq\": \"59799517\",\n" +
-                     "      \"authst\": \"Q_H_L_63k3NAzDtG5gI2jNHWwdFIV47G22x_HZQw5UIbcZLQp0qV8J9k_0MsZlc3gj1Q-m_Ep5GsT-4MwMxOyoqUdSVOXfNx_kNL9WMupNZVB4kMT_uhRZYKzlooa7aYQ65ADVkzi8wJfggG4BMxpWfR2nEue0\",\n" +
-                     "      \"tmeLoginType\": \"2\"\n" +
-                     "        }\n" +
-                     "}";
+        String qq = "59799517";
+        String musicKey = "Q_H_L_63k3NcDPrQrsuD0_09pHm4Ne1fJdP9A7e2qG7XldYLEew_T7YtgIphCETu41_Hs3NfJ4YBZ7jd5DL3O1ZFRZcgHdzXFI1lJ_BkbDOIvw9zb7uD-bmoIfXOC5e-AS-B6x760wJsW7n-PVN_d1Fqf9Y7dg";
+        String loginType = "2";
+        String songmid = "0039MnYb0qxYhV";
+        String fileName = "F000"+songmid+songmid+".flac";
+
+        String data =downloadRequestParam(qq,musicKey,loginType,fileName,songmid);
+        System.out.println(data);
         String sign = sign(data);
-//        System.out.println(sign);
+        System.out.println(sign);
 
 
     }
+
+
+    /**
+     * 获取下载链接
+     */
+    public  static String downloadRequestParam(String qq,String musicKey,String loginType ,String filename,String songmid) {
+//        "QIMEI36": "%s",
+        String msg = """
+                {
+                    "comm": {
+                      "cv": 13020508,
+                      "v": 13020508,
+                      "ct": "11",
+                      "tmeAppID": "qqmusic",
+                      "format": "json",
+                      "inCharset": "utf-8",
+                      "outCharset": "utf-8",
+                      "uid": "3931641530",
+                      "qq": "%s",
+                      "authst": "%s",
+                      "tmeLoginType": "%s"
+                    },
+                    "music.vkey.GetVkey.UrlGetVkey": {
+                      "module": "music.vkey.GetVkey",
+                      "method": "UrlGetVkey",
+                      "param": {
+                        "filename": [
+                          "%s"
+                        ],
+                        "guid": "%s",
+                        "songmid": [
+                          "%s"
+                        ],
+                        "songtype": [
+                          0
+                        ]
+                      }
+                    }
+                  }
+               """;
+        String format = String.format(msg,
+                qq,
+                musicKey,
+                loginType,
+                filename,
+                QQMusicUtil.getGuid(),
+                songmid
+        );
+        return format;
+    }
+
+
 
     public static String getQ36(){
         if (StringUtils.isEmpty(Q36)){

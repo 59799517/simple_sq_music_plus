@@ -20,6 +20,7 @@ import com.sqmusicplus.plug.qq.entity.getfollowsingerlist.GetFollowSingerList;
 import com.sqmusicplus.plug.qq.enums.LoginType;
 import com.sqmusicplus.plug.qq.enums.QQSearchType;
 import com.sqmusicplus.plug.qq.enums.QRCodeLoginEvents;
+import com.sqmusicplus.plug.qq.util.QQMusicUtil;
 import com.sqmusicplus.utils.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -215,6 +216,13 @@ public class QQHander extends SearchHanderAbstract {
         String ekey="";
         String s = getqqSearchEntity().downloadRequestParam(qq,musickey,loginType,fileName,musicId);
         String searchUrl = config.getSearchUrl();
+
+        try {
+            String  sign =  QQMusicUtil.sign(s);
+            searchUrl= searchUrl+"?sign="+sign;
+        } catch (Exception e) {
+        }
+
 
         Mapper mapper = DownloadUtils.getHttp().sync(searchUrl).setBodyPara(s).post().getBody().toMapper();
 
