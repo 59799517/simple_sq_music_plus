@@ -448,6 +448,7 @@ public class QQHander extends SearchHanderAbstract {
 
         String  url= "";
         String ekey="";
+        String vkey = "";
         String s = getqqSearchEntity().downloadRequestParam(qq,musickey,loginType,fileName,musicId);
         String searchUrl = config.getSearchUrl();
 
@@ -469,11 +470,33 @@ public class QQHander extends SearchHanderAbstract {
         for (int i = 0; i < array.size(); i++) {
             Mapper mapper2 = array.getMapper(i);
             url = mapper2.getString("wifiurl");
+            if (StringUtils.isBlank(url)){
+                url= mapper2.getString("purl");
+            }
             //有此参数则需要解密
             ekey = mapper2.getString("ekey");
+            vkey = mapper2.getString("vkey");
         }
+
+        String baseUrl = "https://isure.stream.qqmusic.qq.com/";
+        Array sipArray = mapper1.getMapper("data").getArray("sip");
+        ArrayList<String> baseurls = new ArrayList<>();
+        if (sipArray!=null&&sipArray.size()>0){
+            //循环找出sip
+            for (int i = 0; i < sipArray.size(); i++) {
+              //找出全部的
+                if (StringUtils.isNotBlank(sipArray.getString(i))){
+                    baseurls.add(sipArray.getString(i));
+                }
+            }
+        }
+        if (sipArray!=null&&sipArray.size()>0){
+            //随机从baseurls抽取一个
+            baseUrl = baseurls.get(new Random().nextInt(baseurls.size()));
+        }
+
+
         if (StringUtils.isNotBlank(url)){
-            String baseUrl = "https://isure.stream.qqmusic.qq.com/";
             url = baseUrl +url;
         }else{
             if (!brType.getValue().equalsIgnoreCase("HQ_M800")){
@@ -488,6 +511,7 @@ public class QQHander extends SearchHanderAbstract {
         stringStringHashMap.put("type", brType.getType());
         stringStringHashMap.put("bit", brType.getBit().toString());
         stringStringHashMap.put("ekey", ekey);
+        stringStringHashMap.put("vkey", vkey);
         return stringStringHashMap;
 
     }

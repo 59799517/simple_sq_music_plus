@@ -87,7 +87,7 @@ public class QQSearchEntity {
                     "comm": {
                       "cv": 13020508,
                       "v": 13020508,
-                      "ct": "11",
+                      "ct": "24",
                       "tmeAppID": "qqmusic",
                       "format": "json",
                       "inCharset": "utf-8",

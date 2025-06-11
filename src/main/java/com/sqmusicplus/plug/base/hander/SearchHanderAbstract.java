@@ -191,7 +191,7 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
         } catch (Exception e) {
             e.printStackTrace();
             log.debug("下载失败{}", downloadEntity.getMusicname());
-            throw new RuntimeException("下载失败:" + downloadEntity.getMusicname());
+            throw new RuntimeException(e.getMessage());
         }
     }
 
