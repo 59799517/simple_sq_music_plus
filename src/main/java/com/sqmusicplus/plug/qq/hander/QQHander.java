@@ -500,7 +500,12 @@ public class QQHander extends SearchHanderAbstract {
             url = baseUrl +url;
         }else{
             if (!brType.getValue().equalsIgnoreCase("HQ_M800")){
-                downloadEntity.setBrType(PlugBrType.QQ_MP3_320);
+                String plugName = brType.getPlugName();
+                if (plugName.equalsIgnoreCase("qqvipHander")){
+                    downloadEntity.setBrType(PlugBrType.QQVIP_MP3_320);
+                }else{
+                    downloadEntity.setBrType(PlugBrType.QQ_MP3_320);
+                }
                 DownloadInfo downloadInfo = MusicUtils.downloadEntitytoDownloadInfoTo(downloadEntity);
                 getDownloadInfoService().add(downloadInfo);
             }
