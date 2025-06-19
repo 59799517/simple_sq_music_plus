@@ -1,28 +1,30 @@
 package com.sqmusicplus.plug.qqvip;
 
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.ejlchina.data.Array;
 import com.ejlchina.data.Mapper;
 import com.sqmusicplus.base.entity.*;
+import com.sqmusicplus.base.service.SqConfigService;
+import com.sqmusicplus.config.GlobalStatic;
 import com.sqmusicplus.plug.base.PlugBrType;
+import com.sqmusicplus.plug.base.QQSongType;
 import com.sqmusicplus.plug.base.hander.SearchHanderAbstract;
 import com.sqmusicplus.plug.entity.*;
-import com.sqmusicplus.plug.qq.entity.CgiGetAlbumFavInfo;
-import com.sqmusicplus.plug.qq.entity.CgiGetPlaylistFavInfo;
-import com.sqmusicplus.plug.qq.entity.DissInfo;
-import com.sqmusicplus.plug.qq.entity.PlaylistBaseRead;
+import com.sqmusicplus.plug.qq.entity.*;
 import com.sqmusicplus.plug.qq.entity.getfollowsingerlist.GetFollowSingerList;
 import com.sqmusicplus.plug.qq.hander.QQHander;
+import com.sqmusicplus.plug.qq.util.QQMusicUtil;
 import com.sqmusicplus.plug.qqvip.config.QQVipConfig;
 import com.sqmusicplus.plug.qqvip.entity.QQVipSearchEntity;
 import com.sqmusicplus.utils.DownloadUtils;
+import com.sqmusicplus.utils.MusicUtils;
+import com.sqmusicplus.utils.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -107,7 +109,112 @@ public class QQvipHander extends SearchHanderAbstract {
 
     @Override
     public HashMap<String, String> getDownloadUrl(DownloadEntity downloadEntity) {
-        return qqHander.getDownloadUrl(downloadEntity);
+        String musicId = downloadEntity.getMusicid();
+        PlugBrType brType = downloadEntity.getBrType();
+        if (musicId.contains(",")){
+            musicId = musicId.split(",")[0];
+        }
+        QQSongType qqSongType=  QQSongType.FLAC;
+        String musickey ="";
+        String qq ="";
+        String loginType ="";
+        if (brType.getBit().intValue()==128){
+            qqSongType = QQSongType.MP3_128;
+        }else  if (brType.getBit().intValue()==320){
+            qqSongType = QQSongType.MP3_320;
+        }else if (brType.getValue().equals("flac")){
+            if(brType.getBit().intValue()==2000||brType.getBit().intValue()==3000||brType.getBit().intValue()==4000||brType.getBit().intValue()==5000){
+                qqSongType = QQSongType.FLAC;
+            }
+        }else  {
+            qqSongType = QQSongType.FLAC;
+        }
+
+        SqConfigService configService = getConfigService();
+        SqConfig sqConfig = configService.getOne(new QueryWrapper<SqConfig>().eq("config_key", GlobalStatic.QQ_LOGIN_COOKIE_KEY));
+        if (sqConfig!=null&& StringUtils.isNotBlank(sqConfig.getConfigValue())){
+            QQMusicCookieInfo qqMusicCookieInfo = JSONObject.parseObject(sqConfig.getConfigValue(), QQMusicCookieInfo.class);
+            if (qqMusicCookieInfo != null){
+                musickey= qqMusicCookieInfo.getMusickey();
+                qq= qqMusicCookieInfo.getMusicid();
+                loginType = qqMusicCookieInfo.getLoginType().toString();
+            }
+
+        }
+        if (StringUtils.isBlank(musickey)||StringUtils.isBlank(qq)||StringUtils.isBlank(loginType)||StringUtils.isBlank(musicId)){
+            return null;
+        }
+        String fileName = qqSongType.getPrefix()+musicId+musicId+"."+qqSongType.getSuffix();
+
+
+        String  url= "";
+        String ekey="";
+        String vkey = "";
+        String s = qqHander.getqqSearchEntity().downloadRequestParam(qq,musickey,loginType,fileName,musicId);
+        String searchUrl = qqHander.getConfig().getSearchUrl();
+
+        try {
+            String  sign =  QQMusicUtil.sign(s);
+            searchUrl= searchUrl+"?sign="+sign+"&signature="+sign;
+        } catch (Exception e) {
+        }
+
+
+        Mapper mapper = DownloadUtils.getHttp().sync(searchUrl).setBodyPara(s).post().getBody().toMapper();
+
+        Mapper mapper1 = mapper.getMapper("music.vkey.GetVkey.UrlGetVkey");
+        long code = mapper1.getLong("code");
+        if (code != 0) {
+            return null;
+        }
+        Array array = mapper1.getMapper("data").getArray("midurlinfo");
+        for (int i = 0; i < array.size(); i++) {
+            Mapper mapper2 = array.getMapper(i);
+            url = mapper2.getString("wifiurl");
+            if (StringUtils.isBlank(url)){
+                url= mapper2.getString("purl");
+            }
+            //有此参数则需要解密
+            ekey = mapper2.getString("ekey");
+            vkey = mapper2.getString("vkey");
+        }
+
+        String baseUrl = "https://isure.stream.qqmusic.qq.com/";
+        Array sipArray = mapper1.getMapper("data").getArray("sip");
+        ArrayList<String> baseurls = new ArrayList<>();
+        if (sipArray!=null&&sipArray.size()>0){
+            //循环找出sip
+            for (int i = 0; i < sipArray.size(); i++) {
+                //找出全部的
+                if (StringUtils.isNotBlank(sipArray.getString(i))){
+                    baseurls.add(sipArray.getString(i));
+                }
+            }
+        }
+        if (sipArray!=null&&sipArray.size()>0){
+            //随机从baseurls抽取一个
+            baseUrl = baseurls.get(new Random().nextInt(baseurls.size()));
+        }
+
+
+        if (StringUtils.isNotBlank(url)){
+            url = baseUrl +url;
+        }else{
+            if (brType.getBit().intValue()!=320){
+                downloadEntity.setBrType(PlugBrType.QQVIP_MP3_320);
+                DownloadInfo downloadInfo = MusicUtils.downloadEntitytoDownloadInfoTo(downloadEntity);
+                getDownloadInfoService().add(downloadInfo);
+            }
+            return null;
+        }
+        HashMap<String, String> stringStringHashMap = new HashMap<>();
+        stringStringHashMap.put("url", url);
+        stringStringHashMap.put("type", brType.getType());
+        stringStringHashMap.put("bit", brType.getBit().toString());
+        stringStringHashMap.put("ekey", ekey);
+        stringStringHashMap.put("vkey", vkey);
+        return stringStringHashMap;
+
     }
 
     @Override
