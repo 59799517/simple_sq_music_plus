@@ -56,6 +56,17 @@ jobs:
           docker build . --file Dockerfile_jar --tag registry.cn-hangzhou.aliyuncs.com/sqdockler/sq_docker:v$APP_VERSION
           # 推送镜像到镜像仓库
           docker push registry.cn-hangzhou.aliyuncs.com/sqdockler/sq_docker:v$APP_VERSION  
+      -  name: Push to GitHub Packages
+         run: |
+           docker version
+            # 登录 GitHub Packages
+           docker login ghcr.io --username=${{ github.actor }} --password=${{ secrets.GITHUB_TOKEN }}
+           
+           # 构建 Docker 镜像
+           docker build . --file Dockerfile_jar --tag ghcr.io/${{ github.actor }}/simple_sq_musuc_plus:v$APP_VERSION
+           
+           # 推送镜像到 GitHub Packages
+           docker push ghcr.io/${{ github.actor }}/simple_sq_musuc_plus:v$APP_VERSION
 
   release:
     needs: build
