@@ -1,93 +1,71 @@
 version: '3.8'
 
-x-common-env: &common-env
-  # 对外暴露服务端口
-  PORT: "8099"
-  # 下载文件地址
-  MUSIC_PATH: /music
-  # 数据库数据卷 数据库存储地址下方自行修改 mysql 的 volumes
-
-  # --------一下配置可以不用管------------
-  # 数据库IP
-  DB_IP: "172.20.0.12"
-  # 数据库端口(对外暴露)
-  DB_PORT: "3316"
-  # 本项目使用的数据库
-  DB_NAME: sqmusic
-  # 数据库登录账号
-  DB_USERNAME: root
-  # 数据库登录密码
-  DB_PASSWORD: sqmusic123root456@@@
-  # 对内QQapi IP地址
-  QQ_IP: "172.20.0.10"
-  # 对外 QQapi 端口
-  QQ_PORT: "8007"
-  # 对内酷狗api IP地址
-  KG_IP: "172.20.0.11"
-  # 对外酷狗api 端口
-  KG_PORT: "3000"
-  # --------------------请勿修改-----------------
-  QQ_URL: http://${QQ_IP}:${QQ_PORT}
-  KG_URL: http://${KG_IP}:${KG_PORT}
-
 services:
-  qqmusicapi1:
-    build:
-      context: https://gitclone.com/github.com/jsososo/QQMusicApi.git#master:.
-    ports:
-      - "${QQ_PORT}:80"
-    networks:
-      musicbridge:
-        ipv4_address: ${QQ_IP}
-
-  kugoumusicapi2:
-    build:
-      context: https://gitclone.com/github.com/MakcRe/KuGouMusicApi.git#main:.
-    ports:
-      - "${KG_PORT}:3000"
-    environment:
-      platform: lite
-    networks:
-      musicbridge:
-        ipv4_address: ${KG_IP}
-
-  mysql3:
+  mysql:
     image: mysql:5.7
+    container_name: sqmusic-mysql
     environment:
-      <<: *common-env
-      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-sqmusic123root456@@@}
+      MYSQL_USER: ${DB_USERNAME:-root}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-sqmusic123root456@@@}
     ports:
-      - "${DB_PORT}:3306"
+      - "${DB_PORT:-3316}:3306"  # 注意：移除多余的 } 符号
     volumes:
-      - /volume1/nas_3t/code/test/var/lib/mysql:/var/lib/mysql  # 使用绑定挂载
-    command: >
-      bash -c 'if ! mysql -u root -p${DB_PASSWORD} -e "USE ${DB_NAME}"; then
-        mysql -u root -p${DB_PASSWORD} -e "CREATE DATABASE ${DB_NAME};";
-      fi && exec mysqld'
-    networks:
-      musicbridge:
-        ipv4_address: ${DB_IP}
+      - mysql_data:/var/lib/mysql
+    command: >      
+      bash -c "
+      set -e
+      docker-entrypoint.sh mysqld &
 
-  sqmusicapi4:
+      until mysqladmin -u root -p$${MYSQL_ROOT_PASSWORD} ping --silent; do
+        echo 'Waiting for MySQL to start...'
+        sleep 2
+      done
+
+      mysql -u root -p$${MYSQL_ROOT_PASSWORD} -e 'CREATE DATABASE IF NOT EXISTS sqmusic;'
+
+      wait
+      "
+    networks:
+      - musicnet
+    restart: unless-stopped
+
+  app:
     build:
       context: .
       dockerfile: Dockerfile
+    container_name: sqmusic-app
     ports:
-      - "${PORT}:8099"
+      - "${PORT:-8099}:8099"
     environment:
-      <<: *common-env
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: sqmusic
+      DB_USERNAME: ${DB_USERNAME:-root}
+      DB_PASSWORD: ${DB_PASSWORD:-sqmusic123root456@@@}
+      MUSIC_PATH: ${MUSIC_PATH:-/music}
+    depends_on:
+      - mysql
     networks:
-      musicbridge:
-        ipv4_address: 172.20.0.13
+      - musicnet
+    restart: unless-stopped
+
+  kugou:
+    image: kugou:latest
+    container_name: sqmusic-kugou
+    build:
+      context: https://github.com/MakcRe/KuGouMusicApi.git#main
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    networks:
+      - musicnet
+    restart: unless-stopped
 
 networks:
-  musicbridge:
+  musicnet:
     driver: bridge
-    ipam:
-      config:
-        - subnet: 172.20.0.0/16
 
-
-#volumes:
-#  mysql_data:
+volumes:
+  mysql_data:
 

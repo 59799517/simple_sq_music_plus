@@ -18,7 +18,7 @@ kw:
 
 
   #  歌曲详情以及歌词
-  SongInfoUrl: http://m.kuwo.cn/newh5/singles/songinfoandlrc?musicId=#{musicId}
+  SongInfoUrl: https://m.kuwo.cn/newh5/singles/songinfoandlrc?musicId=#{musicId}&httpsStatus=1&reqId=969ba290-4b49-11eb-8db2-ebd372233623
   #  歌曲封面前缀
   SongCoverUrl: https://img3.kuwo.cn/star/albumcover/
   # 歌手封面前缀
