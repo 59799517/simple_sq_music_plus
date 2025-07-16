@@ -429,15 +429,23 @@ public class NeteaseHander extends SearchHanderAbstract {
 
             }
             JSONObject jsonObject2 = neteaseCloudMusicInfo.songDownloadUrl(jsonObject1);
-            return null;
+            String string = null;
+            try {
+                string = jsonObject2.getJSONObject("data").getString("url");
+            } catch (Exception e) {
+                return null;
+            }
+            if (string != null){
+                DownloadUrlResult downloadUrlResult = new DownloadUrlResult();
+                downloadUrlResult.setUrl(string);
+                downloadUrlResult.setPlugBrTypeId(brType);
+                downloadUrlResult.setBit(plugBrType.getBit().toString());
+                return downloadUrlResult;
+            }else{
+                return null;
+            }
 
         }
-
-
-
-
-
-
     }
 
     @Override

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sqmusicplus.v3.base.mapper.SqSyncMapper">
+  <resultMap id="BaseResultMap" type="com.sqmusicplus.v3.base.entity.SqSync">
+    <!--@mbg.generated-->
+    <!--@Table sq_sync-->
+    <id column="id" jdbcType="INTEGER" property="id" />
+    <result column="plug_name" jdbcType="VARCHAR" property="plugName" />
+    <result column="music_id" jdbcType="VARCHAR" property="musicId" />
+    <result column="music_info" jdbcType="LONGVARCHAR" property="musicInfo" />
+    <result column="download_id" jdbcType="INTEGER" property="downloadId" />
+    <result column="play_list_name" jdbcType="VARCHAR" property="playListName" />
+    <result column="play_list_sha1" jdbcType="VARCHAR" property="playListSha1" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    <!--@mbg.generated-->
+    id, plug_name, music_id, music_info, download_id, play_list_name, play_list_sha1
+  </sql>
+</mapper>
