@@ -21,7 +21,7 @@ public class KgSignInTask {
 
     @Autowired
     private KGHander kgHander;
-    @Scheduled(cron="1 0 0,3,6,9,12,15,18,21 * * ? ")
+    @Scheduled(cron="1 0 3,6,9,12,15,18,21 * * ? ")
     public void excuteSignIn() {
         boolean login = kgHander.isLogin();
         if (!login){
@@ -29,7 +29,5 @@ public class KgSignInTask {
             return;
         }
         kgHander.signIn();
-
-
     }
 }

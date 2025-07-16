@@ -1,0 +1,208 @@
+package com.sqmusicplus.v3.base.enums;
+
+/**
+ * @Classname SetConfigEnum
+ * @Description 设置配置类
+ * @Version 1.0.0
+ * @Date 2025/7/14 10:35
+ * @Created by SQ
+ */
+
+public enum SetConfigEnum {
+    /**
+     * 系统下载路径
+     */
+    SYSTEM_DOWNLOAD_PATH("system.download.path","音乐下载路径","system"),
+    /**
+     * 是否忽略伴奏
+     */
+    SYSTEM_IGNORE_ACCOMPANIMENT("system.ignore.accompaniment","是否忽略伴奏片段等格式","system"),
+    /**
+     * 伴奏正则表达式
+     */
+    SYSTEM_IGNORE_ACCOMPANIMENT_EXPRESSION("system.ignore.accompaniment.expression","伴奏表达式多个|（管道符）分割","system"),
+    /**
+     * 文件存在时不下载
+     */
+    SYSTEM_FILE_EXIST_NOT_DOWNLOAD("system.file.exist.not.download","文件存在时不下载","system"),
+    /**
+     * 同时下载的数量
+     */
+    SYSTEM_DOWNLOAD_NUM("system.download.num","同时下载的数量","system"),
+    /**
+     * 登录账号
+     */
+    SYSTEM_LOGIN_ACCOUNT("system.login.account","登录账号","system"),
+    /**
+     * 登录密码
+     */
+    SYSTEM_LOGIN_PASSWORD("system.login.password","登录密码","system"),
+    /**
+     * 开启降级下载
+     */
+    SYSTEM_DOWNLOAD_DEGRADE("system.download.degrade","开启降级下载","system"),
+    /**
+     * 排除的歌单名称多个|（管道符）分割
+     */
+    SYSTEM_SYNC_PLAYLIST_EXCLUDE("system.sync.playlist.exclude","排除的歌单名称多个|（管道符）分割","system"),
+    /**
+     * QQ音乐排除的专辑名称多个|（管道符）分割
+     */
+    SYSTEM_SYNC_ALBUM_EXCLUDE("system.sync.album.exclude","排除的专辑名称多个|（管道符）分割","system"),
+    /**
+     * QQ音乐排除的歌手名称多个|（管道符）分割
+     */
+    SYSTEM_SYNC_ARTISTS_EXCLUDE("system.sync.artists.exclude","排除的歌手名称多个|（管道符）分割","system"),
+
+    /**
+     * 显示播放连接（下载链接）
+     */
+    SYSTEM_SHOW_PLAY_URL("system.show.play.url","是否显示播放连接（下载链接）","system"),
+
+//    ------------QQ插件配置-----------------
+
+    /**
+     * 是否开启QQvip音乐插件
+     */
+    PLUG_QQVIP_OPEN("plug.qqvip.open","是否开启QQ音乐插件","plug"),
+    /**
+     * 是否开启QQ音乐自动刷新登录信息
+     */
+    PLUG_QQVIP_AUTO_REFRESH_LOGIN("plug.qqvip.auto.refresh.login","是否开启QQ音乐自动刷新登录信息","plug"),
+    /**
+     * 是否开启qq音乐自动下载我喜欢音乐内容
+     */
+    PLUG_QQVIP_SYNC_MY_LIKE_MUSIC("plug.qqvip.sync.my.like.music","是否开启QQ音乐自动下载我喜欢音乐内容","plug"),
+    /**
+     * 是否开启QQ音乐自动下载我喜欢专辑内容
+     */
+    PLUG_QQVIP_SYNC_MY_LIKE_ALBUM("plug.qqvip.sync.my.like.album","是否开启QQ音乐自动下载我喜欢专辑内容","plug"),
+    /**
+     * 是否开启QQ音乐自动下载我喜欢歌手内容
+     */
+    PLUG_QQVIP_SYNC_MY_LIKE_ARTISTS("plug.qqvip.sync.my.like.artists","是否开启QQ音乐自动下载我喜欢歌手内容","plug"),
+    /**
+     * 是否开启QQ音乐自动下载我喜欢歌单内容
+     */
+    PLUG_QQVIP_SYNC_MY_LIKE_PLAYLIST("plug.qqvip.sync.my.like.playlist","是否开启QQ音乐自动下载我喜欢歌单内容","plug"),
+
+    /**
+     * QQ音乐cookie
+     */
+    PLUG_QQVIP_COOKIE("plug.qqvip.cookie","QQ音乐cookie","plug"),
+    /**
+     * QQ音乐qrcode
+     */
+    PLUG_QQVIP_QRCODE("plug.qqvip.qrcode","QQ音乐qrcode","plug"),
+
+
+
+
+//    -----------------网易云音乐插件配置-----------------
+    /**
+     * 是否开启网易云音乐插件
+     */
+    PLUG_NETEASE_OPEN("plug.netease.open","是否开启网易云音乐插件","plug"),
+
+    /**
+     * 网易云音乐API地址
+     */
+    PLUG_NETEASE_BASEURL("plug.netease.baseurl","网易云音乐API地址","plug"),
+
+    /**
+     * 网易云音乐用户信息
+     */
+    PLUG_NETEASE_COOKIEURL("plug.netease.cookieurl","网易云音乐API地址url","plug"),
+
+    /**
+     * 网易云音乐用户信息
+     */
+    PLUG_NETEASE_COOKIE("plug.netease.cookie","网易云音乐用户信息","plug"),
+    /**
+     * 是否使用扩展下载
+     */
+    PLUG_NETEASE_EXTEND_DOWNLOAD("plug.netease.extend.download","是否使用扩展下载","plug"),
+    /**
+     * 网易云扩展下载地址
+     */
+    PLUG_NETEASE_EXTEND_DOWNLOAD_URL("plug.netease.extend.DOWNLOAD.url","网易云音乐扩展下载地址","plug"),
+
+
+//    ------------------酷狗概念音乐插件配置-----------------
+    /**
+     * 是否开启酷狗念音乐插件
+     */
+    PLUG_KG_OPEN("plug.kg.open","是否开启酷狗插件","plug"),
+    /**
+     * 酷狗概念API地址
+     */
+    PLUG_KG_BASEURL("plug.kg.baseurl","酷狗概念API地址","plug"),
+
+    /**
+     * 酷狗用户信息
+     */
+    PLUG_KG_USER_INFO("plug.kg.user.info","酷狗用户信息","plug"),
+    /**
+     * 酷狗二维码信息
+     */
+    PLUG_KG_QRCODE_INFO("plug.kg.qrcode.code","酷狗二维码信息","plug"),
+
+    /**
+     * 酷狗微信二维码信息
+     */
+    PLUG_KG_QRCODE_WX_CODE("plug.kg.qrcode.wx.code","酷狗微信二维码信息","plug"),
+    /**
+     * 是否开启酷狗念音乐自动下载我收藏的歌单内容
+     */
+    PLUG_KG_SYNC_MY_COLLECT_PLAYLIST("plug.kg.sync.my.collect.playlist","是否开启酷狗念音乐自动下载我收藏的歌单内容","plug"),
+    /**
+     * 是否开启酷狗念音乐自动签到
+     */
+    PLUG_KG_SIGN_OPEN("plug.kg.sign.open","是否开启酷狗念音乐自动签到","plug"),
+    /**
+     * 酷狗最后一次自动签到时间
+     */
+    PLUG_KG_SIGN_LAST_TIME("plug.kg.sign.last.time","酷狗最后一次自动签到时间","plug"),
+
+//    ------------------酷我插件配置-----------------
+    /**
+     * 是否开启酷我插件
+     */
+    PLUG_KW_OPEN("plug.kw.open","是否开启酷我插件","plug"),
+
+
+// --------------------------freemp3------------------
+    PLUG_FREEMP3_OPEN("plug.freemp3.open","是否开启freemp3插件","plug");
+
+
+    /**
+     * 配置的key
+     */
+    private String key;
+    /**
+     * 配值描述
+     */
+    private String describe;
+    /**
+     * 配置类型
+     */
+    private String type;
+
+    SetConfigEnum(String key, String describe, String type) {
+        this.key = key;
+        this.describe = describe;
+        this.type = type;
+    }
+
+    public String getKey() {
+        return key;
+    }
+
+    public String getDescribe() {
+        return describe;
+    }
+
+    public String getType() {
+        return type;
+    }
+}

@@ -35,7 +35,7 @@ spring:
   jackson:
     default-property-inclusion: non_null
   profiles:
-    active: plug,qq,netease,qqvip,kg
+    active: kw,mg,qq,netease,kg
   mvc:
     static-path-pattern: /**
   web:
@@ -87,6 +87,6 @@ sa-token:
   is-log: false
   is-print: false
 
-version: 2.15.22
+version: 3.0.0
 
 

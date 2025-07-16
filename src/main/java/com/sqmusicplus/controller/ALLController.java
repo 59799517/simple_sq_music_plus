@@ -8,19 +8,15 @@ import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.sqmusicplus.base.entity.*;
 import com.sqmusicplus.base.entity.vo.*;
-import com.sqmusicplus.base.service.DownloadInfoService;
-import com.sqmusicplus.config.AjaxResult;
+import com.sqmusicplus.v3.base.service.DownloadInfoService;
+import com.sqmusicplus.v3.config.AjaxResult;
 import com.sqmusicplus.parser.TextMusicPlayListParser;
 import com.sqmusicplus.parser.UrlMusicPlayListParser;
-import com.sqmusicplus.plug.base.PlugBrType;
+import com.sqmusicplus.v3.base.enums.PlugBrType;
 import com.sqmusicplus.plug.base.hander.SearchHanderAbstract;
 import com.sqmusicplus.plug.entity.*;
 import com.sqmusicplus.plug.freemp3.hander.FreeMp3Hander;
-import com.sqmusicplus.plug.kw.hander.NKwSearchHander;
-import com.sqmusicplus.plug.mg.hander.MgHander;
-import com.sqmusicplus.plug.netease.hander.NeteaseHander;
-import com.sqmusicplus.plug.qq.hander.QQHander;
-import com.sqmusicplus.plug.utils.TypeUtils;
+import com.sqmusicplus.v3.utils.TypeUtils;
 import com.sqmusicplus.base.service.SqConfigService;
 import com.sqmusicplus.utils.*;
 import lombok.extern.slf4j.Slf4j;
@@ -32,11 +28,8 @@ import org.springframework.web.bind.annotation.*;
 
 
 import javax.validation.Valid;
-import javax.validation.constraints.NotEmpty;
 import java.io.IOException;
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Created with IntelliJ IDEA.

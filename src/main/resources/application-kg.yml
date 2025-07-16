@@ -23,7 +23,13 @@ kg:
   albumSongUrl: /album/songs
 #  获取下载链接
   downloadUrl: /song/url
-
+#  用户歌单
+  userPlaylist: /user/playlist
+#  歌单详情
+  playlistTrackAll: /playlist/track/all
+##  获取用户关注歌手下个版本在说
+#  userFollow: /user/follows
+#
 
 
 #  登录二维码（酷狗的）
@@ -38,12 +44,14 @@ kg:
 #  登录微信二维码（微信的）
 #  ①获取微信二维码
   wxQrCodeUrl: /login/wx/create
-#  ②检测扫码状态
+#  ②微信检测扫码状态
   wxQrCodeCheckUrl: /login/wx/check
-#  返回token获取登录信息
+#  微信返回token获取登录信息
   wxQropenplatUrl: /login/openplat
 
-#  签到
-  signUrl: /youth/vip
+#  签到（领取一天）
+  signUrl: /youth/day/vip
+#  签到状态
+  signInfoUrl: /youth/union/vip
 
 

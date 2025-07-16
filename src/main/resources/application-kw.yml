@@ -1,0 +1,36 @@
+kw:
+  id: kw-v1
+  #  名称
+  name: 酷我
+  #  不需要登录
+  islogin: false
+  #  搜索歌曲
+  SearchUrl: http://search.kuwo.cn/r.s?client=kt&encoding=utf8&rformat=json&mobi=1&vipver=1&pn=#{pn}&rn=#{pagesize}&correct=1&all=#{searchKey}&ft=#{searchType}
+  #  榜单
+  BangMenuUrl: http://m.kuwo.cn/newh5app/api/mobile/v1/typelist/rank
+  #  榜单详情
+  BangInfoUrl: http://kbangserver.kuwo.cn/ksong.s?from=pc&fmt=json&pn=#{pn}&rn=#{pagesize}&type=bang&data=content&id=#{BangMenuId}&show_copyright_off=0&pcmp4=1&isbang=1
+  #   下载
+  downloadurl: http://nmobi.kuwo.cn/mobi.s?f=kuwo&source=jiakong&q=
+  #返回json的下载链接
+  downloadurl2: http://mobi.kuwo.cn/mobi.s?f=web&source=jiakong&type=convert_url_with_sign&rid=#{musicId}&br=#{brvalue}
+
+  #  歌曲详情以及歌词
+  SongInfoUrl: https://m.kuwo.cn/newh5/singles/songinfoandlrc?musicId=#{musicId}&httpsStatus=1&reqId=969ba290-4b49-11eb-8db2-ebd372233623
+  #  歌曲封面前缀
+  SongCoverUrl: https://img3.kuwo.cn/star/albumcover/
+  # 歌手封面前缀
+  Searheads: https://star.kuwo.cn/star/starheads/
+  # 歌手信息
+  ArtistInfoUrl: https://search.kuwo.cn/r.s?stype=artistinfo&encoding=utf8&artistid=#{artistid}&pcjson=1;
+  # 专辑列表
+  AlbumListUrl: https://search.kuwo.cn/r.s?pn=0&rn=10000&artistid=#{artistid}&stype=albumlist&sortby=1&alflac=1&show_copyright_off=1&pcmp4=1&encoding=utf8&plat=pc&thost=search.kuwo.cn&vipver=MUSIC_9.1.1.2_BCS2&devid=38668888&pcjson=1
+  # 专辑信息
+  AlbumInfoUrl: https://search.kuwo.cn/r.s?pn=#{pn}&rn=#{pagesize}&albumid=#{albumid}&stype=albuminfo&show_copyright_off=1&alflac=1&pcmp4=1&encoding=utf8&plat=pc&vipver=MUSIC_9.1.1.2_BCS2&devid=38668888&newver=1&pcjson=1
+  #专辑列表
+  ArtistAlbumListUrl: https://search.kuwo.cn/r.s?pn=0&rn=10000&artistid=#{artistid}&stype=albumlist&sortby=1&alflac=1&show_copyright_off=1&pcmp4=1&encoding=utf8&plat=pc&thost=search.kuwo.cn&vipver=MUSIC_9.1.1.2_BCS2&devid=38668888&pcjson=1
+  #  歌手单曲列表（分页）
+  ArtistSongListUrl: https://search.kuwo.cn/r.s?pn=#{pn}&rn=#{pagesize}&artistid=#{artistid}&stype=artist2music&sortby=0&alflac=1&show_copyright_off=1&pcmp4=1&encoding=utf8&plat=pc&thost=search.kuwo.cn&vipver=MUSIC_9.1.1.2_BCS2&devid=38668888&newver=1&pcjson=1
+  #歌单详情
+  PlayListInfo: http://nplserver.kuwo.cn/pl.svc?op=getlistinfo&pid=#{id}&pn=#{pn}&rn=#{pagesize}&encode=utf8&keyset=pl2012&vipver=MUSIC_9.1.1.2_BCS2&newver=1
+
