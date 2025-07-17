@@ -200,11 +200,11 @@ public class QQvipHander extends SearchHanderAbstract {
         if (StringUtils.isNotBlank(url)){
             url = baseUrl +url;
         }else{
-            if (brType.getBit().intValue()!=320){
-                downloadEntity.setBrType(PlugBrType.QQVIP_MP3_320);
-                DownloadInfo downloadInfo = MusicUtils.downloadEntitytoDownloadInfoTo(downloadEntity);
-                getDownloadInfoService().add(downloadInfo);
-            }
+            // if (brType.getBit().intValue()!=320){
+            //     downloadEntity.setBrType(PlugBrType.QQVIP_MP3_320);
+            //     DownloadInfo downloadInfo = MusicUtils.downloadEntitytoDownloadInfoTo(downloadEntity);
+            //     getDownloadInfoService().add(downloadInfo);
+            // }
             return null;
         }
         HashMap<String, String> stringStringHashMap = new HashMap<>();
