@@ -16,8 +16,7 @@ import java.util.stream.Collectors;
  * @Created by SQ
  */
 @Component("textParser")
-public class TextMusicPlayListParser extends TextParser {
-    @Override
+public class TextMusicPlayListParser {
     public List<ParserEntity> parser(String msg) throws IOException {
         String[] split = msg.split("\n");
         return Arrays.stream(split).map(m -> {

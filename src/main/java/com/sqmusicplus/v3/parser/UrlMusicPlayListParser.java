@@ -37,7 +37,7 @@ import java.util.*;
  */
 @Component("urlParser")
 @Slf4j
-public class UrlMusicPlayListParser extends URLParser {
+public class UrlMusicPlayListParser {
 
     @Autowired
     QQvipHander qqvipHander;
@@ -54,7 +54,6 @@ public class UrlMusicPlayListParser extends URLParser {
     private DownloadInfoService downloadInfoService;
 
 
-    @Override
     public List<Music> parser(DownlaodParserUrl downlaodParserUrl) throws IOException {
         String url = downlaodParserUrl.getUrl();
         //找出url所属的平台
