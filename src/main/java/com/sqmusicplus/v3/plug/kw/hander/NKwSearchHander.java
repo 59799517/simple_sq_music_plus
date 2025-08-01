@@ -2,11 +2,10 @@ package com.sqmusicplus.v3.plug.kw.hander;
 
 import cn.hutool.core.collection.ListUtil;
 import com.alibaba.fastjson.JSONObject;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.sqmusicplus.v3.base.entity.DownloadInfo;
-import com.sqmusicplus.v3.base.entity.vo.Album;
-import com.sqmusicplus.v3.base.entity.vo.Artists;
-import com.sqmusicplus.v3.base.entity.vo.Music;
+import com.sqmusicplus.v3.plug.entity.Album;
+import com.sqmusicplus.v3.plug.entity.Artists;
+import com.sqmusicplus.v3.plug.entity.Music;
 import com.sqmusicplus.v3.base.enums.PlugBrType;
 import com.sqmusicplus.v3.download.vo.DownloadUrlResult;
 import com.sqmusicplus.v3.plug.base.hander.SearchHanderAbstract;
@@ -24,9 +23,7 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 /**
@@ -58,7 +55,10 @@ public class NKwSearchHander extends SearchHanderAbstract {
                 .replaceAll("#\\{searchType}", KwSearchType.MUSIC.getValue());
         SearchMusicResult searchMusicResult = DownloadUtils.get(s, SearchMusicResult.class);
         ArrayList<PlugSearchMusicResult> plugSearchMusicResults = new ArrayList<>();
+        ArrayList<PlugBrType> brTypes = new ArrayList<>();
         searchMusicResult.getAbslist().forEach(e -> {
+                    String nMinfo = e.getNMinfo();
+                    List<PlugBrType> plugBrTypes = NMinfoToPlugBrType(nMinfo);
                     String duration = "0";
                     try {
                         duration = e.getDuration();
@@ -75,8 +75,9 @@ public class NKwSearchHander extends SearchHanderAbstract {
                                     .setArtistName(ListUtil.of(e.getArtist().split("&")))
                                     .setArtistids(ListUtil.of(e.getArtistid()))
                                     .setId(e.getMusicrid().replaceAll("MUSIC_",""))
-                                    .setSearchType(getPlugName())
+                                    .setPlugName(getPlugName())
                                     .setDuration(duration)
+                                    .setBrTypes(plugBrTypes)
                                     .setDataInfo(JSONObject.parseObject(JSONObject.toJSONString(e)))
                                     .setName(e.getName()).setPic(getConfig().getSongCoverUrl() + e.getWebAlbumpicShort())
                     );
@@ -85,11 +86,11 @@ public class NKwSearchHander extends SearchHanderAbstract {
         PlugSearchResult<PlugSearchMusicResult> plugSearchResult = new PlugSearchResult<>();
         plugSearchResult.setSearchIndex(searchKeyData.getPageIndex())
                 .setSearchSize(searchKeyData.getPageSize())
-                .setSearchType(getPlugName())
+                .setPlugName(getPlugName())
                 .setSearchTotal(searchMusicResult.getTotal())
                 .setSearchKeyWork(searchKeyData.getSearchkey())
                 .setRecords(plugSearchMusicResults);
-        plugSearchResult.setSearchType(getPlugName());
+        plugSearchResult.setPlugName(getPlugName());
         return plugSearchResult;
     }
 
@@ -104,7 +105,7 @@ public class NKwSearchHander extends SearchHanderAbstract {
         searchArtistResult.getAbslist().forEach(e -> plugSearchArtistResults.add(
                 new PlugSearchArtistResult().setArtistName(e.getArtist())
                 .setArtistid(e.getArtistid())
-                .setSearchType(getPlugName())
+                .setPlugName(getPlugName())
                 .setPic(e.getHtsPicpath().replaceAll("/240", "/500"))
                         .setArtistName(e.getArtist())
                 .setDataInfo(JSONObject.parseObject(JSONObject.toJSONString(e)))
@@ -114,11 +115,11 @@ public class NKwSearchHander extends SearchHanderAbstract {
         PlugSearchResult<PlugSearchArtistResult> plugSearchResult = new PlugSearchResult<>();
         plugSearchResult.setSearchIndex(searchKeyData.getPageIndex())
                 .setSearchSize(searchKeyData.getPageSize())
-                .setSearchType(getPlugName())
+                .setPlugName(getPlugName())
                 .setSearchTotal(Integer.valueOf(searchArtistResult.getTotal()))
                 .setSearchKeyWork(searchKeyData.getSearchkey())
                 .setRecords(plugSearchArtistResults);
-        plugSearchResult.setSearchType(getPlugName());
+        plugSearchResult.setPlugName(getPlugName());
         return plugSearchResult;
     }
 
@@ -134,17 +135,17 @@ public class NKwSearchHander extends SearchHanderAbstract {
                 .setAlbumid(e.getAlbumid())
                 .setArtistName(e.getArtist())
                 .setArtistid(e.getArtistid())
-                .setSearchType(getPlugName())
+                .setPlugName(getPlugName())
                 .setDataInfo(JSONObject.parseObject(JSONObject.toJSONString(e)))
                 .setPic(config.getSongCoverUrl()+e.getPic())));
         PlugSearchResult<PlugSearchAlbumResult> plugSearchResult = new PlugSearchResult<>();
         plugSearchResult.setSearchIndex(searchKeyData.getPageIndex())
                 .setSearchSize(searchKeyData.getPageSize())
-                .setSearchType(getPlugName())
+                .setPlugName(getPlugName())
                 .setSearchTotal(Integer.valueOf(searchAlbumResult.getTotal()))
                 .setSearchKeyWork(searchKeyData.getSearchkey())
                 .setRecords(plugSearchAlbumResults);
-        plugSearchResult.setSearchType(getPlugName());
+        plugSearchResult.setPlugName(getPlugName());
         return plugSearchResult;
     }
 
@@ -185,6 +186,22 @@ public class NKwSearchHander extends SearchHanderAbstract {
                 .setAlbumId(albumId)
                 .setDataInfo(JSONObject.parseObject(JSONObject.toJSONString(data)))
                 .setArtistsIds(ListUtil.of(artistId));
+    }
+
+    @Override
+    public Music querySongById(DownloadInfo downloadInfo) {
+        String downloadBrTypes = downloadInfo.getDownloadBrTypes();
+        Music music = querySongById(downloadInfo.getDownloadMusicId());
+        String[] split = downloadBrTypes.split(",");
+        ArrayList<PlugBrType> brTypes = new ArrayList<>();
+        for (String s : split) {
+            PlugBrType plugBrType = PlugBrType.findById(s);
+            brTypes.add(plugBrType);
+        }
+        music.setBits(brTypes)
+                .setBit(brTypes.get(0).getBit());
+        return music;
+
     }
 
     @Override
@@ -268,6 +285,11 @@ public class NKwSearchHander extends SearchHanderAbstract {
             String url = (config.getSongCoverUrl() + abslistDTO.getWebAlbumpicShort()).replaceAll("/120", "/500");
 
             String duration = abslistDTO.getDuration();
+            String nMinfo = abslistDTO.getNMinfo();
+            List<PlugBrType> plugBrTypes = NMinfoToPlugBrType(nMinfo);
+//
+//            NMinfoToPlugBrType
+
             return  new Music()
                     .setId(abslistDTO.getId())
                     .setMusicImage(url)
@@ -276,6 +298,7 @@ public class NKwSearchHander extends SearchHanderAbstract {
                     .setMusicName(abslistDTO.getName())
                     .setMusicDuration(Long.parseLong(duration))
                     .setAlbumId(albumId)
+                    .setBits(plugBrTypes)
                     .setDataInfo(JSONObject.parseObject(JSONObject.toJSONString(abslistDTO)))
                     .setArtistsIds(ListUtil.of(abslistDTO.getArtistid()));
 
@@ -308,7 +331,19 @@ public class NKwSearchHander extends SearchHanderAbstract {
     @Deprecated
     @Override
     public String queryLyric(String SongId) {
-        return null;
+        String searchUrl = config.getSongInfoUrl().replaceAll("#\\{musicId}", SongId);
+        MusicInfoResult musicInfoResult = DownloadUtils.get(searchUrl, MusicInfoResult.class);
+        MusicInfoResult.DataDTO data = musicInfoResult.getData();
+        MusicInfoResult.DataDTO.SonginfoDTO songinfo = data.getSonginfo();
+        String album = songinfo.getAlbum();
+        String artist = songinfo.getArtist();
+        String songName = songinfo.getSongName();
+        List<MusicInfoResult.DataDTO.LrclistDTO> lrclist = data.getLrclist();
+        String Lrc = null;
+        if (lrclist != null && lrclist.size() > 0) {
+            Lrc = LrcUtils.krcTolrc(lrclist, album, artist, songName);
+        }
+        return Lrc;
     }
 
     @Override
@@ -345,12 +380,15 @@ public class NKwSearchHander extends SearchHanderAbstract {
         ArrayList<Music> music = new ArrayList<>();
         musiclist.forEach(e -> {
             String duration = e.getDuration();
+            String nMinfo = e.getNMinfo();
+            List<PlugBrType> plugBrTypes = NMinfoToPlugBrType(nMinfo);
             music.add(
                     new Music()
                      .setAlbumId(albumInfoResult.getAlbumid())
                     .setMusicAlbum(albumInfoResult.getName())
                     .setMusicName(e.getName())
                     .setId(e.getId())
+                    .setBits(plugBrTypes)
                     .setMusicDuration(Long.parseLong(duration))
                     .setArtistsIds(ListUtil.of(e.getArtistid()))
                     .setMusicArtists(ListUtil.of(e.getArtist()))
@@ -406,7 +444,7 @@ public class NKwSearchHander extends SearchHanderAbstract {
         List<Music> music = queryAllArtistSongList(artistId, 0);
         ArrayList<DownloadInfo> downloadInfos = new ArrayList<>();
         music.forEach(e->{
-            DownloadInfo downloadInfo = super.MusicToDownloadInfo(e, brType, false);
+            DownloadInfo downloadInfo = super.musicToDownloadInfo(e, brType, false);
             downloadInfos.add(downloadInfo);
 
         } );
@@ -422,10 +460,6 @@ public class NKwSearchHander extends SearchHanderAbstract {
         return downloadInfos;
     }
 
-    @Override
-    public Music musicInfoToMuisc(String musicInfo) {
-        return null;
-    }
 
 
 
@@ -547,6 +581,8 @@ public class NKwSearchHander extends SearchHanderAbstract {
             String aartist = artistSongListResult.getArtist().trim();
             String albumid = StringUtils.isEmpty(abslistDTO.getAlbumid())?"":abslistDTO.getAlbumid();
             String url = (config.getSongCoverUrl() + abslistDTO.getWebAlbumpicShort()).replaceAll("/120", "/500");
+            String nMinfo = abslistDTO.getNMinfo();
+            List<PlugBrType> plugBrTypes = NMinfoToPlugBrType(nMinfo);
             return new Music()
                     .setAlbumId(albumid)
                     .setMusicAlbum(album)
@@ -556,6 +592,7 @@ public class NKwSearchHander extends SearchHanderAbstract {
                     .setArtistsIds(ListUtil.of())
                     .setMusicArtists(ListUtil.of(aartist.split("&")))
                     .setMusicImage(url)
+                    .setBits(plugBrTypes)
                     .setDataInfo(JSONObject.parseObject(JSONObject.toJSONString(abslistDTO)));
         }).collect(Collectors.toList());
         if (getSize.intValue() - 1 == pn) {
@@ -585,6 +622,8 @@ public class NKwSearchHander extends SearchHanderAbstract {
             String duration = abslistDTO.getDuration();
             String albumid = StringUtils.isEmpty(abslistDTO.getAlbumid())?"":abslistDTO.getAlbumid();
 //            String url = (config.getSongCoverUrl() + abslistDTO.getWebAlbumpicShort()).replaceAll("/120", "/500");
+            String nMinfo = abslistDTO.getNMinfo();
+            List<PlugBrType> plugBrTypes = NMinfoToPlugBrType(nMinfo);
             return new Music()
                     .setAlbumId(albumid)
                     .setMusicAlbum(album)
@@ -592,6 +631,7 @@ public class NKwSearchHander extends SearchHanderAbstract {
                     .setId(abslistDTO.getId())
                     .setMusicDuration(Long.parseLong(duration))
                     .setArtistsIds(ListUtil.of())
+                    .setBits(plugBrTypes)
                     .setMusicArtists(ListUtil.of(aartist.split("&")))
 //                    .setMusicImage(url)
                     .setDataInfo(JSONObject.parseObject(JSONObject.toJSONString(abslistDTO)));
@@ -647,13 +687,15 @@ public class NKwSearchHander extends SearchHanderAbstract {
 
         musiclist.forEach(md -> {
             String duration = md.getDuration();
-
+            String nMinfo = md.getNMinfo();
+            List<PlugBrType> plugBrTypes = NMinfoToPlugBrType(nMinfo);
             Music music = new Music()
                     .setId(md.getId())
                     .setMusicImage(getConfig().getSearheads() + albumInfoResult.getPic().replaceAll("/120", "/500"))
                     .setMusicAlbum(albumInfoResult.getName())
                     .setMusicArtists(artists)
                     .setMusicName(md.getName())
+                    .setBits(plugBrTypes)
                     .setMusicDuration(Long.parseLong(duration))
                     .setAlbumId(albumInfoResult.getId())
                     .setDataInfo(JSONObject.parseObject(JSONObject.toJSONString(md)))
@@ -661,15 +703,36 @@ public class NKwSearchHander extends SearchHanderAbstract {
             if (isAudioBook) {
                 music.setMusicAlbum(albumName).setMusicArtists(artists);
             }
-            DownloadInfo downloadInfo = super.MusicToDownloadInfo(music, brType, isAudioBook);
+            DownloadInfo downloadInfo = super.musicToDownloadInfo(music, brType, isAudioBook);
             downloadEntities.add(downloadInfo);
-
-
-
-
         });
         return downloadEntities;
     }
 
+
+    public List<PlugBrType> NMinfoToPlugBrType(String nMinfo) {
+        ArrayList<PlugBrType> brTypes = new ArrayList<>();
+        if (StringUtils.isNotBlank(nMinfo)) {
+            String[] split = nMinfo.split(";");
+            for (String string : split) {
+                String[] split1 = string.split(",");
+                for (String s1 : split1) {
+                    String[] split2 = s1.split(":");
+                    if (split2.length > 1) {
+                        if ("bitrate".equals(split2[0])) {
+                            if (split2[1].equals("2000")) {
+                                brTypes.add(PlugBrType.KW_FLAC_2000);
+                            }else if (split2[1].equals("320")){
+                                brTypes.add(PlugBrType.KW_MP3_320);
+                            }else if (split2[1].equals("128")){
+                                brTypes.add(PlugBrType.KW_MP3_128);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+      return   brTypes.stream().distinct().collect(Collectors.toList());
+    }
 
 }

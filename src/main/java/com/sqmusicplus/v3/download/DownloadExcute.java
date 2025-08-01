@@ -3,14 +3,11 @@ package com.sqmusicplus.v3.download;
 import cn.hutool.core.util.ReflectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.sqmusicplus.base.entity.DownloadEntity;
-import com.sqmusicplus.base.entity.SqConfig;
-import com.sqmusicplus.base.service.SqConfigService;
-import com.sqmusicplus.plug.base.hander.SearchHander;
 import com.sqmusicplus.v3.base.entity.DownloadInfo;
 import com.sqmusicplus.v3.base.enums.SetConfigEnum;
 import com.sqmusicplus.v3.base.service.DownloadInfoService;
-import com.sqmusicplus.v3.utils.MusicUtils;
+import com.sqmusicplus.v3.config.SqConfigCache;
+import com.sqmusicplus.v3.plug.base.hander.SearchHander;
 import com.sqmusicplus.v3.utils.SpringContextUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,9 +31,6 @@ import java.util.List;
 @Lazy
 public class DownloadExcute {
 
-
-    @Autowired
-    private SqConfigService configService;
     @Autowired
     private DownloadInfoService downloadInfoService;
     @Autowired
@@ -55,11 +49,8 @@ public class DownloadExcute {
 
         List<DownloadInfo> records = null;
         if (waitsize>0) {
-            LambdaQueryWrapper<SqConfig> downloadSizeQueryWrapper = new LambdaQueryWrapper<>();
-            downloadSizeQueryWrapper.eq(SqConfig::getConfigKey, SetConfigEnum.SYSTEM_DOWNLOAD_NUM.getKey());
-            SqConfig init_download = configService.getOne(downloadSizeQueryWrapper);
-            String configValue = init_download.getConfigValue();
-            Long downloadsize = Long.valueOf(configValue);
+            String init_download = SqConfigCache.getSqConfigValue(SetConfigEnum.SYSTEM_DOWNLOAD_NUM);
+            Long downloadsize = Long.valueOf(init_download);
             LambdaQueryWrapper<DownloadInfo> downloadInfoQueryWrapper = new LambdaQueryWrapper<>();
             downloadInfoQueryWrapper.eq(DownloadInfo::getDownloadStatus, DownloadStatus.loading.value);
             long count = downloadInfoService.count(downloadInfoQueryWrapper);

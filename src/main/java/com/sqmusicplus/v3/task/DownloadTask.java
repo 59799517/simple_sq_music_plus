@@ -1,6 +1,6 @@
-package com.sqmusicplus.task;
+package com.sqmusicplus.v3.task;
 
-import com.sqmusicplus.download.DownloadExcute;
+import com.sqmusicplus.v3.download.DownloadExcute;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;

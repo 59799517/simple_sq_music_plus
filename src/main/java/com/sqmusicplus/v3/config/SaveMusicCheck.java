@@ -1,8 +1,8 @@
 package com.sqmusicplus.v3.config;
 
 import cn.hutool.core.util.ReflectUtil;
-import com.sqmusicplus.plug.base.hander.SearchHander;
 import com.sqmusicplus.v3.base.entity.DownloadInfo;
+import com.sqmusicplus.v3.plug.base.hander.SearchHander;
 import com.sqmusicplus.v3.utils.SpringContextUtil;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.Aspect;

@@ -3,20 +3,13 @@ package com.sqmusicplus.v3.plug.qq.hander;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.serializer.SimplePropertyPreFilter;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.sqmusicplus.v3.base.entity.DownloadInfo;
-import com.sqmusicplus.v3.base.entity.SqConfig;
-import com.sqmusicplus.v3.base.entity.vo.Album;
-import com.sqmusicplus.v3.base.entity.vo.Artists;
-import com.sqmusicplus.v3.base.entity.vo.Music;
-import com.sqmusicplus.v3.base.enums.DbBooleanConvert;
+import com.sqmusicplus.v3.plug.entity.Album;
+import com.sqmusicplus.v3.plug.entity.Artists;
+import com.sqmusicplus.v3.plug.entity.Music;
 import com.sqmusicplus.v3.base.enums.PlugBrType;
 import com.sqmusicplus.v3.base.enums.SetConfigEnum;
-import com.sqmusicplus.v3.base.service.SqConfigService;
-import com.sqmusicplus.v3.config.GlobalStatic;
 import com.sqmusicplus.v3.config.SqConfigCache;
-import com.sqmusicplus.v3.download.DownloadStatus;
 import com.sqmusicplus.v3.download.vo.DownloadUrlResult;
 import com.sqmusicplus.v3.plug.base.QQSongType;
 import com.sqmusicplus.v3.plug.base.hander.SearchHanderAbstract;
@@ -40,8 +33,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
 
 /**
  * @Classname QQHander
@@ -163,6 +154,11 @@ public class QQHander extends SearchHanderAbstract {
                 .sync();
         JSONObject jsonObject = JSONObject.parseObject(data);
         return getqqSearchEntity().songInfoToMusic(jsonObject, config);
+    }
+
+    @Override
+    public Music querySongById(DownloadInfo downloadInfo) {
+        return querySongById(downloadInfo.getDownloadMusicId());
     }
 
     @Override
@@ -336,7 +332,7 @@ public class QQHander extends SearchHanderAbstract {
             if (isAudioBook) {
                 md.setMusicAlbum(albumName).setMusicArtists(artists);
             }
-            DownloadInfo downloadInfo = super.MusicToDownloadInfo(md, brType, isAudioBook);
+            DownloadInfo downloadInfo = super.musicToDownloadInfo(md, brType, isAudioBook);
             downloadEntities.add(downloadInfo);
         });
         return downloadEntities;
@@ -395,11 +391,6 @@ public class QQHander extends SearchHanderAbstract {
         return downloadInfos;
     }
 
-    @Override
-    public Music musicInfoToMuisc(String musicInfo) {
-        return null;
-    }
-
 
     /**
      * 获取 qq登录二维码
@@ -411,15 +402,8 @@ public class QQHander extends SearchHanderAbstract {
         SimplePropertyPreFilter filter = new SimplePropertyPreFilter();
         filter.getExcludes().add("LoginType");
         String jsonString = JSONObject.toJSONString(qqLoginQr, filter);
-        SqConfigCache.removeCacheAndDBbSqConfig(SetConfigEnum.PLUG_QQVIP_QRCODE);
-        SqConfig sqConfig = new SqConfig();
-        sqConfig.setConfigKey(SetConfigEnum.PLUG_QQVIP_QRCODE.getKey());
-        sqConfig.setConfigValue(jsonString);
-        sqConfig.setConfigName("QQ登录二维码key");
-        sqConfig.setType("input");
-        sqConfig.setConfigShow("N");
+        SqConfigCache.updateConfigToDb(SetConfigEnum.PLUG_QQVIP_QRCODE,jsonString);
         //异步监听
-        SqConfigCache.addConfigToDb(sqConfig);
         syncCheckQrCodeStatus();
         return qqLoginQr;
     }
@@ -471,14 +455,7 @@ public class QQHander extends SearchHanderAbstract {
      * cookies保存数据库
      */
     public void saveCookie(QQMusicCookieInfo qqMusicCookieInfo) {
-        SqConfigCache.removeCacheAndDBbSqConfig(SetConfigEnum.PLUG_QQVIP_COOKIE);
-        SqConfig sqConfig = new SqConfig();
-        sqConfig.setConfigKey(SetConfigEnum.PLUG_QQVIP_COOKIE.getKey());
-        sqConfig.setConfigValue(JSONObject.toJSONString(qqMusicCookieInfo));
-        sqConfig.setConfigName("QQ登录Cookie请勿做任何操作");
-        sqConfig.setType("input");
-        sqConfig.setConfigShow("N");
-        SqConfigCache.addConfigToDb(sqConfig);
+        SqConfigCache.updateConfigToDb(SetConfigEnum.PLUG_QQVIP_COOKIE,JSONObject.toJSONString(qqMusicCookieInfo));
     }
 
 

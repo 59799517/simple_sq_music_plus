@@ -1,8 +1,8 @@
-#DB_IP: 100.122.250.55
-#DB_PORT: 7006
-#DB_NAME: testsqmusic
-#DB_USERNAME: root
-#DB_PASSWORD: 11111
+DB_IP: 100.122.250.55
+DB_PORT: 7006
+DB_NAME: sqmusicv3
+DB_USERNAME: root
+DB_PASSWORD: 11111
 server:
   port: 8099
 spring:
@@ -10,7 +10,7 @@ spring:
 #    url: jdbc:sqlite::resource:sqlite/sqmusic.db
 #    url: jdbc:sqlite:/D:\\music\\sqmusic.db
 #    url: jdbc:sqlite:/cache/sqmusic.db
-    url: jdbc:mysql://${DB_IP:localhost}:${DB_PORT:3306}/${DB_NAME:sqmusic}?useUnicode=true&useSSL=false&characterEncoding=utf8&serverTimezone=UTC&rewriteBatchedStatements=true&allowMultiQueries=true
+    url: jdbc:mysql://${DB_IP:localhost}:${DB_PORT:3306}/${DB_NAME:sqmusicv3}?useUnicode=true&useSSL=false&characterEncoding=utf8&serverTimezone=UTC&rewriteBatchedStatements=true&allowMultiQueries=true
     driver-class-name: com.mysql.jdbc.Driver
     username: ${DB_USERNAME:root}
     password: ${DB_PASSWORD:root}
@@ -52,7 +52,7 @@ spring:
         max-size: 40
 mybatis-plus:
   # 搜索指定包别名
-  typeAliasesPackage: com.sqmusicplus.*.entity
+  typeAliasesPackage: com.sqmusicplus.v3.*.entity
   # 配置mapper的扫描，找到所有的mapper.xml映射文件
   mapperLocations: classpath*:mapper/*Mapper.xml
   # 加载全局的配置文件

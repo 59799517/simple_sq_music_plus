@@ -19,9 +19,9 @@ public class SearchKeyData {
      */
     String searchkey;
     /**
-     * 搜索类型
+     * 插件名称
      */
-    String searchType;
+    String plugName;
     /**
      * 页码
      */

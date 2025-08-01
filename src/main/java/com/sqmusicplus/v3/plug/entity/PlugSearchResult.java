@@ -38,5 +38,5 @@ public class PlugSearchResult<T> {
     /**
      * 搜索类型
      */
-    private String searchType;
+    private String plugName;
 }

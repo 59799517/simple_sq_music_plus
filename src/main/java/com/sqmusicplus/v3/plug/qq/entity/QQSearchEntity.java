@@ -3,9 +3,9 @@ package com.sqmusicplus.v3.plug.qq.entity;
 import cn.hutool.core.codec.Base64;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.sqmusicplus.v3.base.entity.vo.Album;
-import com.sqmusicplus.v3.base.entity.vo.Artists;
-import com.sqmusicplus.v3.base.entity.vo.Music;
+import com.sqmusicplus.v3.plug.entity.Album;
+import com.sqmusicplus.v3.plug.entity.Artists;
+import com.sqmusicplus.v3.plug.entity.Music;
 import com.sqmusicplus.v3.base.enums.PlugBrType;
 import com.sqmusicplus.v3.plug.entity.PlugSearchAlbumResult;
 import com.sqmusicplus.v3.plug.entity.PlugSearchArtistResult;
@@ -629,9 +629,25 @@ public class QQSearchEntity {
             String pmid = e.getJSONObject("album").getString("pmid");
             String albumImageconfig = qqConfig.getAlbumImage();
             String albumImage = albumImageconfig.replaceAll("#\\{pmid}", pmid);
-            String lyricResult = toPlugLyricResult(mid,qqConfig);
+
+            Long file_128mp3 = e.getJSONObject("file").getLong("size_128mp3");
+            Long file_320mp3 = e.getJSONObject("file").getLong("size_320mp3");
+            Long file_flac = e.getJSONObject("file").getLong("size_flac");
+            ArrayList<PlugBrType> brTypes = new ArrayList<>();
+            if (file_flac != null&&file_flac.longValue()>0){
+                brTypes.add(PlugBrType.QQVIP_Flac_2000);
+            }
+            if (file_320mp3 != null&&file_320mp3.longValue()>0){
+                brTypes.add(PlugBrType.QQVIP_MP3_320);
+            }
+            if (file_128mp3 != null&&file_128mp3.longValue()>0){
+                brTypes.add(PlugBrType.QQVIP_MP3_128);
+            }
+
+
+//            String lyricResult = toPlugLyricResult(mid,qqConfig);
             PlugSearchMusicResult plugSearchMusicResult = new PlugSearchMusicResult();
-            plugSearchMusicResult.setSearchType(getPlugName());
+            plugSearchMusicResult.setPlugName(getPlugName());
             plugSearchMusicResult.setId(mid);
             plugSearchMusicResult.setName(name);
             plugSearchMusicResult.setArtistName(artistNames);
@@ -640,7 +656,8 @@ public class QQSearchEntity {
             plugSearchMusicResult.setAlbumName(album);
             plugSearchMusicResult.setAlbumid(albumId);
             plugSearchMusicResult.setLyricId(mid);
-            plugSearchMusicResult.setLyric(lyricResult);
+            plugSearchMusicResult.setBrTypes(brTypes);
+//            plugSearchMusicResult.setLyric(lyricResult);
             int i1 = e.getInteger("interval") * 1000;
             plugSearchMusicResult.setDuration(i1+"");
             plugSearchMusicResult.setDataInfo(e);
@@ -648,7 +665,7 @@ public class QQSearchEntity {
         });
 
         PlugSearchResult<PlugSearchMusicResult> plugSearchResult = new PlugSearchResult<>();
-        plugSearchResult.setSearchType(getPlugName());
+        plugSearchResult.setPlugName(getPlugName());
         plugSearchResult.setRecords(plugSearchMusicResults);
         return plugSearchResult;
     }
@@ -670,7 +687,7 @@ public class QQSearchEntity {
             String singerPic = e.getString("singerPic");
             String string = e.getString("albumNum");
             PlugSearchArtistResult plugSearchArtistResult = new PlugSearchArtistResult();
-            plugSearchArtistResult.setSearchType(getPlugName());
+            plugSearchArtistResult.setPlugName(getPlugName());
             plugSearchArtistResult.setArtistName(singerName);
             plugSearchArtistResult.setTotal(string);
             plugSearchArtistResult.setArtistid(singerID);
@@ -680,7 +697,7 @@ public class QQSearchEntity {
         });
 
         PlugSearchResult<PlugSearchArtistResult> plugSearchResult = new PlugSearchResult<>();
-        plugSearchResult.setSearchType(getPlugName());
+        plugSearchResult.setPlugName(getPlugName());
         plugSearchResult.setRecords(plugSearchArtistResults);
         return plugSearchResult;
     }
@@ -862,7 +879,7 @@ public class QQSearchEntity {
             String singerID = e.getString("singerID");
             String albumPic = e.getString("albumPic");
             PlugSearchAlbumResult plugSearchAlbumResult = new PlugSearchAlbumResult();
-            plugSearchAlbumResult.setSearchType(getPlugName());
+            plugSearchAlbumResult.setPlugName(getPlugName());
             plugSearchAlbumResult.setAlbumName(albumName);
             plugSearchAlbumResult.setAlbumid(albumID);
             plugSearchAlbumResult.setArtistName(singerName);
@@ -871,7 +888,7 @@ public class QQSearchEntity {
             plugSearchAlbumResults.add(plugSearchAlbumResult);
         });
         PlugSearchResult<PlugSearchAlbumResult> plugSearchResult = new PlugSearchResult<>();
-        plugSearchResult.setSearchType(getPlugName());
+        plugSearchResult.setPlugName(getPlugName());
         plugSearchResult.setRecords(plugSearchAlbumResults);
         return plugSearchResult;
     }

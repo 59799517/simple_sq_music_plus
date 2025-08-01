@@ -2,14 +2,12 @@ package com.sqmusicplus.v3.plug.qqvip;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.sqmusicplus.v3.base.entity.DownloadInfo;
-import com.sqmusicplus.v3.base.entity.vo.Album;
-import com.sqmusicplus.v3.base.entity.vo.Artists;
-import com.sqmusicplus.v3.base.entity.vo.Music;
+import com.sqmusicplus.v3.plug.entity.Album;
+import com.sqmusicplus.v3.plug.entity.Artists;
+import com.sqmusicplus.v3.plug.entity.Music;
 import com.sqmusicplus.v3.base.enums.PlugBrType;
 import com.sqmusicplus.v3.base.enums.SetConfigEnum;
-import com.sqmusicplus.v3.config.GlobalStatic;
 import com.sqmusicplus.v3.config.SqConfigCache;
 import com.sqmusicplus.v3.download.vo.DownloadUrlResult;
 import com.sqmusicplus.v3.plug.base.QQSongType;
@@ -28,7 +26,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @Classname QQvipHander1
@@ -78,6 +75,11 @@ public class QQvipHander extends SearchHanderAbstract {
     @Override
     public Music querySongById(String SongId) {
         return qqHander.querySongById(SongId);
+    }
+
+    @Override
+    public Music querySongById(DownloadInfo downloadInfo) {
+        return querySongById(downloadInfo.getDownloadMusicId());
     }
 
     @Override
@@ -231,10 +233,7 @@ public class QQvipHander extends SearchHanderAbstract {
     }
 
 
-    @Override
-    public Music musicInfoToMuisc(String musicInfo) {
-        return null;
-    }
+
 
     public GetFollowSingerList likeArtists(int i) {
         return qqHander.likeArtists(i);
@@ -252,6 +251,13 @@ public class QQvipHander extends SearchHanderAbstract {
         return qqHander.getUserFavSongList(i);
     }
 
+    /**
+     *
+     * @param tid
+     * @param dirid
+     * @param l
+     * @return
+     */
     public DissInfo songListInfo(String tid, String dirid, long l) {
         return qqHander.songListInfo(tid, dirid, l);
     }

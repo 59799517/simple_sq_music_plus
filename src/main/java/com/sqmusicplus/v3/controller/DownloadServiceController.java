@@ -1,0 +1,106 @@
+package com.sqmusicplus.v3.controller;
+
+import cn.dev33.satoken.annotation.SaCheckLogin;
+import com.sqmusicplus.v3.base.entity.DownloadInfo;
+import com.sqmusicplus.v3.base.enums.PlugBrType;
+import com.sqmusicplus.v3.base.service.DownloadInfoService;
+import com.sqmusicplus.v3.config.AjaxResult;
+import com.sqmusicplus.v3.config.exception.SQException;
+import com.sqmusicplus.v3.plug.base.hander.SearchHanderAbstract;
+import com.sqmusicplus.v3.plug.entity.*;
+import com.sqmusicplus.v3.utils.MusicUtils;
+import com.sqmusicplus.v3.utils.StringUtils;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+
+/**
+ * @Classname DownloadServiceController
+ * @Description 下载到服务器控制接口
+ * @Version 1.0.0
+ * @Date 2025/7/25 10:29
+ * @Created by SQ
+ */
+@Slf4j
+@RestController
+@RequestMapping("/api/download")
+public class DownloadServiceController {
+
+    @Autowired
+    List<SearchHanderAbstract> searchHanderAbstractList;
+
+    @Autowired
+    private DownloadInfoService downloadInfoService;
+    @SaCheckLogin
+    @PostMapping("/downloadSong")
+   public AjaxResult downloadSong(@RequestBody PlugDownloadSongParam downloadSongParam) {
+        SearchHanderAbstract plugHander = MusicUtils.getPlugHander(downloadSongParam.getPlugName(), searchHanderAbstractList);
+        String id = downloadSongParam.getId();
+        Music music = plugHander.querySongById(id);
+        music.setBits(downloadSongParam.getBrTypes());
+        List<PlugBrType> brTypes = downloadSongParam.getBrTypes();
+        if (brTypes==null|| brTypes.isEmpty()){
+            throw new SQException("未找到可供下载的bit");
+        }
+        PlugBrType maxBr = MusicUtils.getMaxBr(brTypes);
+        if (downloadSongParam.getBrType()!=null){
+            maxBr = downloadSongParam.getBrType();
+        }
+        DownloadInfo downloadInfo = plugHander.musicToDownloadInfo(music, maxBr, false);
+        Boolean add = downloadInfoService.add(downloadInfo);
+        if (add){
+            return AjaxResult.success("下载成功",music);
+        }
+        return AjaxResult.error("下载失败");
+    }
+    @SaCheckLogin
+    @PostMapping("/downloadArtistAlbum")
+    public AjaxResult downloadArtistAlbum(@RequestBody PlugDownloadArtisParam plugDownloadArtisParam) {
+        SearchHanderAbstract plugHander = MusicUtils.getPlugHander(plugDownloadArtisParam.getPlugName(), searchHanderAbstractList);
+        PlugBrType maxBr= null;
+        if (plugDownloadArtisParam.getBit()!=null){
+            maxBr = PlugBrType.findByPlugNameAndBit(plugDownloadArtisParam.getPlugName(), plugDownloadArtisParam.getBit());
+        }
+        List<DownloadInfo> downloadInfos = plugHander.downloadArtistAllAlbum(plugDownloadArtisParam.getArtistid(), maxBr);
+        Boolean add = downloadInfoService.add(downloadInfos);
+        if (add){
+            return AjaxResult.success("下载成功",downloadInfos);
+        }
+        return AjaxResult.error("下载失败");
+    }
+    @SaCheckLogin
+    @PostMapping("/downloadAlbum")
+    public AjaxResult downloadAlbum(@RequestBody PlugDownloadAlbumParam plugDownloadAlbumParam){
+        SearchHanderAbstract plugHander = MusicUtils.getPlugHander(plugDownloadAlbumParam.getPlugName(), searchHanderAbstractList);
+        PlugBrType maxBr= null;
+        if (plugDownloadAlbumParam.getBit()!=null){
+            maxBr = PlugBrType.findByPlugNameAndBit(plugDownloadAlbumParam.getPlugName(), plugDownloadAlbumParam.getBit());
+        }
+        String albumid = plugDownloadAlbumParam.getAlbumid();
+        String[] split = plugDownloadAlbumParam.getArtistName().split("&");
+        List<String> artistNameList = new ArrayList<>();
+        for (String s : split) {
+            artistNameList.add(s.trim());
+        }
+        ArrayList<DownloadInfo> downloadInfos = plugHander.downloadAlbum(albumid, maxBr, artistNameList, false, plugDownloadAlbumParam.getAlbumName());
+        Boolean add = downloadInfoService.add(downloadInfos);
+        if (add){
+            return AjaxResult.success("下载成功",downloadInfos);
+        }
+        return AjaxResult.error("下载失败");
+    }
+
+
+
+
+
+
+
+}

@@ -32,8 +32,4 @@ public class KwConfig extends PlugConfig {
     private String PlayListInfo;
 
 
-    @Override
-    public String getStringPlugSetName() {
-        return getId() + ":" + getName();
-    }
 }

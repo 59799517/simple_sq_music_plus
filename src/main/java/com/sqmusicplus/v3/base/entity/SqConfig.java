@@ -40,11 +40,11 @@ public class SqConfig implements Serializable {
     @TableField(value = "config_type")
     private String type;
     @TableField(value = "config_show")
-    private String configShow;
+    private Integer configShow;
     @TableField(value = "config_remark")
     private String configRemark;
     @TableField(value = "config_null_check")
     private Integer configNullCheck;
     @TableField(value = "config_disabled")
-    private String configDisabled;
+    private Integer configDisabled;
 }

@@ -1,7 +1,7 @@
 package com.sqmusicplus.v3.parser;
 
 
-import com.sqmusicplus.v3.base.entity.vo.Music;
+import com.sqmusicplus.v3.plug.entity.Music;
 import com.sqmusicplus.v3.download.vo.DownlaodParserUrl;
 
 import java.io.IOException;

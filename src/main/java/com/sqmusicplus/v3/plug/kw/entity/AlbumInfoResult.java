@@ -85,6 +85,8 @@ public class AlbumInfoResult {
         private String canSetRingback;
         @JsonProperty("MVFLAG")
         private String mvflag;
+        @JsonProperty("N_MINFO")
+        private String nMinfo;
         @JsonProperty("aartist")
         private String aartist;
         @JsonProperty("ad_subtype")

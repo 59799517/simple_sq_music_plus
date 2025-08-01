@@ -2,13 +2,13 @@ package com.sqmusicplus.v3.config;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import com.baomidou.mybatisplus.extension.conditions.update.LambdaUpdateChainWrapper;
 import com.sqmusicplus.v3.base.entity.SqConfig;
 import com.sqmusicplus.v3.base.enums.SetConfigEnum;
 import com.sqmusicplus.v3.base.service.SqConfigService;
 import com.sqmusicplus.v3.utils.SpringContextUtil;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 
@@ -120,6 +120,17 @@ public class SqConfigCache {
             sqConfigMap.put(setConfigEnum.getKey(),sqConfig);
         }
     }
+    /**
+     * 修改配置到DB
+     */
+    public static void updateConfigToDb(String configKey,String  value){
+        SqConfigService bean = SpringContextUtil.getBean(SqConfigService.class);
+        boolean update = bean.update(Wrappers.<SqConfig>lambdaUpdate().eq(SqConfig::getConfigKey, configKey).set(SqConfig::getConfigValue, value));
+        if (update){
+            SqConfig sqConfig = bean.selectByKeyAndValue(configKey);
+            sqConfigMap.put(configKey,sqConfig);
+        }
+    }
 
     /**
      * 添加插件选项
@@ -127,7 +138,36 @@ public class SqConfigCache {
     public static void addPlugOptions(HashMap<String, String> plugOptions) {
         PlugOptions.add(plugOptions);
     }
+    /**
+     * 修改选项
+     */
+    public static void updatePlugOptions(HashMap<String, String> plugOptions) {
+        String targetLabel = plugOptions.get("label");
+        if (targetLabel == null) {
+            addPlugOptions(plugOptions);
+            return;
+        }
 
+        // 使用Iterator安全地移除元素
+        PlugOptions.removeIf(plugOption -> targetLabel.equals(plugOption.get("label")));
+
+        // 添加新的选项
+        addPlugOptions(plugOptions);
+    }
+    /**
+     * 删除选项
+     */
+    public static void removePlugOptions(String label) {
+        PlugOptions.removeIf(plugOption -> label.equals(plugOption.get("label")));
+    }
+
+    /**
+     * 获取所有配置
+     */
+    public static List<SqConfig> getAllConfig() {
+        Collection<SqConfig> values = sqConfigMap.values();
+        return new ArrayList<>(values);
+    }
 
 
 

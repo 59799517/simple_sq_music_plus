@@ -1,23 +1,25 @@
-package com.sqmusicplus.task;
+package com.sqmusicplus.v3.task;
 
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
-import com.sqmusicplus.base.entity.DownloadEntity;
-import com.sqmusicplus.base.entity.Music;
-import com.sqmusicplus.base.entity.SqConfig;
+import cn.hutool.crypto.digest.DigestUtil;
+import com.alibaba.fastjson.JSON;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.sqmusicplus.v3.base.entity.DownloadInfo;
+import com.sqmusicplus.v3.base.entity.SqSync;
+import com.sqmusicplus.v3.plug.entity.Music;
+import com.sqmusicplus.v3.base.enums.DbBooleanConvert;
+import com.sqmusicplus.v3.base.enums.SetConfigEnum;
 import com.sqmusicplus.v3.base.service.DownloadInfoService;
-import com.sqmusicplus.base.service.SqConfigService;
 import com.sqmusicplus.v3.base.enums.PlugBrType;
-import com.sqmusicplus.plug.qq.entity.CgiGetAlbumFavInfo;
-import com.sqmusicplus.plug.qq.entity.CgiGetPlaylistFavInfo;
-import com.sqmusicplus.plug.qq.entity.DissInfo;
-import com.sqmusicplus.plug.qq.entity.PlaylistBaseRead;
-import com.sqmusicplus.plug.qq.entity.getfollowsingerlist.DataVDTO;
-import com.sqmusicplus.plug.qq.entity.getfollowsingerlist.GetFollowSingerList;
-import com.sqmusicplus.plug.qq.entity.getfollowsingerlist.ListVDTO;
-import com.sqmusicplus.plug.qqvip.QQvipHander;
-import com.sqmusicplus.v3.utils.MusicUtils;
+import com.sqmusicplus.v3.base.service.SqSyncService;
+import com.sqmusicplus.v3.config.SqConfigCache;
+import com.sqmusicplus.v3.plug.qq.entity.CgiGetAlbumFavInfo;
+import com.sqmusicplus.v3.plug.qq.entity.CgiGetPlaylistFavInfo;
+import com.sqmusicplus.v3.plug.qq.entity.DissInfo;
+import com.sqmusicplus.v3.plug.qq.entity.PlaylistBaseRead;
+import com.sqmusicplus.v3.plug.qq.entity.getfollowsingerlist.DataVDTO;
+import com.sqmusicplus.v3.plug.qq.entity.getfollowsingerlist.GetFollowSingerList;
+import com.sqmusicplus.v3.plug.qq.entity.getfollowsingerlist.ListVDTO;
+import com.sqmusicplus.v3.plug.qqvip.QQvipHander;
 import com.sqmusicplus.v3.utils.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,8 +27,6 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -41,56 +41,49 @@ import java.util.stream.Collectors;
 @Component
 public class ScanQQVIPLikeMusicTask {
 
-    @Autowired
-    private SqConfigService configService;
 
     @Autowired
     private QQvipHander qQvipHander;
+    @Autowired
+    private SqSyncService syncService;
 
     @Autowired
     private DownloadInfoService downloadInfoService;
 
     @Scheduled(cron = "0 */10 * * * ? ")
     public void excute() {
-        SqConfig qqopenconfigKey = configService.getOne(new QueryWrapper<SqConfig>().eq("config_key", "plug.qqvip.open"));
+        String qqopenconfigKey = SqConfigCache.getSqConfigValue(SetConfigEnum.PLUG_QQVIP_OPEN);
+        String myLikeSongSyncConfig = SqConfigCache.getSqConfigValue(SetConfigEnum.PLUG_QQVIP_SYNC_MY_LIKE_MUSIC);
+        String myLikePlaylistSyncConfig = SqConfigCache.getSqConfigValue(SetConfigEnum.PLUG_QQVIP_SYNC_MY_LIKE_PLAYLIST);
+        String myLikeAlbumSyncConfig = SqConfigCache.getSqConfigValue(SetConfigEnum.PLUG_QQVIP_SYNC_MY_LIKE_ALBUM);
+        String myLikeArtistsSyncConfig = SqConfigCache.getSqConfigValue(SetConfigEnum.PLUG_QQVIP_SYNC_MY_LIKE_ARTISTS);
 
-        SqConfig syncConfig = configService.getOne(new QueryWrapper<SqConfig>().eq("config_key", "plug.qqvip.sync"));
+            if (StringUtils.isNotBlank(qqopenconfigKey)&& Boolean.parseBoolean(qqopenconfigKey)) {
 
-        if (qqopenconfigKey != null && Boolean.parseBoolean(qqopenconfigKey.getConfigValue()) && Boolean.parseBoolean(syncConfig.getConfigValue())) {
+                if (StringUtils.isNotBlank(myLikeSongSyncConfig)&& Boolean.parseBoolean(myLikeSongSyncConfig)){
+                    log.info("扫描QQVIP同步我喜欢单曲");
+                    syncLikeSong();
+                }
 
-//
-//            喜欢单曲
-            SqConfig syncLikeSongConfig = configService.getOne(new QueryWrapper<SqConfig>().eq("config_key", "plug.qqvip.synclikesong"));
-            if (syncLikeSongConfig!=null&&Boolean.parseBoolean(syncLikeSongConfig.getConfigValue())) {
-                log.info("扫描QQVIP同步我喜欢单曲");
-                syncLikeSong();
-            }
-            //所有歌单
-            SqConfig syncplaylist = configService.getOne(new QueryWrapper<SqConfig>().eq("config_key", "plug.qqvip.syncplaylist"));
-            if (syncplaylist!=null&&Boolean.parseBoolean(syncplaylist.getConfigValue())) {
-                log.info("扫描QQVIP同步所有歌单");
-                syncplaylist();
-            }
-            //专辑
-            SqConfig synclikealbum = configService.getOne(new QueryWrapper<SqConfig>().eq("config_key", "plug.qqvip.synclikealbum"));
-            if (synclikealbum!=null&&Boolean.parseBoolean(synclikealbum.getConfigValue())) {
-                log.info("扫描QQVIP同步所有专辑");
-                syncalbu();
-            }
-            //关注的歌手
-            SqConfig syncLikeArtist = configService.getOne(new QueryWrapper<SqConfig>().eq("config_key", "plug.qqvip.synclikeartist"));
-            if (syncLikeArtist!=null&&Boolean.parseBoolean(syncLikeArtist.getConfigValue())) {
-                log.info("扫描QQVIP同步所有关注歌手");
-                syncArtist();
-            }
+                if (StringUtils.isNotBlank(myLikePlaylistSyncConfig)&& Boolean.parseBoolean(myLikePlaylistSyncConfig)){
+                    log.info("扫描QQVIP同步所有歌单");
+                    syncplaylist();
+                }
+
+                if (StringUtils.isNotBlank(myLikeAlbumSyncConfig)&& Boolean.parseBoolean(myLikeAlbumSyncConfig)){
+                    log.info("扫描QQVIP同步所有专辑");
+                    syncalbu();
+                }
+                if (StringUtils.isNotBlank(myLikeArtistsSyncConfig)&& Boolean.parseBoolean(myLikeArtistsSyncConfig)){
+                    log.info("扫描QQVIP同步所有关注歌手");
+                    syncArtist();
+                }
         }
     }
-//    plug.qqvip.likeArtistids
     private void syncArtist() {
         GetFollowSingerList getFollowSingerList = qQvipHander.likeArtists(1);
         Integer code = getFollowSingerList.getCode();
         if (code != null && code.intValue() ==  0) {
-            ArrayList<String> artistids = new ArrayList<>();
             ArrayList<String> exclude = new ArrayList<>();
             DataVDTO data = getFollowSingerList.getData();
             List<ListVDTO> list = data.getList();
@@ -100,34 +93,21 @@ public class ScanQQVIPLikeMusicTask {
                 GetFollowSingerList getFollowSingerList1 = qQvipHander.likeArtists(i);
                 list.addAll(getFollowSingerList1.getData().getList());
             }
-            for (ListVDTO listDTO : list) {
-                String mid = listDTO.getMid();
-                artistids.add(mid);
-            }
-            String allartistids = StringUtils.join(artistids, ",");
-            SqConfig configKey = configService.getOne(new QueryWrapper<SqConfig>().eq("config_key", "plug.qqvip.likeArtistids"));
-            if (configKey!=null){
-                String configValue = configKey.getConfigValue();
-                //已经下载的
-                String[] split = configValue.split(",");
-                if (split != null) {
-                    Collections.addAll(exclude, split);
-                }
-                configService.update(new UpdateWrapper<SqConfig>().eq("config_key", "plug.qqvip.likeArtistids").set("config_value", allartistids));
-            }else{
-                SqConfig sqConfig = new SqConfig();
-                sqConfig.setConfigKey("plug.qqvip.likeArtistids");
-                sqConfig.setConfigValue(allartistids);
-                sqConfig.setConfigName("QQVIP插件同步我关注的歌手同步专辑");
-                sqConfig.setType("input");
-                sqConfig.setConfigShow("N");
-                configService.save(sqConfig);
-            }
+            LambdaQueryWrapper<SqSync> sqQqmusicMyLike = new LambdaQueryWrapper<SqSync>().eq(SqSync::getPlugName, PlugBrType.QQVIP_Flac_2000.getPlugName())
+                    .isNotNull(SqSync::getArtistId);
+
+            //已经下载的
+            List<SqSync> dbSqSync = syncService.list(sqQqmusicMyLike);
             ArrayList<String> excludeNames = new ArrayList<>();
-            //不同步的歌单名称
-            SqConfig syncplaylistexclude = configService.getOne(new QueryWrapper<SqConfig>().eq("config_key", "plug.qqvip.syncartistexclude"));
-            if (StringUtils.isNotBlank(syncplaylistexclude.getConfigValue())) {
-                String[] split = syncplaylistexclude.getConfigValue().split(",");
+
+            if (dbSqSync!=null) {
+                List<String> collect = dbSqSync.stream().map(SqSync::getArtistId).collect(Collectors.toList());
+                exclude.addAll(collect);
+            }
+            String sqConfigValue = SqConfigCache.getSqConfigValue(SetConfigEnum.SYSTEM_SYNC_ARTISTS_EXCLUDE);
+            //不同步的歌手名称
+            if (StringUtils.isNotBlank(sqConfigValue)) {
+                String[] split = sqConfigValue.split("\\|");
                 if (split != null) {
                     for (String s : split) {
                         excludeNames.add(s.trim());
@@ -139,9 +119,19 @@ public class ScanQQVIPLikeMusicTask {
                 String mid = item.getMid();
                 String name = item.getName();
                 if (!excludeNames.contains(name)&&!exclude.contains(mid)){
-                    List<DownloadEntity> downloadEntities = qQvipHander.downloadArtistAllSong(mid, PlugBrType.QQVIP_Flac_2000, null);
-                    List<DownloadInfo> downloadInfos = MusicUtils.downloadEntitytoDownloadInfoTo(downloadEntities);
-                    downloadInfoService.add(downloadInfos);
+                    List<DownloadInfo> downloadInfos = qQvipHander.downloadArtistAllSong(mid, PlugBrType.QQVIP_Flac_2000);
+                    List<DownloadInfo> downloadInfos1 = qQvipHander.musicIgnoreCheck(downloadInfos);
+
+                    downloadInfoService.add(downloadInfos1);
+                    SqSync sqSync = new SqSync();
+                    sqSync.setPlugName( PlugBrType.QQVIP_Flac_2000.getPlugName());
+                    sqSync.setMusicInfo(JSON.toJSONString(item));
+                    sqSync.setArtistId(mid);
+                    sqSync.setArtistName(name);
+                    //添加完成后保存到已经下载的列表中
+                    syncService.save(sqSync);
+
+
                 }else{
                     log.info("已排除歌手或者已经下载过了：{} 不下载",name);
                 }
@@ -160,7 +150,6 @@ public class ScanQQVIPLikeMusicTask {
         CgiGetAlbumFavInfo cgiGetAlbumFavInfo = qQvipHander.userALbymList(1);
         Long code = cgiGetAlbumFavInfo.getCode();
         if (code != null && code == 0) {
-            ArrayList<String> albummids = new ArrayList<>();
             ArrayList<String> exclude = new ArrayList<>();
 
             CgiGetAlbumFavInfo.DataDTO data = cgiGetAlbumFavInfo.getData();
@@ -171,36 +160,46 @@ public class ScanQQVIPLikeMusicTask {
                 CgiGetAlbumFavInfo cgiGetAlbumFavInfo1 = qQvipHander.userALbymList(i);
                 vList.addAll(cgiGetAlbumFavInfo1.getData().getVList());
             }
-            for (CgiGetAlbumFavInfo.DataDTO.VListDTO vListDTO : vList) {
-                albummids.add(vListDTO.getMid());
-            }
-            String allalbummids = StringUtils.join(albummids, ",");
-            SqConfig configKey = configService.getOne(new QueryWrapper<SqConfig>().eq("config_key", "plug.qqvip.likeAlubids"));
-            if (configKey != null) {
-                String configValue = configKey.getConfigValue();
+            LambdaQueryWrapper<SqSync> sqQqmusicMyLike = new LambdaQueryWrapper<SqSync>().eq(SqSync::getPlugName, PlugBrType.QQVIP_Flac_2000.getPlugName())
+                    .isNotNull(SqSync::getAlbumId);
+
+            //已经下载的
+            List<SqSync> dbSqSync = syncService.list(sqQqmusicMyLike);
+            if (dbSqSync != null) {
                 //已经下载的
-                String[] split = configValue.split(",");
-                if (split != null) {
-                    Collections.addAll(exclude, split);
-                }
-                configService.update(new UpdateWrapper<SqConfig>().eq("config_key", "plug.qqvip.likeAlubids").set("config_value", allalbummids));
-            } else {
-                SqConfig sqConfig = new SqConfig();
-                sqConfig.setConfigKey("plug.qqvip.likeAlubids");
-                sqConfig.setConfigValue(allalbummids);
-                sqConfig.setConfigName("QQVIP已经同步过的专辑id（删除则重新同步一次）");
-                sqConfig.setType("input");
-                sqConfig.setConfigShow("N");
-                configService.save(sqConfig);
+                exclude.addAll(dbSqSync.stream().map(SqSync::getAlbumId).toList());
             }
+            ArrayList<String> excludeNames = new ArrayList<>();
+
+//           需要排除的
+            String sqConfigValue = SqConfigCache.getSqConfigValue(SetConfigEnum.SYSTEM_SYNC_ALBUM_EXCLUDE);
+
+            //不同步的专辑名称
+            if (StringUtils.isNotBlank(sqConfigValue)) {
+                String[] split = sqConfigValue.split("\\|");
+                if (split != null) {
+                    for (String s : split) {
+                        excludeNames.add(s.trim());
+                    }
+                }
+            }
+
+
             vList.forEach((item) -> {
                 String albummid = item.getMid();
-                String singername = item.getVSinger().stream().map(item1 -> item1.getName()).collect(Collectors.joining(","));
+                List<String> collect = item.getVSinger().stream().map(item1 -> item1.getName()).collect(Collectors.toList());
                 String albumname = item.getName();
-                if (!exclude.contains(albummid)) {
-                    ArrayList<DownloadEntity> downloadEntities = qQvipHander.downloadAlbum(albummid, PlugBrType.QQVIP_Flac_2000, null, singername, false, albumname);
-                    List<DownloadInfo> downloadInfos = MusicUtils.downloadEntitytoDownloadInfoTo(downloadEntities);
-                    downloadInfoService.add(downloadInfos);
+                if (!excludeNames.contains(albumname)&&!exclude.contains(albummid)) {
+                    ArrayList<DownloadInfo> downloadInfos = qQvipHander.downloadAlbum(albummid, PlugBrType.QQVIP_Flac_2000, collect, false, albumname);
+                    List<DownloadInfo> downloadInfos1 = qQvipHander.musicIgnoreCheck(downloadInfos);
+                    downloadInfoService.add(downloadInfos1);
+                    SqSync sqSync = new SqSync();
+                    sqSync.setPlugName( PlugBrType.QQVIP_Flac_2000.getPlugName());
+                    sqSync.setMusicInfo(JSON.toJSONString(item));
+                    sqSync.setAlbumId(albummid);
+                    sqSync.setArtistName(albumname);
+                    //添加完成后保存到已经下载的列表中
+                    syncService.save(sqSync);
                 }
             });
 
@@ -213,9 +212,10 @@ public class ScanQQVIPLikeMusicTask {
     private void syncplaylist() {
         ArrayList<String> excludeNames = new ArrayList<>();
         //不同步的歌单名称
-        SqConfig syncplaylistexclude = configService.getOne(new QueryWrapper<SqConfig>().eq("config_key", "plug.qqvip.syncplaylistexclude"));
-        if (StringUtils.isNotBlank(syncplaylistexclude.getConfigValue())) {
-            String[] split = syncplaylistexclude.getConfigValue().split(",");
+        String sqConfigValue = SqConfigCache.getSqConfigValue(SetConfigEnum.SYSTEM_SYNC_PLAYLIST_EXCLUDE);
+
+        if (StringUtils.isNotBlank(sqConfigValue)) {
+            String[] split = sqConfigValue.split("\\|");
             if (split != null) {
                 for (String s : split) {
                     excludeNames.add(s.trim());
@@ -327,7 +327,6 @@ public class ScanQQVIPLikeMusicTask {
      */
     private void syncsonglist(String tid, String dirid, String dissname) {
         ArrayList<String> songids;
-
         DissInfo dissInfo = qQvipHander.songListInfo(tid, dirid, 1L);
         Long code = dissInfo.getCode();
         if (code != null && code == 0L) {
@@ -348,32 +347,31 @@ public class ScanQQVIPLikeMusicTask {
                     DissInfo dissInfo1 = qQvipHander.songListInfo(tid, dirid, Long.parseLong(i + ""));
                     DissInfo.DataDTO data1 = dissInfo1.getData();
                     List<DissInfo.DataDTO.SonglistDTO> songlist1 = data1.getSonglist();
+                    songlist.addAll(songlist1);
                     songids.addAll(songlist1.stream().map(e -> e.getId().toString()).collect(Collectors.toCollection(ArrayList::new)));
                 }
             }
             ArrayList<String> addSongIds = new ArrayList<>();
-            SqConfig configKey = configService.getOne(new QueryWrapper<SqConfig>().eq("config_key", "plug.qqvip.songlistid." + tid));
-            if (configKey != null) {
+            String playListSha1 = DigestUtil.sha1Hex(dissname);
+
+            LambdaQueryWrapper<SqSync> sqQqmusicMyLike = new LambdaQueryWrapper<SqSync>().eq(SqSync::getPlugName, PlugBrType.QQVIP_Flac_2000.getPlugName())
+                    .eq(SqSync::getPlayListId, tid)
+                    .eq(SqSync::getPlayListName, dissname)
+                    .eq(SqSync::getPlayListSha1, playListSha1);
+
+            List<SqSync> list = syncService.list(sqQqmusicMyLike);
+
+
+            if (list.isEmpty()) {
+                 list = new ArrayList<>();
+            }
+                List<String> collect = list.stream().map(SqSync::getMusicId).collect(Collectors.toList());
                 //获取上次同步的歌单id
-                String configValue = configKey.getConfigValue();
-                List<String> targetList = Arrays.asList(configValue.split(","));
                 //通过songids和上次同步的歌单id对比，获取新增的歌单id 使用流处理
                 ArrayList<String> finalAddSongIds = new ArrayList<>();
-                songids.stream().filter(item -> !targetList.contains(item)).forEach(item -> {
-                    finalAddSongIds.add(item);
-                });
+                songids.stream().filter(item -> !collect.contains(item)).forEach(finalAddSongIds::add);
                 addSongIds = finalAddSongIds;
-                configService.update(new UpdateWrapper<SqConfig>().eq("config_key", "plug.qqvip.songlistid." + tid).set("config_value", String.join(",", songids)));
-            } else {
-                addSongIds = new ArrayList<>(songids);
-                SqConfig sqConfig = new SqConfig();
-                sqConfig.setConfigKey("plug.qqvip.songlistid." + tid);
-                sqConfig.setConfigValue(String.join(",", songids));
-                sqConfig.setType("input");
-                sqConfig.setConfigName("qqvip(" + dissname + ")歌单已下载id缓存 删除则回重新同步数据");
-                sqConfig.setConfigShow("N");
-                configService.save(sqConfig);
-            }
+
 
             //循环找出歌曲详情
             ArrayList<String> finalAddSongIds1 = addSongIds;
@@ -382,7 +380,6 @@ public class ScanQQVIPLikeMusicTask {
                 Long id = item.getId();
                 if (finalAddSongIds1.contains(id.toString())) {
                     String songmid = item.getMid();
-
                     Long sizeflac = item.getFile().getSizeFlac();
                     Long size320 = item.getFile().getSize320mp3();
                     Long size128 = item.getFile().getSize128mp3();
@@ -395,9 +392,28 @@ public class ScanQQVIPLikeMusicTask {
                         brType = PlugBrType.QQVIP_MP3_128;
                     }
                     Music music = qQvipHander.querySongById(songmid);
-                    DownloadEntity downloadEntity = qQvipHander.downloadSong(music, brType, null);
-                    DownloadInfo downloadInfo = MusicUtils.downloadEntitytoDownloadInfoTo(downloadEntity);
+
+                    Music music1 = qQvipHander.musicIgnoreCheck(music);
+                    if (music1 == null){
+                        log.info("{}:忽略下载",music.getMusicName());
+                        return;
+                    }
+
+
+
+                    DownloadInfo downloadInfo = qQvipHander.musicToDownloadInfo(music, brType, DbBooleanConvert.NO.getBooleanValue());
                     downloadInfos.add(downloadInfo);
+                    SqSync sqSync = new SqSync();
+                    sqSync.setMusicId(id.toString());
+                    sqSync.setPlugName( PlugBrType.QQVIP_Flac_2000.getPlugName());
+                    sqSync.setMusicInfo(JSON.toJSONString(music));
+                    sqSync.setPlayListName(dissname);
+                    sqSync.setPlayListId(tid);
+                    sqSync.setDownloadId(downloadInfo.getId());
+                    sqSync.setPlayListSha1(playListSha1);
+
+                    //添加完成后保存到已经下载的列表中
+                    syncService.save(sqSync);
                 }
             });
             log.info("QQVIP同步歌单{}需要同步{}首", dissname, downloadInfos.size());

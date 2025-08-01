@@ -1,9 +1,9 @@
 package com.sqmusicplus.v3.utils;
 
 import cn.hutool.core.img.ImgUtil;
-import com.sqmusicplus.base.entity.DownloadEntity;
-import com.sqmusicplus.v3.base.entity.DownloadInfo;
 import com.sqmusicplus.v3.base.enums.PlugBrType;
+import com.sqmusicplus.v3.config.exception.SQException;
+import com.sqmusicplus.v3.plug.base.hander.SearchHanderAbstract;
 import lombok.extern.slf4j.Slf4j;
 import org.jaudiotagger.audio.AudioFile;
 import org.jaudiotagger.audio.exceptions.CannotReadException;
@@ -26,6 +26,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 
@@ -143,6 +144,32 @@ public class MusicUtils {
     }
 
 
+    /**
+     * 获取插件
+     * @param plugName 插件名称
+     * @return
+     */
+    public static SearchHanderAbstract getPlugHander(String plugName,List<SearchHanderAbstract> searchHanderAbstractList){
+        SearchHanderAbstract searchHanderAbstract = null;
+        for (SearchHanderAbstract item : searchHanderAbstractList) {
+            if(item.getPlugName().equals(plugName)){
+                searchHanderAbstract = item;
+            }
+        }
+        if (searchHanderAbstract==null){
+            throw  new SQException("未知的搜索类型");
+        }
+        return searchHanderAbstract;
+    }
 
+
+    /**
+     * 找到最大的bit
+     * @param brTypes
+     * @return
+     */
+    public static PlugBrType getMaxBr(List<PlugBrType> brTypes) {
+        return brTypes.stream().max(Comparator.comparing(PlugBrType::getBit)).get();
+    }
 
 }

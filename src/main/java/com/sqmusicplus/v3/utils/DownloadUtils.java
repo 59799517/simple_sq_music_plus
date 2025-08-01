@@ -1,15 +1,10 @@
 package com.sqmusicplus.v3.utils;
 
 import com.alibaba.fastjson.JSONObject;
-import com.ejlchina.okhttps.*;
-import com.ejlchina.okhttps.Process;
-import com.sqmusicplus.v3.config.GlobalStatic;
+import com.sqmusicplus.v3.download.vo.DownloadProgress;
 import lombok.extern.slf4j.Slf4j;
-import okhttp3.ConnectionPool;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
-import okhttp3.logging.HttpLoggingInterceptor;
+import okhttp3.*;
+import org.apache.hc.core5.util.TextUtils;
 
 import javax.net.ssl.*;
 import java.io.*;
@@ -18,6 +13,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -32,136 +28,135 @@ import java.util.function.Consumer;
 @Slf4j
 public class DownloadUtils {
 
-   private static HTTP http = null;
     private static OkHttpClient okHttpClient;
 
 
-
-    public static HTTP getHttp()  {
-        if (http==null){
-
-            SSLContext sslCtx = null;
-            try {
-                sslCtx = SSLContext.getInstance("TLS");
-                sslCtx.init(null, new TrustManager[] { myTrustManager }, new SecureRandom());
-            } catch (NoSuchAlgorithmException e) {
-                throw new RuntimeException(e);
-            } catch (KeyManagementException e) {
-                throw new RuntimeException(e);
-            }
-
-            SSLSocketFactory mySSLSocketFactory = sslCtx.getSocketFactory();
-
-            HTTP.Builder hb = HTTP.builder().config((OkHttpClient.Builder builder) -> {
-                builder.sslSocketFactory(mySSLSocketFactory, myTrustManager);
-                builder.hostnameVerifier(myHostnameVerifier);
-
-
-                // 连接超时时间（默认10秒）
-                builder.connectTimeout(3, TimeUnit.MINUTES);
-                // 写入超时时间（默认10秒）
-                builder.writeTimeout(3, TimeUnit.MINUTES);
-                // 读取超时时间（默认10秒）
-                builder.readTimeout(3, TimeUnit.MINUTES);
-                //连接池
-                builder.connectionPool(new ConnectionPool(10, 5, TimeUnit.MINUTES));
-//                //添加重试
-                builder.addInterceptor(chain -> {
-                    HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
-                    logging.setLevel(HttpLoggingInterceptor.Level.BASIC);
-                    // 添加日志拦截器
-                    builder.addInterceptor(logging);
-
-                    int retryTimes = 0;
-                    while (true) {
-                        try {
-                            return chain.proceed(chain.request());
-                        } catch (Exception e) {
-                            if (retryTimes >= GlobalStatic.SUBSONIC_SYNC_MAXIMUM_STATISTICS) {
-                             log.error("多次请求失败！：{}",chain.request().url().url().toString());
-                                throw new RuntimeException("多次请求失败:"+chain.request().url().url().toString());
-                            }
-                            log.info("超时重试第{}次！",retryTimes);
-                            retryTimes++;
-                        }
-                    }
-                });
-
-            });
-            ConvertProvider.inject(hb);
-            http = hb.build();
-            return http;
-        }else{
-            return http;
-        }
-    }
-
     //下载其他的
-   public static void download(String url, String path, String fileName, Consumer<Process> onProcess, Consumer<File> onSuccess) {
-       HTTP http = getHttp();
-       HttpResult.Body body = http.async(url)
-                .tag("music")
-                .get()
-                .getResult()
-                .getBody();
-        if (onProcess != null) {
-            body.setOnProcess(onProcess);
-        }
-       Download download;
-        if(fileName != null){
-            download= body.toFile(path + fileName);
-        }else{
-            download = body.toFolder(path);
-        }
-        if (onSuccess != null) {
-            download.setOnSuccess(onSuccess);
-        }
-        download.start();
+   public static void download(String url, String path, String fileName, Consumer<DownloadProgress> onProcess, Consumer<File> onSuccess) {
+
+       String s = "";
+       if(fileName != null){
+            s = path + fileName;
+       }else{
+           s = path;
+       }
+       File file = new File(s);
+       download(url, file,null, onProcess, onSuccess, null,null);
     }
 
-    public static void download(String url ,File file,Consumer<File> onSuccess,Consumer<Download.Failure> onFailure){
+    public static void download(String url ,File file,Consumer<File> onSuccess,Consumer<Exception> onFailure){
         download(url,file,null,null,onSuccess,onFailure,null);
     }
-    public static void download(String url ,File file,HashMap<String,String> headers,Consumer<File> onSuccess,Consumer<Download.Failure> onFailure){
+    public static void download(String url ,File file,HashMap<String,String> headers,Consumer<File> onSuccess,Consumer<Exception> onFailure){
         download(url,file,headers,null,onSuccess,onFailure,null);
     }
-    public static void download(String url ,File file,Consumer<File> onSuccess,Consumer<Download.Failure> onFailure,Consumer<Download.Status> onComplete){
+    public static void download(String url ,File file,Consumer<File> onSuccess,Consumer<Exception> onFailure,Consumer<String> onComplete){
         download(url,file,null,null,onSuccess,onFailure,onComplete);
     }
-    public static void download(String url , File file, HashMap<String,String> headers, Consumer<File> onSuccess, Consumer<Download.Failure> onFailure, Consumer<Download.Status> onComplete){
+    public static void download(String url , File file, HashMap<String,String> headers, Consumer<File> onSuccess, Consumer<Exception> onFailure, Consumer<String> onComplete){
         download(url,file,headers,null,onSuccess,onFailure,onComplete);
     }
 
-    public static void download(String url, File file,HashMap<String,String> headers, Consumer<Process> onProcess,Consumer<File> onSuccess,Consumer<Download.Failure> onFailure,Consumer<Download.Status> onComplete) {
-            //开始下载
-            HTTP http = getHttp();
-        SHttpTask sync = http.sync(url);
-        if (headers!=null){
-            headers.put("Accept", "application/xml;version=1");
-            sync.addHeader(headers);
-        }else{
-            sync.addHeader("Accept", "application/xml;version=1");
-        }
-        HttpResult.Body body = sync
-                    .get()
-//                    .getResult()
-                    .getBody();
-            if (onProcess != null) {
-                body.setOnProcess(onProcess);
-            }
-            Download download = body.toFile(file);
-            if (onSuccess != null) {
-                download.setOnSuccess(onSuccess);
-            }
-            if (onFailure!=null){
-                download.setOnFailure(onFailure);
-            }
-            if (onComplete!=null){
-                download.setOnComplete(onComplete);
-            }
-            download.start();
+    /**
+     * 下载文件
+     *
+     * @param url       下载地址
+     * @param target      保存的文件 或者文件夹
+     * @param headers   请求头（可为 null）
+     * @param onProcess 下载进度回调
+     * @param onSuccess 下载成功回调
+     * @param onFailure 下载失败回调
+     * @param onComplete 下载完成回调（返回执行信息，如 "completed"）
+     */
+    public static void download(
+            String url,
+            File target,
+            HashMap<String, String> headers,
+            Consumer<DownloadProgress> onProcess,
+            Consumer<File> onSuccess,
+            Consumer<Exception> onFailure,
+            Consumer<String> onComplete) {
+
+        if(okHttpClient==null){
+            okHttpClient = getOkHttpClient();
         }
 
+        Request.Builder builder = new Request.Builder()
+                .url(url)
+                .addHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36");
+
+        if (headers != null) {
+            headers.put("Accept", "application/xml;version=1");
+            headers.forEach(builder::addHeader);
+        } else {
+            builder.addHeader("Accept", "application/xml;version=1");
+        }
+
+        Request request = builder.build();
+
+        new Thread(() -> {
+            try (Response response = okHttpClient.newCall(request).execute()) {
+                if (!response.isSuccessful()) {
+                    throw new IOException("Unexpected code " + response);
+                }
+
+                ResponseBody body = response.body();
+                if (body == null) {
+                    throw new IOException("Empty response body");
+                }
+
+                // 如果是文件夹，则生成目标文件
+                File file;
+                if (target.isDirectory()) {
+                    String fileName = getHeaderFileName(response); // 从 URL 提取文件名
+                    file = new File(target, fileName);
+                } else {
+                    file = target;
+                }
+
+
+                long totalBytesRead = 0;
+                long contentLength = body.contentLength();
+
+                try (InputStream is = body.byteStream();
+                     OutputStream os = new FileOutputStream(file)) {
+
+                    byte[] buffer = new byte[8192];
+                    int bytesRead;
+
+                    while ((bytesRead = is.read(buffer)) != -1) {
+                        os.write(buffer, 0, bytesRead);
+                        totalBytesRead += bytesRead;
+
+                        if (onProcess != null) {
+                            DownloadProgress progress = new DownloadProgress(totalBytesRead, contentLength);
+                            onProcess.accept(progress);
+                        }
+                    }
+
+                    os.flush();
+
+                    if (onSuccess != null) {
+                        onSuccess.accept(file);
+                    }
+
+                } catch (IOException e) {
+                    if (onFailure != null) {
+                        onFailure.accept(e);
+                    }
+                }
+
+            } catch (Exception e) {
+                if (onFailure != null) {
+                    onFailure.accept(e);
+                }
+            } finally {
+                if (onComplete != null) {
+                    onComplete.accept("Download completed");
+                }
+            }
+        }).start();
+    }
 
     public static void download(String url, String path, Consumer<File> onSuccess) {
         download(url,path,null,null,onSuccess);
@@ -200,7 +195,7 @@ public class DownloadUtils {
     public static boolean download(final String url, final File file)  {
 
     if(okHttpClient==null){
-        okHttpClient = new OkHttpClient();
+        okHttpClient = getOkHttpClient();
     }
 
         Request request = new Request.Builder()
@@ -242,6 +237,9 @@ public class DownloadUtils {
     }
 
     public static  OkHttpClient getOkHttpClient() {
+       return getOkHttpClient(true);
+    }
+    public static  OkHttpClient getOkHttpClient(boolean followRedirects ) {
         if(okHttpClient==null){
             SSLContext sslCtx = null;
             try {
@@ -255,13 +253,22 @@ public class DownloadUtils {
 //            builder.sslSocketFactory(mySSLSocketFactory, myTrustManager);
 //            builder.hostnameVerifier(myHostnameVerifier);
             SSLSocketFactory mySSLSocketFactory = sslCtx.getSocketFactory();
-            okHttpClient = new OkHttpClient().newBuilder()
+            okHttpClient = new OkHttpClient.Builder()
+                    .connectTimeout(15, TimeUnit.SECONDS)
+                    .writeTimeout(20, TimeUnit.SECONDS)
+                    .readTimeout(20, TimeUnit.SECONDS)
+                    .hostnameVerifier((hostName, session) -> true)
+                    .protocols(Arrays.asList(Protocol.HTTP_2, Protocol.HTTP_1_1))
+                    .retryOnConnectionFailure(true)
+                    .followRedirects(followRedirects)
+                    .followSslRedirects(followRedirects)
                     .sslSocketFactory(mySSLSocketFactory, myTrustManager)
-                    .hostnameVerifier(myHostnameVerifier).build();
+                    .hostnameVerifier(myHostnameVerifier)
+                    .build();
+
         }
         return okHttpClient;
     }
-
     public  static <T> T get(String url,HashMap<String,String> params,Class<T> clazz){
         OkHttpUtils builder = OkHttpUtils.builder().url(url);
 
@@ -302,5 +309,26 @@ public class DownloadUtils {
 
     }
 
+
+    /**
+     * 解析文件头
+     * Content-Disposition:attachment;filename=FileName.txt
+     * Content-Disposition: attachment; filename*="UTF-8''%E6%9B%BF%E6%8D%A2%E5%AE%9E%E9%AA%8C%E6%8A%A5%E5%91%8A.pdf"
+     */
+    private static String getHeaderFileName(Response response) {
+        String dispositionHeader = response.header("Content-Disposition");
+        if (!TextUtils.isEmpty(dispositionHeader)) {
+            dispositionHeader.replace("attachment;filename=", "");
+            dispositionHeader.replace("filename*=utf-8", "");
+            String[] strings = dispositionHeader.split("; ");
+            if (strings.length > 1) {
+                dispositionHeader = strings[1].replace("filename=", "");
+                dispositionHeader = dispositionHeader.replace("\"", "");
+                return dispositionHeader;
+            }
+            return "";
+        }
+        return "";
+    }
 
 }

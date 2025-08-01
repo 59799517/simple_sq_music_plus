@@ -1,4 +1,4 @@
-package com.sqmusicplus.v3.base.entity.vo;
+package com.sqmusicplus.v3.plug.entity;
 
 import com.alibaba.fastjson.JSONObject;
 
@@ -10,7 +10,6 @@ import lombok.experimental.Accessors;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -154,7 +153,7 @@ public class Music implements Serializable {
     /**
      * 支持的码率
      */
-    private ArrayList<PlugBrType> Bits;
+    private List<PlugBrType> Bits;
 
 
 

@@ -1,6 +1,7 @@
 package com.sqmusicplus.v3.plug.entity;
 
 import com.alibaba.fastjson.JSONObject;
+import com.sqmusicplus.v3.base.enums.PlugBrType;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
@@ -19,54 +20,63 @@ public class PlugSearchMusicResult {
     /**
      * id
      */
-    String id;
+    private String id;
     /**
      * 歌曲名称
      */
-    String name;
+    private String name;
     /**
      * 歌手名称
      */
-    List<String> artistName;
+    private List<String> artistName;
     /**
      * 歌手id
      */
-    List<String> artistids;
+    private List<String> artistids;
     /**
      * 歌曲图片（必须是完整的url地址）
      */
-    String pic;
+    private String pic;
     /**
      * 专辑名称
      */
-    String albumName;
+    private String albumName;
     /**
      * 专辑id
      */
-    String albumid;
+    private String albumid;
     /**
      * 歌词
      */
-    String lyric;
+    private String lyric;
     /**
      * 歌词id（一次性获取不到歌词时接下来使用---尽量避免使用一次性就获取好）
      */
-    String lyricId;
+    private String lyricId;
 
     /**
      * 搜索类型
      */
-    String  searchType;
+    private String  plugName;
     /**
      * 歌曲时长
      */
 
-    String duration;
+    private String duration;
+
+
 
     /**
-     * 其余信息（
+     * br 码
      */
-    JSONObject dataInfo;
+    private List<PlugBrType> brTypes;
+
+    /**
+     * 其余信息
+     */
+    private JSONObject dataInfo;
+
+
 
 
 }

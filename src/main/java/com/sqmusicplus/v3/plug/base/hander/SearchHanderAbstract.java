@@ -6,11 +6,10 @@ import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.io.IORuntimeException;
 import cn.hutool.core.util.ReflectUtil;
 import com.alibaba.fastjson.JSONObject;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.sqmusicplus.v3.base.entity.DownloadInfo;
-import com.sqmusicplus.v3.base.entity.vo.Album;
-import com.sqmusicplus.v3.base.entity.vo.Artists;
-import com.sqmusicplus.v3.base.entity.vo.Music;
+import com.sqmusicplus.v3.plug.entity.Album;
+import com.sqmusicplus.v3.plug.entity.Artists;
+import com.sqmusicplus.v3.plug.entity.Music;
 import com.sqmusicplus.v3.base.enums.DbBooleanConvert;
 import com.sqmusicplus.v3.base.enums.PlugBrType;
 import com.sqmusicplus.v3.base.enums.SetConfigEnum;
@@ -28,6 +27,8 @@ import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -56,12 +57,15 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
     public void dnonloadAndSaveToFile(DownloadInfo downloadInfo, SearchHander searchHander) {
         try {
             //获取歌曲详情(数据在下载之前已经校验完成)
-            Music music = searchHander.musicInfoToMuisc(downloadInfo.getDownloadMusicInfo());
+//            Music music = searchHander.musicInfoToMuisc(downloadInfo.getDownloadMusicInfo());
+//            DownloadInfo downloadInfo = plugHander.musicToDownloadInfo(music, maxBr, false);
+            Music music = searchHander.querySongById(downloadInfo);
+
             if (music == null) {
                 throw new RuntimeException("下载失败歌曲信息不完整歌曲详情转化歌曲失败:" + JSONObject.toJSONString(downloadInfo));
             }
             final String baseMusicName = music.getMusicName().trim();
-            final String baseMusicArtistName = music.getMusicArtists().stream().map(String::trim).collect(Collectors.joining(","));
+            final String baseMusicArtistName = music.getMusicArtists().stream().map(String::trim).collect(Collectors.joining("&"));
             final String baseMusicAlbumName = music.getMusicAlbum().trim();
 
             final String baseAlbumID = music.getAlbumId();
@@ -205,24 +209,33 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
     }
 
     @Override
-    public DownloadInfo MusicToDownloadInfo(Music music, PlugBrType brType, Boolean isAudioBook) {
+    public DownloadInfo musicToDownloadInfo(Music music, PlugBrType brType, Boolean isAudioBook) {
+        List<PlugBrType> bits = music.getBits();
+        if (brType==null){
+
+            brType = MusicUtils.getMaxBr(bits);
+        }
+        String bitsStr = bits.stream().map(plugBrType -> plugBrType.getBit().toString()).collect(Collectors.joining(","));
+        String plugBrTypes = bits.stream().map(plugBrType -> plugBrType.getId()).collect(Collectors.joining(","));
+
         return new DownloadInfo()
                 .setDownloadGid(music.getId())
                 .setDownloadTime(new Date())
-                .setDownloadFile(music.getMusicName()+" - "+String.join(",", music.getMusicArtists()))
+                .setDownloadFile(music.getMusicName()+" - "+String.join("&", music.getMusicArtists()))
                 .setDownloadMusicId(music.getId())
                 .setDownloadPlugName(brType.getPlugName())
                 .setDownloadBrType(brType.getId())
                 .setDownloadMusicname(music.getMusicName())
-                .setDownloadArtistname(String.join(",", music.getMusicArtists()))
+                .setDownloadArtistname(String.join("&", music.getMusicArtists()))
                 .setDownloadAlbumname(music.getMusicAlbum())
                 .setDownloadMusicInfo(music.getDataInfo().toJSONString())
                 .setDownloadStatus(DownloadStatus.waiting.getValue())
                 .setSpringName(brType.getSpringName())
                 .setAudioBook(isAudioBook? DbBooleanConvert.YES.getValue():DbBooleanConvert.NO.getValue())
                 .setDownloadUpdateTime(new Date())
-                .setRewriteMp3tag(DbBooleanConvert.YES.getValue());
-
+                .setRewriteMp3tag(DbBooleanConvert.YES.getValue())
+                .setDownloadBits(bitsStr)
+                .setDownloadBrTypes(plugBrTypes);
     }
 
     /**
@@ -299,7 +312,6 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
         if (StringUtils.isBlank(trim1)) {
             throw new RuntimeException("歌曲校验失败：歌曲信息为空");
         }
-
         String trim2 = downloadInfo.getDownloadPlugName().trim();
         if (StringUtils.isBlank(trim2)) {
             throw new RuntimeException("歌曲校验失败：歌曲插件名称为空");
@@ -318,11 +330,19 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
         if (rewriteMp3tag == null) {
             throw new RuntimeException("歌曲校验失败：歌曲是否重写标签为空");
         }
+        String downloadBits = downloadInfo.getDownloadBits().trim();
+        if (StringUtils.isBlank(downloadBits)) {
+            throw new RuntimeException("歌曲校验失败：歌曲支持码率为空");
+        }
+        String trim5 = downloadInfo.getDownloadBrTypes().trim();
+        if (StringUtils.isBlank(trim5)) {
+            throw new RuntimeException("歌曲校验失败：歌曲支持码率类型为空");
+        }
         return downloadInfo;
     }
 
     @Override
-    public Music MusicIgnoreCheck(Music music){
+    public Music musicIgnoreCheck(Music music){
         if (music==null){
             return null;
         }
@@ -332,22 +352,30 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
             return null;
         }
         String ignoreMusicName = SqConfigCache.getSqConfigValue(SetConfigEnum.SYSTEM_IGNORE_ACCOMPANIMENT);
-        if (StringUtils.isNotBlank(ignoreMusicName)){
+        if (StringUtils.isNotBlank(ignoreMusicName)&&Boolean.parseBoolean(ignoreMusicName)){
             String musicName = music.getMusicName().trim();
             musicName = musicName.replaceAll("（", "(").replaceAll("）", ")");
-            for (String s : ignoreMusicName.split("\\|")) {
+            ArrayList<String> strings = new ArrayList<>();
+            strings.add("(伴奏)");
+            strings.add("(录音)");
+            strings.add("(录音带伴奏)");
+            strings.add("(片段)");
+            strings.add("(片段版)");
+            for (String s : strings) {
                 if (musicName.contains(s)) {
+                    log.info("触发伴奏忽略音乐：{}", musicName);
                     return null;
                 }
             }
         }
-        String ignoreArtist = SqConfigCache.getSqConfigValue(SetConfigEnum.SYSTEM_IGNORE_ACCOMPANIMENT);
+        String ignoreArtist = SqConfigCache.getSqConfigValue(SetConfigEnum.SYSTEM_SYNC_ARTISTS_EXCLUDE);
         List<String> musicArtists = music.getMusicArtists();
         String[] split = ignoreArtist.split("\\|");
         for (String musicArtist : musicArtists) {
             // 忽略的歌手
             for (String s : split) {
                 if (musicArtist.contains(s)) {
+                    log.info("触发歌手忽略音乐：{}--->{}", music.getMusicName(),s);
                     return null;
                 }
             }
@@ -357,9 +385,73 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
         String musicAlbum = music.getMusicAlbum().trim();
         for (String s : ignoreAlbum.split("\\|")) {
             if (musicAlbum.contains(s)) {
+                log.info("触发专辑忽略音乐：{}--->{}", music.getMusicName(),s);
                 return null;
             }
         }
         return music;
     }
+    public DownloadInfo musicIgnoreCheck(DownloadInfo downloadInfo) {
+        if (downloadInfo==null){
+            return null;
+        }
+        String id = downloadInfo.getDownloadMusicId().trim();
+
+        if (StringUtils.isBlank(id)) {
+            return null;
+        }
+        String ignoreMusicName = SqConfigCache.getSqConfigValue(SetConfigEnum.SYSTEM_IGNORE_ACCOMPANIMENT);
+        if (StringUtils.isNotBlank(ignoreMusicName)&&Boolean.parseBoolean(ignoreMusicName)){
+            String musicName = downloadInfo.getDownloadMusicname().trim();
+            musicName = musicName.replaceAll("（", "(").replaceAll("）", ")");
+            ArrayList<String> strings = new ArrayList<>();
+            strings.add("(伴奏)");
+            strings.add("(录音)");
+            strings.add("(录音带伴奏)");
+            strings.add("(片段)");
+            strings.add("(片段版)");
+            for (String s : strings) {
+                if (musicName.contains(s)) {
+                    log.info("触发伴奏忽略音乐：{}", musicName);
+                    return null;
+                }
+            }
+        }
+        String ignoreArtist = SqConfigCache.getSqConfigValue(SetConfigEnum.SYSTEM_SYNC_ARTISTS_EXCLUDE);
+        List<String> musicArtists = Arrays.stream(downloadInfo.getDownloadArtistname().split("&")).toList();
+        String[] split = ignoreArtist.split("\\|");
+        for (String musicArtist : musicArtists) {
+            // 忽略的歌手
+            for (String s : split) {
+                if (musicArtist.contains(s)) {
+                    log.info("触发歌手忽略音乐：{}--->{}", downloadInfo.getDownloadMusicname(),s);
+                    return null;
+                }
+            }
+        }
+        //忽略专辑
+        String ignoreAlbum = SqConfigCache.getSqConfigValue(SetConfigEnum.SYSTEM_SYNC_ALBUM_EXCLUDE);
+        String musicAlbum = downloadInfo.getDownloadAlbumname().trim();
+        for (String s : ignoreAlbum.split("\\|")) {
+            if (musicAlbum.contains(s)) {
+                log.info("触发专辑忽略音乐：{}--->{}", downloadInfo.getDownloadMusicname(),s);
+                return null;
+            }
+        }
+        return downloadInfo;
+    }
+
+
+    public List<DownloadInfo> musicIgnoreCheck(List<DownloadInfo> downloadInfos) {
+        ArrayList<DownloadInfo> downloadInfos1 = new ArrayList<>();
+        downloadInfos.forEach(downloadInfo -> {
+            DownloadInfo downloadInfo1 = musicIgnoreCheck(downloadInfo);
+            if (downloadInfo1 != null) {
+                downloadInfos1.add(downloadInfo1);
+            }
+        });
+        return downloadInfos1;
+
+    }
+
 }

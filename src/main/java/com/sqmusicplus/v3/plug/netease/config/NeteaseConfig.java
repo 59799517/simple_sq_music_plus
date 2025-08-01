@@ -23,8 +23,4 @@ public class NeteaseConfig extends PlugConfig {
     private String cookie;
     private String downloadUrl;
 
-    @Override
-    public String getStringPlugSetName() {
-        return getId() + ":" + getName();
-    }
 }

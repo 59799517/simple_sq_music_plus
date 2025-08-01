@@ -1,17 +1,15 @@
 package com.sqmusicplus;
 import com.alibaba.fastjson.JSONObject;
 
-import com.ejlchina.okhttps.OkHttps;
-import com.sqmusicplus.plug.qq.entity.QQMusicQr;
-import com.sqmusicplus.plug.qq.entity.QQMusicQrEventResult;
-import com.sqmusicplus.plug.qq.enums.LoginType;
-import com.sqmusicplus.plug.qq.enums.QRCodeLoginEvents;
-import com.sqmusicplus.plug.qq.hander.QQHander;
-import com.sqmusicplus.plug.qq.util.QQMusicUtil;
-import com.sqmusicplus.task.ScanQQVIPLikeMusicTask;
-import com.sqmusicplus.utils.DownloadUtils;
-import com.sqmusicplus.utils.OkHttpUtils;
-import com.sqmusicplus.utils.StringUtils;
+
+import com.sqmusicplus.v3.plug.qq.entity.QQMusicQr;
+import com.sqmusicplus.v3.plug.qq.entity.QQMusicQrEventResult;
+import com.sqmusicplus.v3.plug.qq.enums.LoginType;
+import com.sqmusicplus.v3.plug.qq.enums.QRCodeLoginEvents;
+import com.sqmusicplus.v3.plug.qq.hander.QQHander;
+import com.sqmusicplus.v3.plug.qq.util.QQMusicUtil;
+import com.sqmusicplus.v3.task.ScanQQVIPLikeMusicTask;
+import com.sqmusicplus.v3.utils.OkHttpUtils;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.*;
 
@@ -20,13 +18,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.util.Base64Utils;
 
-import java.net.CookieManager;
-import java.net.URI;
-import java.net.http.HttpClient;
 import java.net.http.HttpHeaders;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.net.http.HttpRequest.BodyPublishers;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 

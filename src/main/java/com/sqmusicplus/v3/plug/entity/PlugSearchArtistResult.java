@@ -25,7 +25,7 @@ public class PlugSearchArtistResult {
     /**
      * 搜索类型
      */
-    private String searchType;
+    private String plugName;
     /**
      * 歌曲图片（必须是完整的url地址）
      */
@@ -35,7 +35,7 @@ public class PlugSearchArtistResult {
      */
     String total;
     /**
-     * 其余信息（插件特殊参数） 尽量避免使用
+     * 其余信息
      */
     private JSONObject dataInfo;
 

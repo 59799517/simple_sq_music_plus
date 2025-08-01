@@ -56,6 +56,36 @@ public class SqSync {
      */
     @TableField(value = "play_list_sha1")
     private String playListSha1;
+    /**
+     * 歌单id
+     */
+    @TableField(value = "play_list_id")
+    private String playListId;
+
+    /**
+     * 歌手ID
+     */
+    @TableField(value = "artist_id")
+    private String artistId;
+    /**
+     * 歌手名称
+     */
+    @TableField(value = "artist_name")
+    private String artistName;
+    /**
+     * 专辑ID
+     */
+    @TableField(value = "album_id")
+    private String albumId;
+    /**
+     * 专辑名称
+     */
+    @TableField(value = "album_name")
+    private String albumName;
+
+
+
+
 
     /**
      * 获取主键
@@ -181,5 +211,35 @@ public class SqSync {
      */
     public void setPlayListSha1(String playListSha1) {
         this.playListSha1 = playListSha1 == null ? null : playListSha1.trim();
+    }
+    public String getPlayListId() {
+        return playListId;
+    }
+    public void setPlayListId(String playListId) {
+        this.playListId = playListId == null ? null : playListId.trim();
+    }
+    public String getArtistId() {
+        return artistId;
+    }
+    public void setArtistId(String artistId) {
+        this.artistId = artistId == null ? null : artistId.trim();
+    }
+    public String getArtistName() {
+        return artistName;
+    }
+    public void setArtistName(String artistName) {
+        this.artistName = artistName == null ? null : artistName.trim();
+    }
+    public String getAlbumId() {
+        return albumId;
+    }
+    public void setAlbumId(String albumId) {
+        this.albumId = albumId == null ? null : albumId.trim();
+    }
+    public String getAlbumName() {
+        return albumName;
+    }
+    public void setAlbumName(String albumName) {
+        this.albumName = albumName == null ? null : albumName.trim();
     }
 }

@@ -2,15 +2,14 @@ package com.sqmusicplus.v3.plug.base.hander;
 
 
 import com.sqmusicplus.v3.base.entity.DownloadInfo;
-import com.sqmusicplus.v3.base.entity.vo.Album;
-import com.sqmusicplus.v3.base.entity.vo.Artists;
-import com.sqmusicplus.v3.base.entity.vo.Music;
+import com.sqmusicplus.v3.plug.entity.Album;
+import com.sqmusicplus.v3.plug.entity.Artists;
+import com.sqmusicplus.v3.plug.entity.Music;
 import com.sqmusicplus.v3.base.enums.PlugBrType;
 import com.sqmusicplus.v3.download.vo.DownloadUrlResult;
 import com.sqmusicplus.v3.plug.entity.*;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 public interface SearchHander {
@@ -61,6 +60,9 @@ public interface SearchHander {
      * @return 歌曲信息
      */
     Music querySongById(String SongId);
+
+
+    Music querySongById(DownloadInfo downloadInfo);
 
     /**
      * 根据歌手id查询歌手信息
@@ -128,7 +130,7 @@ public interface SearchHander {
      * @param isAudioBook             是否是书籍类型
      * @return
      */
-    DownloadInfo MusicToDownloadInfo(Music music, PlugBrType brType, Boolean isAudioBook);
+    DownloadInfo musicToDownloadInfo(Music music, PlugBrType brType, Boolean isAudioBook);
 
 
     /**
@@ -170,10 +172,10 @@ public interface SearchHander {
      */
     void dnonloadAndSaveToFile(DownloadInfo downloadInfo,Object searchHander);
 
-    /**
-     * 音乐详情转音乐对象（下载使用）
-     */
-    Music musicInfoToMuisc(String musicInfo);
+//    /**
+//     * 音乐详情转音乐对象（下载使用）
+//     */
+//    Music musicInfoToMuisc(String id,String musicInfo);
 
     /**
      * DownloadInfo存储到数据库校验
@@ -185,6 +187,19 @@ public interface SearchHander {
      * @param music
      * @return
      */
-    Music MusicIgnoreCheck(Music music);
+    Music musicIgnoreCheck(Music music);
+    /**
+     * 过滤忽略的音下载
+     * @param downloadInfo
+     * @return
+     */
+    DownloadInfo musicIgnoreCheck(DownloadInfo downloadInfo);
+    /**
+     * 过滤忽略的音下载
+     * @param downloadInfos
+     * @return
+     */
+    List<DownloadInfo> musicIgnoreCheck(List<DownloadInfo> downloadInfos);
+
 
 }

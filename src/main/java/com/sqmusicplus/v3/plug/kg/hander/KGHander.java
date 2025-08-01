@@ -2,13 +2,10 @@ package com.sqmusicplus.v3.plug.kg.hander;
 
 import cn.hutool.core.date.DateUtil;
 import com.alibaba.fastjson.JSONObject;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.sqmusicplus.v3.base.entity.DownloadInfo;
-import com.sqmusicplus.v3.base.entity.SqConfig;
-import com.sqmusicplus.v3.base.entity.vo.Album;
-import com.sqmusicplus.v3.base.entity.vo.Artists;
-import com.sqmusicplus.v3.base.entity.vo.Music;
+import com.sqmusicplus.v3.plug.entity.Album;
+import com.sqmusicplus.v3.plug.entity.Artists;
+import com.sqmusicplus.v3.plug.entity.Music;
 import com.sqmusicplus.v3.base.enums.PlugBrType;
 import com.sqmusicplus.v3.base.enums.SetConfigEnum;
 import com.sqmusicplus.v3.config.SqConfigCache;
@@ -35,7 +32,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import static com.sqmusicplus.v3.base.enums.PlugBrType.KG_Flac_890;
@@ -105,28 +101,50 @@ public class KGHander extends SearchHanderAbstract {
         if (status != 1){
             plugSearchResult.setSearchIndex(searchKeyData.getPageIndex())
                     .setSearchSize(searchKeyData.getPageSize())
-                    .setSearchType(getPlugName())
+                    .setPlugName(getPlugName())
                     .setSearchTotal(0)
                     .setSearchKeyWork(searchKeyData.getSearchkey())
                     .setRecords(plugSearchMusicResults);
-            plugSearchResult.setSearchType(getPlugName());
+            plugSearchResult.setPlugName(getPlugName());
             return plugSearchResult;
         }
         SearchMusicResult.DataDTO data = bean.getData();
         List<SearchMusicResult.DataDTO.ListsDTO> lists = data.getLists();
         for (SearchMusicResult.DataDTO.ListsDTO listsDTO : lists) {
-            plugSearchMusicResults.add(         new PlugSearchMusicResult().setAlbumName(listsDTO.getAlbumName())
+            SearchMusicResult.DataDTO.ListsDTO.SQDTO sq = listsDTO.getSq();//flac
+            SearchMusicResult.DataDTO.ListsDTO.HQDTO hq = listsDTO.getHq();//320
+            Long fileSize = listsDTO.getFileSize();//128
+            ArrayList<PlugBrType> brTypes = new ArrayList<>();
+            if (fileSize!=null&&fileSize>0){
+                brTypes.add(PlugBrType.KG_MP3_128);
+            }
+            if (sq!=null){
+                Long fileSize1 = sq.getFileSize();
+                if (fileSize1!=null&&fileSize1>0){
+                    brTypes.add(PlugBrType.KG_Flac_2000);
+                }
+            }
+            if (hq!=null){
+                Long fileSize1 = hq.getFileSize();
+                if (fileSize1!=null&&fileSize1>0){
+                    brTypes.add(PlugBrType.KG_MP3_320);
+                }
+            }
+
+
+            plugSearchMusicResults.add(new PlugSearchMusicResult().setAlbumName(listsDTO.getAlbumName())
                     .setAlbumid(listsDTO.getAlbumID())
                     .setArtistName(listsDTO.getSingers().stream().map(e -> e.getName()).collect(Collectors.toList()))
                     .setArtistids(listsDTO.getSingers().stream().map(e -> e.getId().toString()).collect(Collectors.toList()))
                     .setId(listsDTO.getFileHash())
-                    .setSearchType(getPlugName())
+                    .setPlugName(getPlugName())
+                    .setBrTypes(brTypes)
                     .setDuration(listsDTO.getDuration().toString())
-                    .setName(listsDTO.getSongName()).setPic(listsDTO.getImage().replaceAll("\\{size}",getConfig().getImageSize())));
+                    .setName(listsDTO.getOriSongName()).setPic(listsDTO.getImage().replaceAll("\\{size}",getConfig().getImageSize())));
         }
         plugSearchResult.setSearchIndex(searchKeyData.getPageIndex())
                 .setSearchSize(searchKeyData.getPageSize())
-                .setSearchType(getPlugName())
+                .setPlugName(getPlugName())
                 .setSearchTotal(data.getTotal().intValue())
                 .setSearchKeyWork(searchKeyData.getSearchkey())
                 .setRecords(plugSearchMusicResults);
@@ -155,28 +173,28 @@ public class KGHander extends SearchHanderAbstract {
         if (status != 1){
             plugSearchResult.setSearchIndex(searchKeyData.getPageIndex())
                     .setSearchSize(searchKeyData.getPageSize())
-                    .setSearchType(getPlugName())
+                    .setPlugName(getPlugName())
                     .setSearchTotal(0)
                     .setSearchKeyWork(searchKeyData.getSearchkey())
                     .setRecords(plugSearchMusicResults);
-            plugSearchResult.setSearchType(getPlugName());
+            plugSearchResult.setPlugName(getPlugName());
             return plugSearchResult;
         }
         SearchArtistResult.DataDTO data = bean.getData();
         List<SearchArtistResult.DataDTO.ListsDTO> lists = data.getLists();
         plugSearchMusicResults = lists.stream().map(listsDTO -> new PlugSearchArtistResult().setArtistName(listsDTO.getAuthorName())
                 .setArtistid(listsDTO.getAuthorId().toString())
-                .setSearchType(getPlugName())
+                .setPlugName(getPlugName())
                 .setPic(listsDTO.getAvatar().replaceAll("\\{size}",getConfig().getImageSize()))
                 .setTotal(listsDTO.getAlbumCount().toString()))
                 .collect(Collectors.toCollection(ArrayList::new));
         plugSearchResult.setSearchIndex(searchKeyData.getPageIndex())
                 .setSearchSize(searchKeyData.getPageSize())
-                .setSearchType(getPlugName())
+                .setPlugName(getPlugName())
                 .setSearchTotal(data.getTotal().intValue())
                 .setSearchKeyWork(searchKeyData.getSearchkey())
                 .setRecords(plugSearchMusicResults);
-        plugSearchResult.setSearchType(getPlugName());
+        plugSearchResult.setPlugName(getPlugName());
         return plugSearchResult;
     }
 
@@ -204,30 +222,30 @@ public class KGHander extends SearchHanderAbstract {
         if (status != 1){
             plugSearchResult.setSearchIndex(searchKeyData.getPageIndex())
                     .setSearchSize(searchKeyData.getPageSize())
-                    .setSearchType(getPlugName())
+                    .setPlugName(getPlugName())
                     .setSearchTotal(0)
                     .setSearchKeyWork(searchKeyData.getSearchkey())
                     .setRecords(plugSearchMusicResults);
-            plugSearchResult.setSearchType(getPlugName());
+            plugSearchResult.setPlugName(getPlugName());
             return plugSearchResult;
         }
         SearchAlbumResult.DataDTO data = bean.getData();
         List<SearchAlbumResult.DataDTO.ListsDTO> lists = data.getLists();
         plugSearchMusicResults = lists.stream().map(listsDTO -> new PlugSearchAlbumResult().setAlbumName(listsDTO.getAlbumname())
                 .setAlbumid(listsDTO.getAlbumid().toString())
-                .setArtistName(listsDTO.getSingers().stream().map(e -> e.getName()).collect(Collectors.joining(",")))
+                .setArtistName(listsDTO.getSingers().stream().map(e -> e.getName()).collect(Collectors.joining("&")))
                 .setArtistid(listsDTO.getSingers().stream().map(e -> e.getId().toString()).collect(Collectors.joining(",")))
-                .setSearchType(getPlugName())
+                .setPlugName(getPlugName())
                 .setPic(listsDTO.getImg().replaceAll("\\{size}",getConfig().getImageSize()))
-               .setTotal(listsDTO.getSongcount().toString()))
+                .setTotal(listsDTO.getSongcount().toString()))
                 .collect(Collectors.toCollection(ArrayList::new));
         plugSearchResult.setSearchIndex(searchKeyData.getPageIndex())
                 .setSearchSize(searchKeyData.getPageSize())
-                .setSearchType(getPlugName())
+                .setPlugName(getPlugName())
                 .setSearchTotal(data.getTotal().intValue())
                 .setSearchKeyWork(searchKeyData.getSearchkey())
                 .setRecords(plugSearchMusicResults);
-        plugSearchResult.setSearchType(getPlugName());
+        plugSearchResult.setPlugName(getPlugName());
         return plugSearchResult;
     }
 
@@ -261,6 +279,7 @@ public class KGHander extends SearchHanderAbstract {
                 String musicAlbum = dataDTO.getAlbumname();
                 String musicName = dataDTO.getName().replaceAll(dataDTO.getSingername(), "").replaceAll("-", "").trim();
                 String albumId = dataDTO.getAlbumId();
+
                 SongInfoResult.DataDTO.InfoDTO info = dataDTO.getInfo();
                 Long duration = info.getDuration();
                 String musicimage = info.getImage().replaceAll("\\{size}",getConfig().getImageSize());
@@ -353,11 +372,17 @@ public class KGHander extends SearchHanderAbstract {
                         .setMusicLyric(lyric)
                         .setMusicDuration(duration)
                         .setBits(plugBrTypes)
+                        .setDataInfo(JSONObject.parseObject(JSONObject.toJSONString(dataDTO)))
                         .setMusicImage(dataDTO.getInfo().getImage());
             }
         }
 
         return null;
+    }
+
+    @Override
+    public Music querySongById(DownloadInfo downloadInfo) {
+        return querySongById(downloadInfo.getDownloadMusicId());
     }
 
     @Override
@@ -582,7 +607,7 @@ public class KGHander extends SearchHanderAbstract {
             if (isAudioBook) {
                 md.setMusicAlbum(albumName).setMusicArtists(artists);
             }
-            DownloadInfo downloadInfo = super.MusicToDownloadInfo(md, brType, isAudioBook);
+            DownloadInfo downloadInfo = super.musicToDownloadInfo(md, brType, isAudioBook);
             downloadEntities.add(downloadInfo);
         });
         return downloadEntities;
@@ -606,10 +631,6 @@ public class KGHander extends SearchHanderAbstract {
         return downloadInfos;
     }
 
-    @Override
-    public Music musicInfoToMuisc(String musicInfo) {
-        return null;
-    }
 
 
 
@@ -660,7 +681,33 @@ public class KGHander extends SearchHanderAbstract {
             if (audioInfo==null||base==null){
                 continue;
             }
+            ArrayList<PlugBrType> brTypes = new ArrayList<>();
+            try {
+                String hash = audioInfo.getHash();
+                if (StringUtils.isNotEmpty(hash)){
+                    brTypes.add(PlugBrType.KG_MP3_128);
+                }
+            } catch (Exception e) {
+            }
+            try {
+                String hash320 = audioInfo.getHash320();
+                if (StringUtils.isNotEmpty(hash320)){
+                    brTypes.add(PlugBrType.KG_MP3_320);
+                }
+            } catch (Exception e) {
+            }
+            try {
+                String hashFlac = audioInfo.getHashFlac();
+
+                if (StringUtils.isNotEmpty(hashFlac)){
+                    brTypes.add(PlugBrType.KG_Flac_2000);
+                }
+            } catch (Exception e) {
+            }
+
+
             Music music = new Music().setId(audioInfo.getHash())
+                    .setBits(brTypes)
                     .setMusicName(base.getAudioName())
                     .setMusicDuration(audioInfo.getDuration())
                     .setMusicAlbum(albumInfo.getAlbumName())
@@ -771,15 +818,7 @@ public class KGHander extends SearchHanderAbstract {
                             if (listDTO.getDay().equals(date)) {
                                 Integer receiveVip = listDTO.getReceiveVip();
                                 if (receiveVip ==1) {
-                                    SqConfigCache.removeCacheAndDBbSqConfig(SetConfigEnum.PLUG_KG_SIGN_LAST_TIME);
-                                    //vipHour
-                                    SqConfig sqConfig = new SqConfig();
-                                    sqConfig.setConfigName("酷狗最后一次自动签到时间");
-                                    sqConfig.setConfigKey(SetConfigEnum.PLUG_KG_SIGN_LAST_TIME.getKey());
-                                    sqConfig.setConfigValue(listDTO.getDay());
-                                    sqConfig.setConfigShow("Y");
-                                    sqConfig.setType("input");
-                                    SqConfigCache.addConfigToDb(sqConfig);
+                                    SqConfigCache.updateConfigToDb(SetConfigEnum.PLUG_KG_SIGN_LAST_TIME,listDTO.getDay());
                                 }
                             }
                         }
@@ -852,14 +891,8 @@ public class KGHander extends SearchHanderAbstract {
         JSONObject mapper = body.getJSONObject("data");
         String key = mapper.getString("qrcode");
         String img = mapper.getString("qrcode_img");
-        SqConfigCache.removeCacheAndDBbSqConfig(SetConfigEnum.PLUG_KG_QRCODE_INFO);
-        SqConfig sqConfig = new SqConfig();
-        sqConfig.setConfigKey(SetConfigEnum.PLUG_KG_QRCODE_INFO.getKey());
-        sqConfig.setConfigValue(key);
-        sqConfig.setConfigName(SetConfigEnum.PLUG_KG_QRCODE_INFO.getDescribe());
-        sqConfig.setType("input");
-        sqConfig.setConfigShow("N");
-        SqConfigCache.addConfigToDb(sqConfig);
+        SqConfigCache.updateConfigToDb(SetConfigEnum.PLUG_KG_QRCODE_INFO,key);
+
         //异步监听
         syncCheckQrCodeStatus();
         return img;
@@ -967,15 +1000,8 @@ public class KGHander extends SearchHanderAbstract {
         }
         String key = body.getString("uuid");
         String img = body.getJSONObject("qrcode").getString("qrcodebase64");
+        SqConfigCache.updateConfigToDb(SetConfigEnum.PLUG_KG_QRCODE_WX_CODE,key);
 
-        SqConfigCache.removeCacheAndDBbSqConfig(SetConfigEnum.PLUG_KG_QRCODE_WX_CODE);
-        SqConfig sqConfig = new SqConfig();
-        sqConfig.setConfigKey(SetConfigEnum.PLUG_KG_QRCODE_WX_CODE.getKey());
-        sqConfig.setConfigValue(key);
-        sqConfig.setConfigName(SetConfigEnum.PLUG_KG_QRCODE_WX_CODE.getDescribe());
-        sqConfig.setType("input");
-        sqConfig.setConfigShow("N");
-        SqConfigCache.addConfigToDb(sqConfig);
         //异步监听
         syncCheckWxQrCodeStatus();
         return "data:image/jpge;base64,"+img;

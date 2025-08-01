@@ -1,11 +1,10 @@
 package com.sqmusicplus.v3.plug.netease.hander;
 
 import com.alibaba.fastjson.JSONObject;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.sqmusicplus.v3.base.entity.DownloadInfo;
-import com.sqmusicplus.v3.base.entity.vo.Album;
-import com.sqmusicplus.v3.base.entity.vo.Artists;
-import com.sqmusicplus.v3.base.entity.vo.Music;
+import com.sqmusicplus.v3.plug.entity.Album;
+import com.sqmusicplus.v3.plug.entity.Artists;
+import com.sqmusicplus.v3.plug.entity.Music;
 import com.sqmusicplus.v3.base.enums.PlugBrType;
 import com.sqmusicplus.v3.base.enums.SetConfigEnum;
 import com.sqmusicplus.v3.config.SqConfigCache;
@@ -14,7 +13,6 @@ import com.sqmusicplus.v3.plug.base.hander.SearchHanderAbstract;
 import com.sqmusicplus.v3.plug.entity.*;
 import com.sqmusicplus.v3.plug.netease.entity.*;
 import com.sqmusicplus.v3.plug.netease.enums.SearchEnums;
-import com.sqmusicplus.v3.utils.DownloadUtils;
 import com.sqmusicplus.v3.utils.OkHttpUtils;
 import com.sqmusicplus.v3.utils.StringUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -22,12 +20,9 @@ import org.springframework.stereotype.Component;
 import top.yumbo.util.music.MusicEnum;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
-import static jdk.internal.org.jline.utils.Colors.s;
 
 /**
  * @Classname NeteaseHander
@@ -103,6 +98,29 @@ public class NeteaseHander extends SearchHanderAbstract {
             songs.forEach(songsDTO -> {
                 ArrayList<String> artists = new ArrayList<>();
                 ArrayList<String> artistids = new ArrayList<>();
+                ArrayList<PlugBrType> brTypes = new ArrayList<>();
+                SearchMusicNeteaseResult.ResultDTO.SongsDTO.LDTO l = songsDTO.getL();
+                if (l!=null&&l.getBr()==128000&&l.getSize()>0) {
+                    brTypes.add(PlugBrType.NETEASE_MP3_128);
+                }
+                SearchMusicNeteaseResult.ResultDTO.SongsDTO.MDTO m = songsDTO.getM();
+
+                if (m!=null&&m.getBr()==192000&&m.getSize()>0) {
+                    brTypes.add(PlugBrType.NETEASE_MP3_192);
+                }
+                SearchMusicNeteaseResult.ResultDTO.SongsDTO.HDTO h = songsDTO.getH();
+                if (h!=null&&h.getBr()==320000&&h.getSize()>0) {
+                    brTypes.add(PlugBrType.NETEASE_MP3_320);
+                }
+                SearchMusicNeteaseResult.ResultDTO.SongsDTO.SqDTO sq = songsDTO.getSq();
+                if (sq!=null&&sq.getSize()>0) {
+                    brTypes.add(PlugBrType.NETEASE_FLAC_2000);
+                }
+                SearchMusicNeteaseResult.ResultDTO.SongsDTO.HrDTO hr = songsDTO.getHr();
+                if (hr!=null&&hr.getSize()>0) {
+                    brTypes.add(PlugBrType.NETEASE_FLAC_3000);
+                }
+
 
 
                 List<SearchMusicNeteaseResult.ResultDTO.SongsDTO.ArDTO> collect = songsDTO.getAr().stream().toList();
@@ -117,7 +135,9 @@ public class NeteaseHander extends SearchHanderAbstract {
                         .setArtistids(artistids)
                         .setAlbumid(songsDTO.getAl().getId().toString())
                         .setId(songsDTO.getId().toString())
-                        .setSearchType(getPlugName())
+                        .setPlugName(getPlugName())
+                        .setBrTypes(brTypes)
+                        .setLyricId(songsDTO.getId().toString())
                         .setName(songsDTO.getName())
                         .setDataInfo(JSONObject.parseObject(JSONObject.toJSONString(songsDTO)));
                 plugSearchMusicResults.add(plugSearchMusicResult);
@@ -125,11 +145,11 @@ public class NeteaseHander extends SearchHanderAbstract {
         }
         plugSearchResult.setSearchIndex(searchKeyData.getPageIndex())
                 .setSearchSize(searchKeyData.getPageSize())
-                .setSearchType(getPlugName())
+                .setPlugName(getPlugName())
                 .setSearchTotal( searchMusicResult.getResult().getSongCount().intValue())
                 .setSearchKeyWork(searchKeyData.getSearchkey())
                 .setRecords(plugSearchMusicResults);
-        plugSearchResult.setSearchType(getPlugName());
+        plugSearchResult.setPlugName(getPlugName());
         return plugSearchResult;
     }
 
@@ -150,7 +170,7 @@ public class NeteaseHander extends SearchHanderAbstract {
                 PlugSearchArtistResult plugSearchArtistResult = new PlugSearchArtistResult()
                         .setArtistName(artistsDTO.getName())
                         .setArtistid(artistsDTO.getId().toString())
-                        .setSearchType(getPlugName())
+                        .setPlugName(getPlugName())
                         .setPic(artistsDTO.getPicUrl())
                         .setDataInfo(JSONObject.parseObject(JSONObject.toJSONString(artistsDTO)))
                         .setTotal(artistsDTO.getAlbumSize().toString());
@@ -159,11 +179,11 @@ public class NeteaseHander extends SearchHanderAbstract {
         }
         plugSearchResult.setSearchIndex(searchKeyData.getPageIndex())
                 .setSearchSize(searchKeyData.getPageSize())
-                .setSearchType(getPlugName())
+                .setPlugName(getPlugName())
                 .setSearchTotal(artistNeteaseResult.getResult().getArtistCount())
                 .setSearchKeyWork(searchKeyData.getSearchkey())
                 .setRecords(plugSearchArtistResults);
-        plugSearchResult.setSearchType(getPlugName());
+        plugSearchResult.setPlugName(getPlugName());
         return plugSearchResult;
 
     }
@@ -187,7 +207,7 @@ public class NeteaseHander extends SearchHanderAbstract {
                         .setAlbumid(albumsDTO.getId().toString())
                         .setArtistName(albumsDTO.getArtist().getName())
                         .setArtistid(albumsDTO.getArtist().getId().toString())
-                        .setSearchType(getPlugName())
+                        .setPlugName(getPlugName())
                         .setDataInfo(JSONObject.parseObject(JSONObject.toJSONString(albumsDTO)))
                         .setPic(albumsDTO.getPicUrl());
                 plugSearchAlbumResults.add(plugSearchAlbumResult);
@@ -195,7 +215,7 @@ public class NeteaseHander extends SearchHanderAbstract {
         }
         plugSearchResult.setSearchIndex(searchKeyData.getPageIndex())
                 .setSearchSize(searchKeyData.getPageSize())
-                .setSearchType(getPlugName())
+                .setPlugName(getPlugName())
                 .setSearchTotal(albumsNeteaseResult.getResult().getAlbumCount())
                 .setSearchKeyWork(searchKeyData.getSearchkey())
                 .setRecords(plugSearchAlbumResults);
@@ -255,6 +275,11 @@ public class NeteaseHander extends SearchHanderAbstract {
     }
 
     @Override
+    public Music querySongById(DownloadInfo downloadInfo) {
+        return querySongById(downloadInfo.getDownloadMusicId());
+    }
+
+    @Override
     public Artists queryArtistById(String artistId) {
         JSONObject parameter = new JSONObject();// 请求参数
         parameter.put("id", artistId);
@@ -283,9 +308,34 @@ public class NeteaseHander extends SearchHanderAbstract {
             List<AlbumInfoNeteaseResult.SongsDTO> songs = albumInfoNeteaseResult.getSongs();
             ArrayList<Music> collect = new ArrayList<>();
             songs.forEach(songsInfoDTO -> {
+
+                AlbumInfoNeteaseResult.SongsDTO songsDTO = songsInfoDTO;
+                AlbumInfoNeteaseResult.SongsDTO.HDTO h = songsDTO.getH();
+                AlbumInfoNeteaseResult.SongsDTO.MDTO m = songsDTO.getM();
+                AlbumInfoNeteaseResult.SongsDTO.LDTO l = songsDTO.getL();
+                AlbumInfoNeteaseResult.SongsDTO.SqDTO sq = songsDTO.getSq();
+                AlbumInfoNeteaseResult.SongsDTO.HrDTO hr = songsDTO.getHr();
+                ArrayList<PlugBrType> plugBrTypes = new ArrayList<>();
+                if (h!=null&&h.getBr()!=null){
+                    plugBrTypes.add(PlugBrType.NETEASE_MP3_320);
+                }
+                if (m!=null&&m.getBr()!=null){
+                    plugBrTypes.add(PlugBrType.NETEASE_MP3_192);
+                }
+                if (l!=null&&l.getBr()!=null){
+                    plugBrTypes.add(PlugBrType.NETEASE_MP3_128);
+                }
+                if (sq!=null&&sq.getBr()!=null){
+                    plugBrTypes.add(PlugBrType.NETEASE_FLAC_2000);
+                }
+                if (hr!=null&&hr.getBr()!=null){
+                    plugBrTypes.add(PlugBrType.NETEASE_FLAC_3000);
+                }
+
                 Music music = new Music();
                 music.setId(songsInfoDTO.getId().toString())
                         .setMusicName(songsInfoDTO.getName())
+                        .setBits(plugBrTypes)
                         .setMusicDuration(songsInfoDTO.getDt())
                         .setMusicAlbum(songsInfoDTO.getAl().getName())
                         .setMusicArtists(songsInfoDTO.getAr().stream().map(e -> e.getName()).collect(Collectors.toList()))
@@ -361,9 +411,34 @@ public class NeteaseHander extends SearchHanderAbstract {
             AlbumInfoNeteaseResult.AlbumDTO albumDTO = albumInfoNeteaseResult.getAlbum();
             List<AlbumInfoNeteaseResult.SongsDTO> songs = albumInfoNeteaseResult.getSongs();
             songs.forEach(songsInfoDTO -> {
+
+                AlbumInfoNeteaseResult.SongsDTO songsDTO = songsInfoDTO;
+                AlbumInfoNeteaseResult.SongsDTO.HDTO h = songsDTO.getH();
+                AlbumInfoNeteaseResult.SongsDTO.MDTO m = songsDTO.getM();
+                AlbumInfoNeteaseResult.SongsDTO.LDTO l = songsDTO.getL();
+                AlbumInfoNeteaseResult.SongsDTO.SqDTO sq = songsDTO.getSq();
+                AlbumInfoNeteaseResult.SongsDTO.HrDTO hr = songsDTO.getHr();
+                ArrayList<PlugBrType> plugBrTypes = new ArrayList<>();
+                if (h!=null&&h.getBr()!=null){
+                    plugBrTypes.add(PlugBrType.NETEASE_MP3_320);
+                }
+                if (m!=null&&m.getBr()!=null){
+                    plugBrTypes.add(PlugBrType.NETEASE_MP3_192);
+                }
+                if (l!=null&&l.getBr()!=null){
+                    plugBrTypes.add(PlugBrType.NETEASE_MP3_128);
+                }
+                if (sq!=null&&sq.getBr()!=null){
+                    plugBrTypes.add(PlugBrType.NETEASE_FLAC_2000);
+                }
+                if (hr!=null&&hr.getBr()!=null){
+                    plugBrTypes.add(PlugBrType.NETEASE_FLAC_3000);
+                }
+
                 Music music = new Music();
                 music.setId(songsInfoDTO.getId().toString())
                         .setMusicName(songsInfoDTO.getName())
+                        .setBits(plugBrTypes)
                         .setMusicDuration(songsInfoDTO.getDt())
                         .setMusicAlbum(songsInfoDTO.getAl().getName())
                         .setMusicArtists(songsInfoDTO.getAr().stream().map(e -> e.getName()).collect(Collectors.toList()))
@@ -403,7 +478,7 @@ public class NeteaseHander extends SearchHanderAbstract {
             String data = OkHttpUtils.builder()
                     .url(url)
                     .addHeader("User-Agent","QQ%E9%9F%B3%E4%B9%90/73222 CFNetwork/1406.0.3 Darwin/22.4.0")
-                    .post(true,s)
+                    .get()
                     .sync();
             JSONObject jsonObject = JSONObject.parseObject(data);
 
@@ -450,105 +525,28 @@ public class NeteaseHander extends SearchHanderAbstract {
 
     @Override
     public ArrayList<DownloadInfo> downloadAlbum(String albumsId, PlugBrType brType, List<String> artists, Boolean isAudioBook, String albumName) {
-        return null;
+
+        List<Music> musiclist = getAlbumSongByAlbumsId(albumsId);
+        ArrayList<DownloadInfo> downloadInfos = new ArrayList<>();
+
+
+        musiclist.forEach(md -> {
+            if (isAudioBook) {
+                md.setMusicAlbum(albumName).setMusicArtists(artists);
+            }
+            DownloadInfo downloadInfo = super.musicToDownloadInfo(md, brType, isAudioBook);
+            downloadInfos.add(downloadInfo);
+        });
+        return downloadInfos;
     }
 
     @Override
     public List<DownloadInfo> downloadArtistAllSong(String artistId, PlugBrType brType) {
-        return List.of();
+        return downloadArtistAllAlbum(artistId, brType);
     }
 
     @Override
     public List<DownloadInfo> downloadArtistAllAlbum(String artistId, PlugBrType brType) {
-        return List.of();
-    }
-
-    @Override
-    public Music musicInfoToMuisc(String musicInfo) {
-        return null;
-    }
-
-    @Override
-    public HashMap<String, String> getDownloadUrl(String musicId, PlugBrType brType) {
-
-
-
-
-
-
-
-
-
-    }
-
-    @Override
-    public HashMap<String, String> getDownloadUrl(DownloadEntity downloadEntity) {
-        return getDownloadUrl(downloadEntity.getMusicid(), downloadEntity.getBrType());
-    }
-
-    @Override
-    public DownloadEntity downloadSong(String musicid, PlugBrType brType, String musicname, String artistname, String albumname, Boolean isAudioBook, String addSubsonicPlayListName) {
-        Music music = querySongById(musicid);
-        DownloadEntity downloadEntity = new DownloadEntity("neteaseHander",musicid, brType, music.getMusicName(), music.getMusicArtists(), music.getMusicAlbum(), isAudioBook, isAudioBook?addSubsonicPlayListName:null);
-        return downloadEntity;
-    }
-
-    @Override
-    public DownloadEntity downloadSong(Music music, PlugBrType brType, Boolean isAudioBook, String addSubsonicPlayListName) {
-        DownloadEntity downloadEntity = new DownloadEntity("neteaseHander",music.getId(), brType, music.getMusicName(), music.getMusicArtists(), music.getMusicAlbum(), isAudioBook, isAudioBook?addSubsonicPlayListName:null);
-        return downloadEntity;
-    }
-
-    @Override
-    public DownloadEntity downloadSong(Music music, PlugBrType brType, String addSubsonicPlayListName) {
-        DownloadEntity downloadEntity = new DownloadEntity("neteaseHander",music.getId(), brType, music.getMusicName(), music.getMusicArtists(), music.getMusicAlbum(), false, addSubsonicPlayListName);
-        return downloadEntity;
-    }
-
-    @Override
-    public ArrayList<DownloadEntity> downloadAlbum(String albumsId, PlugBrType brType, String addSubsonicPlayListName, String artist, Boolean isAudioBook, String albumName) {
-
-
-        List<Music> musiclist = getAlbumSongByAlbumsId(albumsId);
-        AtomicReference<String> change = new AtomicReference<>(artist);
-        ArrayList<DownloadEntity> downloadEntities = new ArrayList<>();
-
-        SqConfig accompaniment = getConfigService().getOne(new QueryWrapper<SqConfig>().eq("config_key", "music.ignore.accompaniment"));
-        SqConfig matchAlbumSinger = getConfigService().getOne(new QueryWrapper<SqConfig>().eq("config_key", "music.strong.match.album.singer"));
-        SqConfig albumSingerUnity = getConfigService().getOne(new QueryWrapper<SqConfig>().eq("config_key", "music.album.singer.unity"));
-
-        musiclist.forEach(md -> {
-            if (Boolean.getBoolean(accompaniment.getConfigValue())) {
-                if (md.getMusicName().contains("(伴奏)") || md.getMusicName().contains("(试听版)") || md.getMusicName().contains("片段")) {
-                    return;
-                }
-            }
-            if (Boolean.getBoolean(matchAlbumSinger.getConfigValue()) && !isAudioBook) {
-                if (!md.getMusicArtists().contains(change.get())) {
-                    return;
-                }
-            }
-            if (!Boolean.getBoolean(albumSingerUnity.getConfigValue()) && !isAudioBook) {
-                change.set(md.getMusicArtists());
-            }
-            if (isAudioBook) {
-                downloadEntities.add(new DownloadEntity("nKwSearchHander",md.getId(), brType, md.getMusicName(), artist, albumName, isAudioBook));
-            } else {
-                //添加到缓存
-                downloadEntities.add(new DownloadEntity("nKwSearchHander",md.getId(), brType, md.getMusicName(), change.get(), md.getMusicAlbum()));
-            }
-
-        });
-        return downloadEntities;
-    }
-
-    @Override
-    public List<DownloadEntity> downloadArtistAllSong(String artistId, PlugBrType brType, String addSubsonicPlayListName) {
-        return downloadArtistAllAlbum(artistId, brType, addSubsonicPlayListName);
-    }
-
-    @Override
-    public List<DownloadEntity> downloadArtistAllAlbum(String artistId, PlugBrType brType, String addSubsonicPlayListName) {
         int page = 1;
         JSONObject parameter = new JSONObject();// 请求参数
         parameter.put("id", artistId);
@@ -572,13 +570,93 @@ public class NeteaseHander extends SearchHanderAbstract {
         } catch (Exception e) {
             more=false;
         }
-
-
-        ArrayList<DownloadEntity> downloadEntitys = new ArrayList<>();
+        ArrayList<DownloadInfo> downloadInfos = new ArrayList<>();
         for (ArtistAllAlubuminNeteaseResult.HotAlbumsDTO album : hotAlbums) {
-            ArrayList<DownloadEntity> downloadEntities = downloadAlbum(album.getId().toString(), brType, addSubsonicPlayListName, album.getArtist().getName(), false, album.getName());
-            downloadEntitys.addAll(downloadEntities);
+            ArrayList<String> artists = new ArrayList<>();
+            artists.add(album.getArtist().getName());
+            ArrayList<DownloadInfo> downloadEntities = downloadAlbum(album.getId().toString(), brType,artists , false, album.getName());
+            downloadInfos.addAll(downloadEntities);
         }
-        return downloadEntitys;
+        return downloadInfos;
     }
+
+
+
+
+    public ArrayList<Music>  getPlayList(String playlistId){
+        ArrayList<Music> musics = new ArrayList<>();
+
+        int page = 1;
+        JSONObject parameter = new JSONObject();// 请求参数
+        parameter.put("id", playlistId);
+        parameter.put("limit", "50");
+        parameter.put("offset", (page - 1)*50);
+        boolean more = true;
+        JSONObject jsonObject = neteaseCloudMusicInfo.playlistDetail(parameter);
+        PlaylistTrackAllResult playlistTrackAllResult = jsonObject.toJavaObject(PlaylistTrackAllResult.class);
+        List<PlaylistTrackAllResult.SongsDTO> songs = playlistTrackAllResult.getSongs();
+        if (songs==null|| songs.isEmpty()){
+            more=false;
+            return musics;
+        }
+        try {
+            while (more) {
+                page++;
+                //继续补充
+                parameter.put("id", playlistId);
+                parameter.put("limit", "50");
+                parameter.put("offset", (page - 1)*50);
+                JSONObject jsonObject1 = neteaseCloudMusicInfo.playlistDetail(parameter);
+                PlaylistTrackAllResult javaObject = jsonObject1.toJavaObject(PlaylistTrackAllResult.class);
+                List<PlaylistTrackAllResult.SongsDTO> songs1 = javaObject.getSongs();
+                if (songs1==null|| songs1.isEmpty()){
+                    more=false;
+                    break;
+                }
+                songs.addAll(songs1);
+            }
+        } catch (Exception e) {
+            more=false;
+        }
+        //处理歌曲
+        songs.forEach(songsInfoDTO -> {
+            PlaylistTrackAllResult.SongsDTO songsDTO = songsInfoDTO;
+            PlaylistTrackAllResult.SongsDTO.HDTO h = songsDTO.getH();
+            PlaylistTrackAllResult.SongsDTO.MDTO m = songsDTO.getM();
+            PlaylistTrackAllResult.SongsDTO.LDTO l = songsDTO.getL();
+            PlaylistTrackAllResult.SongsDTO.SqDTO sq = songsDTO.getSq();
+            PlaylistTrackAllResult.SongsDTO.SqDTO hr = songsDTO.getHr();
+            ArrayList<PlugBrType> plugBrTypes = new ArrayList<>();
+            if (h!=null&&h.getBr()!=null){
+                plugBrTypes.add(PlugBrType.NETEASE_MP3_320);
+            }
+            if (m!=null&&m.getBr()!=null){
+                plugBrTypes.add(PlugBrType.NETEASE_MP3_192);
+            }
+            if (l!=null&&l.getBr()!=null){
+                plugBrTypes.add(PlugBrType.NETEASE_MP3_128);
+            }
+            if (sq!=null&&sq.getBr()!=null){
+                plugBrTypes.add(PlugBrType.NETEASE_FLAC_2000);
+            }
+            if (hr!=null&&hr.getBr()!=null){
+                plugBrTypes.add(PlugBrType.NETEASE_FLAC_3000);
+            }
+            Music music = new Music();
+            music.setId(songsInfoDTO.getId().toString())
+                    .setMusicName(songsInfoDTO.getName())
+                    .setMusicDuration(songsInfoDTO.getDt())
+                    .setMusicAlbum(songsInfoDTO.getAl().getName())
+                    .setMusicArtists(songsInfoDTO.getAr().stream().map(e -> e.getName()).collect(Collectors.toList()))
+                    .setMusicImage(songsInfoDTO.getAl().getPicUrl())
+                    .setAlbumId(songsInfoDTO.getAl().getId().toString())
+                    .setDataInfo(JSONObject.parseObject(JSONObject.toJSONString(songsInfoDTO)))
+                    .setArtistsIds(songsInfoDTO.getAr().stream().map(e -> e.getId().toString()).collect(Collectors.toList()));
+            musics.add(music);
+        });
+        return musics;
+    }
+
+
+
 }

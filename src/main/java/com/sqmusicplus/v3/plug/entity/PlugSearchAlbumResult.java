@@ -43,10 +43,10 @@ public class PlugSearchAlbumResult {
     /**
      * 搜索类型
      */
-    private String searchType;
+    private String plugName;
 
     /**
-     * 其余信息（插件特殊参数）
+     * 其余信息
      */
     JSONObject dataInfo ;
 

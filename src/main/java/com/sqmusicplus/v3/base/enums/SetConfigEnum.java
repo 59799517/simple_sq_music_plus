@@ -46,11 +46,11 @@ public enum SetConfigEnum {
      */
     SYSTEM_SYNC_PLAYLIST_EXCLUDE("system.sync.playlist.exclude","排除的歌单名称多个|（管道符）分割","system"),
     /**
-     * QQ音乐排除的专辑名称多个|（管道符）分割
+     * 排除的专辑名称多个|（管道符）分割
      */
     SYSTEM_SYNC_ALBUM_EXCLUDE("system.sync.album.exclude","排除的专辑名称多个|（管道符）分割","system"),
     /**
-     * QQ音乐排除的歌手名称多个|（管道符）分割
+     * 排除的歌手名称多个|（管道符）分割
      */
     SYSTEM_SYNC_ARTISTS_EXCLUDE("system.sync.artists.exclude","排除的歌手名称多个|（管道符）分割","system"),
 
@@ -125,7 +125,7 @@ public enum SetConfigEnum {
     /**
      * 网易云扩展下载地址
      */
-    PLUG_NETEASE_EXTEND_DOWNLOAD_URL("plug.netease.extend.DOWNLOAD.url","网易云音乐扩展下载地址","plug"),
+    PLUG_NETEASE_EXTEND_DOWNLOAD_URL("plug.netease.extend.download.url","网易云音乐扩展下载地址","plug"),
 
 
 //    ------------------酷狗概念音乐插件配置-----------------

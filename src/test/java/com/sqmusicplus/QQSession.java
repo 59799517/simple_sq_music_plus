@@ -1,6 +1,7 @@
 package com.sqmusicplus;
 
-import com.sqmusicplus.utils.StringUtils;
+
+import com.sqmusicplus.v3.utils.StringUtils;
 
 import java.net.CookieManager;
 import java.net.URI;

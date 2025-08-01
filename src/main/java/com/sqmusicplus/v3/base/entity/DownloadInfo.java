@@ -89,6 +89,13 @@ public class DownloadInfo implements Serializable {
     //    是否是需要重写mp3tag 1 是 0 否
     @TableField("rewrite_mp3tag")
     private Integer rewriteMp3tag;
+//    支持的bit 多个,分割
+    @TableField("download_bits")
+    private String downloadBits;
+//支持的类型列表多个,分割
+    @TableField("download_br_types")
+    private String downloadBrTypes;
+
 
 
 

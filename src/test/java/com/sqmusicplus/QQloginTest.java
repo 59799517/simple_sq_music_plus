@@ -1,9 +1,9 @@
 package com.sqmusicplus;
 
-import com.sqmusicplus.plug.qq.entity.QQMusicQr;
-import com.sqmusicplus.plug.qq.entity.QQMusicQrEventResult;
-import com.sqmusicplus.plug.qq.enums.LoginType;
-import com.sqmusicplus.plug.qq.enums.QRCodeLoginEvents;
+import com.sqmusicplus.v3.plug.qq.entity.QQMusicQr;
+import com.sqmusicplus.v3.plug.qq.entity.QQMusicQrEventResult;
+import com.sqmusicplus.v3.plug.qq.enums.LoginType;
+import com.sqmusicplus.v3.plug.qq.enums.QRCodeLoginEvents;
 import okhttp3.*;
 import org.junit.jupiter.api.Test;
 import org.springframework.util.Base64Utils;
