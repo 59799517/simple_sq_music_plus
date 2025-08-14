@@ -245,6 +245,8 @@ public class QQSearchEntity {
 
 
 
+
+
     /**
      * 搜索请求参数
      * @param query

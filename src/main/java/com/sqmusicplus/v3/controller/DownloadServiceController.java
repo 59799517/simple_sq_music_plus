@@ -2,6 +2,7 @@ package com.sqmusicplus.v3.controller;
 
 import cn.dev33.satoken.annotation.SaCheckLogin;
 import com.sqmusicplus.v3.base.entity.DownloadInfo;
+import com.sqmusicplus.v3.base.entity.vo.ParserEntity;
 import com.sqmusicplus.v3.base.enums.PlugBrType;
 import com.sqmusicplus.v3.base.service.DownloadInfoService;
 import com.sqmusicplus.v3.config.AjaxResult;
@@ -9,7 +10,6 @@ import com.sqmusicplus.v3.config.exception.SQException;
 import com.sqmusicplus.v3.plug.base.hander.SearchHanderAbstract;
 import com.sqmusicplus.v3.plug.entity.*;
 import com.sqmusicplus.v3.utils.MusicUtils;
-import com.sqmusicplus.v3.utils.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -38,13 +38,16 @@ public class DownloadServiceController {
 
     @Autowired
     private DownloadInfoService downloadInfoService;
+
+    /**
+     * 下载单曲
+     * @param downloadSongParam
+     * @return
+     */
     @SaCheckLogin
     @PostMapping("/downloadSong")
    public AjaxResult downloadSong(@RequestBody PlugDownloadSongParam downloadSongParam) {
         SearchHanderAbstract plugHander = MusicUtils.getPlugHander(downloadSongParam.getPlugName(), searchHanderAbstractList);
-        String id = downloadSongParam.getId();
-        Music music = plugHander.querySongById(id);
-        music.setBits(downloadSongParam.getBrTypes());
         List<PlugBrType> brTypes = downloadSongParam.getBrTypes();
         if (brTypes==null|| brTypes.isEmpty()){
             throw new SQException("未找到可供下载的bit");
@@ -53,13 +56,19 @@ public class DownloadServiceController {
         if (downloadSongParam.getBrType()!=null){
             maxBr = downloadSongParam.getBrType();
         }
-        DownloadInfo downloadInfo = plugHander.musicToDownloadInfo(music, maxBr, false);
+        DownloadInfo downloadInfo = plugHander.musicToDownloadInfo(downloadSongParam, maxBr, false);
         Boolean add = downloadInfoService.add(downloadInfo);
         if (add){
-            return AjaxResult.success("下载成功",music);
+            return AjaxResult.success("下载成功",downloadInfo);
         }
         return AjaxResult.error("下载失败");
     }
+
+    /**
+     * 下载歌手的全部专辑
+     * @param plugDownloadArtisParam
+     * @return
+     */
     @SaCheckLogin
     @PostMapping("/downloadArtistAlbum")
     public AjaxResult downloadArtistAlbum(@RequestBody PlugDownloadArtisParam plugDownloadArtisParam) {
@@ -75,6 +84,12 @@ public class DownloadServiceController {
         }
         return AjaxResult.error("下载失败");
     }
+
+    /**
+     * 下载专辑
+     * @param plugDownloadAlbumParam
+     * @return
+     */
     @SaCheckLogin
     @PostMapping("/downloadAlbum")
     public AjaxResult downloadAlbum(@RequestBody PlugDownloadAlbumParam plugDownloadAlbumParam){
@@ -90,6 +105,43 @@ public class DownloadServiceController {
             artistNameList.add(s.trim());
         }
         ArrayList<DownloadInfo> downloadInfos = plugHander.downloadAlbum(albumid, maxBr, artistNameList, false, plugDownloadAlbumParam.getAlbumName());
+        Boolean add = downloadInfoService.add(downloadInfos);
+        if (add){
+            return AjaxResult.success("下载成功",downloadInfos);
+        }
+        return AjaxResult.error("下载失败");
+    }
+
+    /**
+     * 下载解析的URL歌曲
+     * @param musicList
+     * @return
+     */
+    @SaCheckLogin
+    @PostMapping("/downloadParserUrl")
+    public AjaxResult downloadParserUrl(@RequestBody List<Music> musicList) {
+        ArrayList<DownloadInfo> downloadInfos = new ArrayList<>();
+        for (Music music : musicList) {
+            SearchHanderAbstract plugHander = MusicUtils.getPlugHander(music.getPlugName(), searchHanderAbstractList);
+            DownloadInfo downloadInfo = plugHander.musicToDownloadInfo(music, null, false);
+            downloadInfos.add(downloadInfo);
+        }
+        Boolean add = downloadInfoService.add(downloadInfos);
+        if (add){
+            return AjaxResult.success("下载成功",downloadInfos);
+        }
+        return AjaxResult.error("下载失败");
+    }
+    @SaCheckLogin
+    @PostMapping("/downloadParserText")
+    public AjaxResult downloadParserText(@RequestBody List<ParserEntity> parserEntities) {
+        ArrayList<DownloadInfo> downloadInfos = new ArrayList<>();
+        for (ParserEntity parserEntity : parserEntities) {
+            PlugSearchMusicResult plugSearchMusicResult = parserEntity.getPlugSearchMusicResult();
+            SearchHanderAbstract plugHander = MusicUtils.getPlugHander(plugSearchMusicResult.getPlugName(), searchHanderAbstractList);
+            DownloadInfo downloadInfo = plugHander.musicToDownloadInfo(plugSearchMusicResult, null, false);
+            downloadInfos.add(downloadInfo);
+        }
         Boolean add = downloadInfoService.add(downloadInfos);
         if (add){
             return AjaxResult.success("下载成功",downloadInfos);

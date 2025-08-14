@@ -1,6 +1,8 @@
 package com.sqmusicplus.v3.controller;
 
 import cn.dev33.satoken.annotation.SaCheckLogin;
+import cn.dev33.satoken.stp.SaTokenInfo;
+import cn.dev33.satoken.stp.StpUtil;
 import com.sqmusicplus.v3.base.entity.SqConfig;
 import com.sqmusicplus.v3.base.enums.DbBooleanConvert;
 import com.sqmusicplus.v3.base.enums.SetConfigEnum;
@@ -13,9 +15,8 @@ import com.sqmusicplus.v3.plug.qqvip.QQvipHander;
 import com.sqmusicplus.v3.utils.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 
@@ -38,7 +39,48 @@ public class ConfigController {
     private QQHander qqHander;
     @Autowired
     private KGHander kGHander;
+    @Value("${version}")
+    private String version;
 
+
+
+    @PostMapping("/login")
+    public AjaxResult login(@RequestBody HashMap<String,String> data )  {
+        String username = data.get("username");
+        String password = data.get("password");
+        String device = data.get("device");
+        if (StringUtils.isEmpty(device)){
+            return AjaxResult.error("请填写登录设备类型");
+        }
+        if (StringUtils.isEmpty(username)||StringUtils.isEmpty(password)){
+            return AjaxResult.error("登录失败");
+        }
+        String dbname = SqConfigCache.getSqConfigValue(SetConfigEnum.SYSTEM_LOGIN_ACCOUNT);
+        String dbpwd = SqConfigCache.getSqConfigValue(SetConfigEnum.SYSTEM_LOGIN_PASSWORD);
+        if (StringUtils.isBlank(dbname)){
+            return AjaxResult.error("请先设置登录用户");
+        }
+        if (username.equals(dbname) && password.equals(dbpwd)) {
+            StpUtil.login(9527,device);
+            SaTokenInfo tokenInfo = StpUtil.getTokenInfo();
+            return AjaxResult.success(tokenInfo);
+        }else{
+            return   AjaxResult.error("账号密码错误");
+        }
+    }
+
+    @SaCheckLogin
+    @PostMapping("/logout")
+    public AjaxResult logout(@RequestBody HashMap<String,String> data) {
+        String device = data.get("device");
+        StpUtil.logout(9527,device);
+        return AjaxResult.success();
+    }
+
+    @RequestMapping(value = "isLogin")
+    public AjaxResult isLogin() {
+        return  StpUtil.isLogin()?AjaxResult.success("登录有效",true):AjaxResult.error("过期",false);
+    }
     /**
      * 获取全部设置
      * @return
@@ -52,45 +94,50 @@ public class ConfigController {
      * 修改设置
      */
     @SaCheckLogin
-    @GetMapping("/updateConfig")
-    public AjaxResult updateConfig(String configKey, String configValue) {
-        SqConfig sqConfig = SqConfigCache.getSqConfig(configKey);
+    @PostMapping("/updateConfig")
+    public AjaxResult updateConfig(@RequestBody SqConfig data) {
+        SqConfig sqConfig = SqConfigCache.getSqConfig(data.getConfigKey());
         if (sqConfig.getConfigDisabled()== DbBooleanConvert.YES.getValue().intValue()){
             return AjaxResult.error("该设置已禁用不允许修改");
         }
         if (sqConfig.getConfigNullCheck()== DbBooleanConvert.YES.getValue().intValue()){
-            if (StringUtils.isBlank(configValue)){
+            if (StringUtils.isBlank(data.getConfigValue())){
                 return AjaxResult.error("该设置不允许为空");
             }
         }
-        if(!configCheck(sqConfig,configValue)){
+        if(!configCheck(sqConfig,data.getConfigValue())){
             return AjaxResult.error("设置参数填写异常");
 
         }
-        if (StringUtils.isBlank(configValue)){
-            configValue="";
+        if (StringUtils.isBlank(data.getConfigValue())){
+            data.setConfigValue("");
         }
-        if (sqConfig.getType().equals("boolean")){
-            if (configValue.equals(DbBooleanConvert.YES.getBooleanValue().toString())) {
-                configValue = DbBooleanConvert.YES.getValue().toString();
+        if (sqConfig.getConfigType().equals("boolean")){
+            if (data.getConfigValue().equals(DbBooleanConvert.YES.getBooleanValue().toString())) {
+                data.setConfigValue(DbBooleanConvert.YES.getBooleanValue().toString());
             }else{
-                configValue = DbBooleanConvert.NO.getValue().toString();
+                data.setConfigValue(DbBooleanConvert.NO.getBooleanValue().toString());
             }
         }
-        SqConfigCache.updateConfigToDb(configKey,configValue);
+        SqConfigCache.updateConfigToDb(data.getConfigKey(),data.getConfigValue());
         //根据key设置一些特殊配置
-        specialPlugConfigUpdate(configKey,configValue);
+        specialPlugConfigUpdate(data.getConfigKey(), data.getConfigValue());
         return AjaxResult.success();
     }
     /**
      * 获取启动的查询件
      */
     @SaCheckLogin
-    @GetMapping("getSelectOption")
+    @GetMapping("/getOption")
     public AjaxResult getSelectOption() {
         return AjaxResult.success(SqConfigCache.PlugOptions);
     }
 
+
+    @GetMapping("/version")
+    public AjaxResult getVersion(){
+        return AjaxResult.success("成功", version);
+    }
 
 
 
@@ -104,7 +151,7 @@ public class ConfigController {
      * @return
      */
     private boolean configCheck(SqConfig sqConfig, String configValue){
-        String type = sqConfig.getType();
+        String type = sqConfig.getConfigType();
         switch (type){
             case "number":
                 if (!StringUtils.isNumeric(configValue)){
@@ -187,10 +234,8 @@ public class ConfigController {
                 neteaseHander.initPlug();
             }
         }
-
-
-
-
-
     }
+
+
+
 }

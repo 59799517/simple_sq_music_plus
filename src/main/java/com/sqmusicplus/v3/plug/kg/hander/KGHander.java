@@ -1,6 +1,7 @@
 package com.sqmusicplus.v3.plug.kg.hander;
 
 import cn.hutool.core.date.DateUtil;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.sqmusicplus.v3.base.entity.DownloadInfo;
 import com.sqmusicplus.v3.plug.entity.Album;
@@ -70,10 +71,51 @@ public class KGHander extends SearchHanderAbstract {
         return "kg";
     }
 
+    @Override
+    public List<String> searchTip(String searchKey) {
+        ArrayList<String> tips = new ArrayList<>();
+        try {
+            String searchTip = config.getSearchTipUrl();
+            String s = searchTip.replaceAll("#\\{SearchTip}", (searchKey));
+            String sync = OkHttpUtils.builder()
+                    .url(s)
+                    .get()
+                    .sync();
+            JSONObject jsonObject = JSONObject.parseObject(sync);
+            Integer code = jsonObject.getInteger("error_code");
+            if (code == 0) {
+                JSONArray array = jsonObject.getJSONArray("data");
+                if (array != null&&array.size()>0){
+                    for (int i = 0; i < array.size(); i++) {
+                        JSONObject jsonObject1 = array.getJSONObject(i);
+                        String string = jsonObject1.getString("LableName");
+                        Integer recordCount = jsonObject1.getInteger("RecordCount");
+                        if (StringUtils.isEmpty(string)&&recordCount>0){
+                            JSONArray jsonArray = jsonObject1.getJSONArray("RecordDatas");
+                            for (int i1 = 0; i1 < jsonArray.size(); i1++) {
+                                JSONObject jsonObject2 = jsonArray.getJSONObject(i1);
+                                String string1 = jsonObject2.getString("HintInfo");
+                                tips.add(string1);
+                            }
+
+                        }
+
+                    }
+
+                }
+            }
+        } catch (Exception e) {
+        }
+        return tips;
+    }
+
     public String getBaseURL() {
         String sqConfigValue = SqConfigCache.getSqConfigValue(SetConfigEnum.PLUG_KG_BASEURL);
         return sqConfigValue;
     }
+
+
+
 
     @Override
     public PlugSearchResult<PlugSearchMusicResult> querySongByName(SearchKeyData searchKeyData) {

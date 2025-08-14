@@ -38,7 +38,7 @@ public class SqConfig implements Serializable {
     @TableField(value = "config_key")
     private String configKey;
     @TableField(value = "config_type")
-    private String type;
+    private String configType;
     @TableField(value = "config_show")
     private Integer configShow;
     @TableField(value = "config_remark")

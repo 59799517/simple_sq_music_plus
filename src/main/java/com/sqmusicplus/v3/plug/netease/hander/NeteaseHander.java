@@ -1,5 +1,6 @@
 package com.sqmusicplus.v3.plug.netease.hander;
 
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.sqmusicplus.v3.base.entity.DownloadInfo;
 import com.sqmusicplus.v3.plug.entity.Album;
@@ -80,6 +81,33 @@ public class NeteaseHander extends SearchHanderAbstract {
     @Override
     public String getPlugName() {
         return "netease";
+    }
+
+    @Override
+    public List<String> searchTip(String searchKey) {
+        ArrayList<String> tips = new ArrayList<>();
+
+        try {
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("keywords", searchKey);
+            JSONObject jsonObject1 = neteaseCloudMusicInfo.searchSuggest(jsonObject);
+            JSONObject result = jsonObject1.getJSONObject("result");
+            JSONArray jsonArray = result.getJSONArray("songs");
+            for (int i = 0; i < jsonArray.size(); i++) {
+                JSONObject jsonObject2 = jsonArray.getJSONObject(i);
+                String tip = jsonObject2.getString("name");
+                JSONArray jsonArray1 = jsonObject2.getJSONArray("artists");
+                if (jsonArray1!=null&&jsonArray1.size()>0){
+                    tip+=" "+jsonArray1.getJSONObject(0).getString("name");
+                }
+                tips.add(tip);
+            }
+        } catch (Exception e) {
+        }
+        return tips;
+
+
+
     }
 
     @Override

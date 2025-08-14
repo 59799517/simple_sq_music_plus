@@ -33,6 +33,18 @@ public class MusicController {
     @Autowired
     List<SearchHanderAbstract> searchHanderAbstractList;
 
+    /**
+     * 搜索提示词
+     * @param param
+     * @return
+     */
+    @SaCheckLogin
+    @GetMapping("/searchTips")
+    public AjaxResult searchTips(SearchMusicParam param) {
+        SearchHanderAbstract plugHander = MusicUtils.getPlugHander(param.getPlugName(),searchHanderAbstractList);
+        List<String> strings = plugHander.searchTip(param.getKeyword());
+        return AjaxResult.success(strings);
+    }
 
 
     /**

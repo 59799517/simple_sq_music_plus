@@ -33,4 +33,6 @@ kw:
   ArtistSongListUrl: https://search.kuwo.cn/r.s?pn=#{pn}&rn=#{pagesize}&artistid=#{artistid}&stype=artist2music&sortby=0&alflac=1&show_copyright_off=1&pcmp4=1&encoding=utf8&plat=pc&thost=search.kuwo.cn&vipver=MUSIC_9.1.1.2_BCS2&devid=38668888&newver=1&pcjson=1
   #歌单详情
   PlayListInfo: http://nplserver.kuwo.cn/pl.svc?op=getlistinfo&pid=#{id}&pn=#{pn}&rn=#{pagesize}&encode=utf8&keyset=pl2012&vipver=MUSIC_9.1.1.2_BCS2&newver=1
+  #搜索提示
+  SearchTip: https://kuwo.cn/openapi/v1/www/search/searchKey?key=#{SearchTip}&httpsStatus=1
 

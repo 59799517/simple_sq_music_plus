@@ -9,7 +9,6 @@ import com.sqmusicplus.v3.parser.UrlMusicPlayListParser;
 import com.sqmusicplus.v3.plug.entity.Music;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -53,8 +52,9 @@ public class ParserController {
     public AjaxResult parserText(String text) {
         try {
             List<ParserEntity> parser = textMusicPlayListParser.parser(text);
+            List<ParserEntity> parserEntities = textMusicPlayListParser.parserParserEntity(parser);
             if (parser != null){
-                return AjaxResult.success(parser);
+                return AjaxResult.success(parserEntities);
             }
             return AjaxResult.error("解析失败 仅支持qq 酷我 酷狗概念 网易云");
 

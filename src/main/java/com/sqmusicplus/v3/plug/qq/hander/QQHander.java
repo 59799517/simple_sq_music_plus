@@ -68,6 +68,40 @@ public class QQHander extends SearchHanderAbstract {
         return "qq";
     }
 
+    @Override
+    public List<String> searchTip(String searchKey) {
+        ArrayList<String> tips = new ArrayList<>();
+        try {
+            String searchTip = config.getSearchTip();
+            String s = searchTip.replaceAll("#\\{SearchTip}", (searchKey));
+            String sync = OkHttpUtils.builder()
+                    .url(s)
+                    .get()
+                    .sync();
+            JSONObject jsonObject = JSONObject.parseObject(sync);
+            Integer code = jsonObject.getInteger("code");
+            if (code == 0) {
+                JSONObject data = jsonObject.getJSONObject("data");
+                if(data != null){
+                    JSONObject song = data.getJSONObject("song");
+                    if (song!=null){
+                        JSONArray song_list = song.getJSONArray("itemlist");
+                        if (song_list != null&&song_list.size()>0) {
+                            for (int i = 0; i < song_list.size(); i++) {
+                                JSONObject jsonObject1 = song_list.getJSONObject(i);
+                                String tip = jsonObject1.getString("name") +" "+ jsonObject1.getString("singer");
+                                tips.add(tip);
+                            }
+                         }
+                    }
+                }
+            }
+        } catch (Exception e) {
+        }
+
+        return tips;
+    }
+
     public QQSearchEntity getqqSearchEntity() {
         return qqSearchEntity;
     }

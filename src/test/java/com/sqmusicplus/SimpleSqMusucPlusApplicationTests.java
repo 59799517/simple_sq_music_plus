@@ -88,6 +88,16 @@ class SimpleSqMusucPlusApplicationTests {
     public static void main(String[] args) {
 
 
+        String input = "RELWORD=星辰大海\r\nSNUM=31774\r\nRNUM=1000\r\nTYPE=0";
+        Pattern pattern = Pattern.compile("RELWORD=([^\\r\\n]*)");
+        Matcher matcher = pattern.matcher(input);
+
+        if (matcher.find()) {
+            String result = matcher.group(1); // 获取第一个捕获组的内容
+            System.out.println(result); // 输出: 星辰大海
+        }
+
+
 
 //        String s = String.valueOf(sigHash("MFzb5OFrs0WQflcecG6ILLASd0*UgmQbNAHMTLdWvO4_", 5381));
 //        System.out.println(s);

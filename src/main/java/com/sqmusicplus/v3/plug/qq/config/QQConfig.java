@@ -31,6 +31,8 @@ public class QQConfig extends PlugConfig {
     private String ArtistInfoReferer;
     //下载接口
     private String downloadUrl;
+    //SearchTip
+    private String SearchTip;
 
 
 }

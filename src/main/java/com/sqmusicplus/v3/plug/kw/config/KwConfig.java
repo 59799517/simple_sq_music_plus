@@ -30,6 +30,7 @@ public class KwConfig extends PlugConfig {
     private String ArtistAlbumListUrl;
     private String ArtistSongListUrl;
     private String PlayListInfo;
+    private String SearchTip;
 
 
 }

@@ -7,6 +7,7 @@ import com.sqmusicplus.v3.base.entity.DownloadInfo;
 import com.sqmusicplus.v3.base.enums.SetConfigEnum;
 import com.sqmusicplus.v3.base.service.DownloadInfoService;
 import com.sqmusicplus.v3.config.SqConfigCache;
+import com.sqmusicplus.v3.config.exception.IgnoreDownloadException;
 import com.sqmusicplus.v3.plug.base.hander.SearchHander;
 import com.sqmusicplus.v3.utils.SpringContextUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -73,9 +74,26 @@ public class DownloadExcute {
                         Object bean = SpringContextUtil.getBean(record.getSpringName());
                         if (bean instanceof SearchHander){
                             SearchHander searchHander = (SearchHander) bean;
-                            searchHander.dnonloadAndSaveToFile(record, searchHander);
+                            try {
+                                searchHander.dnonloadAndSaveToFile(record, searchHander);
+                                //捕获内容
+                            } catch (IgnoreDownloadException e) {
+                                //一般是酷我的歌曲信息获取失败导致的需要从新下载
+                                record.setDownloadStatus(DownloadStatus.waiting.getValue());
+                                record.setDownloadMsg(e.getMessage());
+                                downloadInfoService.updateById(record);
+                                return;
+                            }
                         }else{
-                            ReflectUtil.invoke(bean, "dnonloadAndSaveToFile", record, bean);
+                            try {
+                                ReflectUtil.invoke(bean, "dnonloadAndSaveToFile", record, bean);
+                            } catch (IgnoreDownloadException e) {
+                                //一般是酷我的歌曲信息获取失败导致的需要从新下载
+                                record.setDownloadStatus(DownloadStatus.waiting.getValue());
+                                record.setDownloadMsg(e.getMessage());
+                                downloadInfoService.updateById(record);
+                                return;
+                            }
                         }
                         record.setDownloadStatus(DownloadStatus.success.getValue());
                         downloadInfoService.updateById(record);

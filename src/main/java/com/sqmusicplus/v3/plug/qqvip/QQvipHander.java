@@ -58,6 +58,11 @@ public class QQvipHander extends SearchHanderAbstract {
     }
 
     @Override
+    public List<String> searchTip(String searchKey) {
+        return qqHander.searchTip(searchKey);
+    }
+
+    @Override
     public PlugSearchResult<PlugSearchMusicResult> querySongByName(SearchKeyData searchKeyData) {
        return qqHander.querySongByName(searchKeyData);
     }

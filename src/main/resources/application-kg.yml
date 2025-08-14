@@ -54,4 +54,6 @@ kg:
 #  签到状态
   signInfoUrl: /youth/union/vip
 
+  SearchTipUrl: https://searchtip.kugou.com/getSearchTip?MusicTipCount=10&keyword=#{SearchTip}
+
 

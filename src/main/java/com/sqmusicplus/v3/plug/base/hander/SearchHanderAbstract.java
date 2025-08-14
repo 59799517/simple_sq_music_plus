@@ -17,6 +17,7 @@ import com.sqmusicplus.v3.base.service.DownloadInfoService;
 import com.sqmusicplus.v3.config.SqConfigCache;
 import com.sqmusicplus.v3.download.DownloadStatus;
 import com.sqmusicplus.v3.download.vo.DownloadUrlResult;
+import com.sqmusicplus.v3.plug.entity.PlugSearchMusicResult;
 import com.sqmusicplus.v3.utils.DownloadUtils;
 import com.sqmusicplus.v3.utils.FileUtils;
 import com.sqmusicplus.v3.utils.MusicUtils;
@@ -52,6 +53,13 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
     public DownloadInfoService getDownloadInfoService() {
         return downloadInfoService;
     }
+
+
+//    @Override
+//    public List<String> searchTip(String searchKey) {
+//        //搂底使用酷我的
+//
+//    }
 
     @Override
     public void dnonloadAndSaveToFile(DownloadInfo downloadInfo, SearchHander searchHander) {
@@ -228,6 +236,35 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
                 .setDownloadMusicname(music.getMusicName())
                 .setDownloadArtistname(String.join("&", music.getMusicArtists()))
                 .setDownloadAlbumname(music.getMusicAlbum())
+                .setDownloadMusicInfo(music.getDataInfo().toJSONString())
+                .setDownloadStatus(DownloadStatus.waiting.getValue())
+                .setSpringName(brType.getSpringName())
+                .setAudioBook(isAudioBook? DbBooleanConvert.YES.getValue():DbBooleanConvert.NO.getValue())
+                .setDownloadUpdateTime(new Date())
+                .setRewriteMp3tag(DbBooleanConvert.YES.getValue())
+                .setDownloadBits(bitsStr)
+                .setDownloadBrTypes(plugBrTypes);
+    }
+
+    @Override
+    public DownloadInfo musicToDownloadInfo(PlugSearchMusicResult music, PlugBrType brType, Boolean isAudioBook) {
+        List<PlugBrType> bits = music.getBrTypes();
+        if (brType==null){
+            brType = MusicUtils.getMaxBr(bits);
+        }
+        String bitsStr = bits.stream().map(plugBrType -> plugBrType.getBit().toString()).collect(Collectors.joining(","));
+        String plugBrTypes = bits.stream().map(plugBrType -> plugBrType.getId()).collect(Collectors.joining(","));
+
+        return new DownloadInfo()
+                .setDownloadGid(music.getId())
+                .setDownloadTime(new Date())
+                .setDownloadFile(music.getName()+" - "+String.join("&", music.getArtistName()))
+                .setDownloadMusicId(music.getId())
+                .setDownloadPlugName(brType.getPlugName())
+                .setDownloadBrType(brType.getId())
+                .setDownloadMusicname(music.getName())
+                .setDownloadArtistname(String.join("&", music.getArtistName()))
+                .setDownloadAlbumname(music.getAlbumName())
                 .setDownloadMusicInfo(music.getDataInfo().toJSONString())
                 .setDownloadStatus(DownloadStatus.waiting.getValue())
                 .setSpringName(brType.getSpringName())

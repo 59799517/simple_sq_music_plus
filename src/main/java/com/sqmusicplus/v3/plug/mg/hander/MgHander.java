@@ -48,6 +48,11 @@ public class MgHander extends SearchHanderAbstract {
     }
 
     @Override
+    public List<String> searchTip(String searchKey) {
+        return List.of();
+    }
+
+    @Override
     public PlugSearchResult querySongByName(SearchKeyData searchKeyData) {
         return null;
     }

@@ -1,8 +1,10 @@
 package com.sqmusicplus.v3.plug.kw.hander;
 
 import cn.hutool.core.collection.ListUtil;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.sqmusicplus.v3.base.entity.DownloadInfo;
+import com.sqmusicplus.v3.config.exception.IgnoreDownloadException;
 import com.sqmusicplus.v3.plug.entity.Album;
 import com.sqmusicplus.v3.plug.entity.Artists;
 import com.sqmusicplus.v3.plug.entity.Music;
@@ -15,6 +17,7 @@ import com.sqmusicplus.v3.plug.kw.entity.*;
 import com.sqmusicplus.v3.plug.kw.enums.KwSearchType;
 import com.sqmusicplus.v3.utils.DownloadUtils;
 import com.sqmusicplus.v3.utils.LrcUtils;
+import com.sqmusicplus.v3.utils.OkHttpUtils;
 import com.sqmusicplus.v3.utils.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.ImmutableTriple;
@@ -24,6 +27,8 @@ import org.springframework.stereotype.Component;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -44,6 +49,35 @@ public class NKwSearchHander extends SearchHanderAbstract {
     @Override
     public String getPlugName() {
         return "kw";
+    }
+
+    @Override
+    public List<String> searchTip(String searchKey) {
+        ArrayList<String> tips = new ArrayList<>();
+        try {
+            Pattern pattern = Pattern.compile("RELWORD=([^\\r\\n]*)");
+            String searchTip = config.getSearchTip();
+            String s = searchTip.replaceAll("#\\{SearchTip}", (searchKey));
+            String sync = OkHttpUtils.builder()
+                    .url(s)
+                    .get()
+                    .sync();
+            JSONObject jsonObject = JSONObject.parseObject(sync);
+            Integer code = jsonObject.getInteger("code");
+            if (code == 200) {
+                JSONArray list = jsonObject.getJSONArray("data");
+                for (int i = 0; i < list.size(); i++) {
+                    Matcher matcher = pattern.matcher(list.getString(i));
+                    if (matcher.find()) {
+                        String result = matcher.group(1); // 获取第一个捕获组的内容
+                        tips.add(result);
+    //                    System.out.println(result); // 输出: 星辰大海
+                    }
+                }
+            }
+        } catch (Exception e) {
+        }
+        return tips;
     }
 
     @Override
@@ -68,6 +102,10 @@ public class NKwSearchHander extends SearchHanderAbstract {
                     } catch (Exception ex) {
                        duration = "0";
                     }
+                    String pic = getConfig().getSongCoverUrl() + e.getWebAlbumpicShort();
+                    if (StringUtils.isBlank(e.getAlbum())){
+                        pic = getConfig().getSearheads() + e.getWebArtistpicShort();
+                    }
 
                     plugSearchMusicResults.add(
                             new PlugSearchMusicResult().setAlbumName(e.getAlbum())
@@ -79,7 +117,8 @@ public class NKwSearchHander extends SearchHanderAbstract {
                                     .setDuration(duration)
                                     .setBrTypes(plugBrTypes)
                                     .setDataInfo(JSONObject.parseObject(JSONObject.toJSONString(e)))
-                                    .setName(e.getName()).setPic(getConfig().getSongCoverUrl() + e.getWebAlbumpicShort())
+                                    .setName(e.getName())
+                                    .setPic(pic)
                     );
                 }
                );
@@ -153,6 +192,9 @@ public class NKwSearchHander extends SearchHanderAbstract {
     public Music querySongById(String SongId) {
         String searchUrl = config.getSongInfoUrl().replaceAll("#\\{musicId}", SongId);
         MusicInfoResult musicInfoResult = DownloadUtils.get(searchUrl, MusicInfoResult.class);
+        if (musicInfoResult.getStatus().intValue()!=200) {
+            throw new IgnoreDownloadException("酷我音乐歌曲信息获取歌曲信息失败，多试几次。");
+        }
         MusicInfoResult.DataDTO data = musicInfoResult.getData();
         MusicInfoResult.DataDTO.SonginfoDTO songinfo = data.getSonginfo();
         String album = songinfo.getAlbum();
@@ -522,6 +564,12 @@ public class NKwSearchHander extends SearchHanderAbstract {
             String duration = abslistDTO.getDuration();
             String aartist = artistSongListResult.getArtist().trim();
             String url = (config.getSongCoverUrl() + abslistDTO.getWebAlbumpicShort()).replaceAll("/120", "/500");
+            if (StringUtils.isBlank(abslistDTO.getAlbum().trim())){
+                url = getConfig().getSearheads() + abslistDTO.getWebArtistpicShort();
+            }
+
+
+
             return new Music()
                             .setAlbumId(albumid)
                             .setMusicAlbum(album)
@@ -580,9 +628,13 @@ public class NKwSearchHander extends SearchHanderAbstract {
             String duration = abslistDTO.getDuration();
             String aartist = artistSongListResult.getArtist().trim();
             String albumid = StringUtils.isEmpty(abslistDTO.getAlbumid())?"":abslistDTO.getAlbumid();
-            String url = (config.getSongCoverUrl() + abslistDTO.getWebAlbumpicShort()).replaceAll("/120", "/500");
+//            String url = (config.getSongCoverUrl() + abslistDTO.getWebAlbumpicShort()).replaceAll("/120", "/500");
             String nMinfo = abslistDTO.getNMinfo();
             List<PlugBrType> plugBrTypes = NMinfoToPlugBrType(nMinfo);
+            String url = (config.getSongCoverUrl() + abslistDTO.getWebAlbumpicShort()).replaceAll("/120", "/500");
+            if (StringUtils.isBlank(abslistDTO.getAlbum().trim())){
+                url = getConfig().getSearheads() + abslistDTO.getWebArtistpicShort();
+            }
             return new Music()
                     .setAlbumId(albumid)
                     .setMusicAlbum(album)
@@ -689,9 +741,15 @@ public class NKwSearchHander extends SearchHanderAbstract {
             String duration = md.getDuration();
             String nMinfo = md.getNMinfo();
             List<PlugBrType> plugBrTypes = NMinfoToPlugBrType(nMinfo);
+
+            String url = getConfig().getSearheads() + albumInfoResult.getPic().replaceAll("/120", "/500");
+            if (StringUtils.isBlank(albumInfoResult.getName())){
+                url = getConfig().getSearheads() + md.getWebArtistpicShort();
+            }
+
             Music music = new Music()
                     .setId(md.getId())
-                    .setMusicImage(getConfig().getSearheads() + albumInfoResult.getPic().replaceAll("/120", "/500"))
+                    .setMusicImage(url)
                     .setMusicAlbum(albumInfoResult.getName())
                     .setMusicArtists(artists)
                     .setMusicName(md.getName())

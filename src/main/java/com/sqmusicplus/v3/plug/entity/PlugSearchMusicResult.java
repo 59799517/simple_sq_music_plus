@@ -50,7 +50,7 @@ public class PlugSearchMusicResult {
      */
     private String lyric;
     /**
-     * 歌词id（一次性获取不到歌词时接下来使用---尽量避免使用一次性就获取好）
+     * 歌词id
      */
     private String lyricId;
 
@@ -59,7 +59,7 @@ public class PlugSearchMusicResult {
      */
     private String  plugName;
     /**
-     * 歌曲时长
+     * 歌曲时长(毫秒)
      */
 
     private String duration;

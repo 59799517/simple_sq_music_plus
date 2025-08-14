@@ -1,5 +1,6 @@
 package com.sqmusicplus.v3.config;
 
+import com.sqmusicplus.v3.config.exception.IgnoreDownloadException;
 import com.sqmusicplus.v3.config.exception.SQException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -33,4 +34,9 @@ public class GlobalExceptionHandler {
         return AjaxResult.error(e.getMsg());
     }
 
+    @ResponseBody
+    public AjaxResult bIgnoreDownloadExceptionHandler(IgnoreDownloadException e) {
+        e.printStackTrace();
+        return AjaxResult.error(e.getMessage());
+    }
 }

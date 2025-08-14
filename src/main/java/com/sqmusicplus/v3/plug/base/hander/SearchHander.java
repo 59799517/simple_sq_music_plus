@@ -29,6 +29,16 @@ public interface SearchHander {
      */
     String getPlugName();
 
+
+    /**
+     * 搜索提示
+     * @param
+     * @return
+     */
+    List<String> searchTip(String searchKey);
+
+
+
     /**
      * 根据名称搜素歌曲
      *
@@ -131,6 +141,17 @@ public interface SearchHander {
      * @return
      */
     DownloadInfo musicToDownloadInfo(Music music, PlugBrType brType, Boolean isAudioBook);
+
+
+    /**
+     * 下载单曲
+     *
+     * @param music                 歌曲信息
+     * @param brType                  下载清晰度
+     * @param isAudioBook             是否是书籍类型
+     * @return
+     */
+    DownloadInfo musicToDownloadInfo(PlugSearchMusicResult music, PlugBrType brType, Boolean isAudioBook);
 
 
     /**
