@@ -10,6 +10,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.sqmusicplus.base.entity.*;
 import com.sqmusicplus.base.service.DownloadInfoService;
 import com.sqmusicplus.base.service.SqConfigService;
+import com.sqmusicplus.config.IgnoreDownloadException;
 import com.sqmusicplus.utils.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -188,7 +189,10 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
                 throw new RuntimeException("下载失败:" + music.getMusicName());
             });
 
-        } catch (Exception e) {
+        } catch (IgnoreDownloadException  e){
+            throw e;
+        }
+        catch (Exception e) {
             e.printStackTrace();
             log.debug("下载失败{}", downloadEntity.getMusicname());
             throw new RuntimeException(e.getMessage());

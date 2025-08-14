@@ -10,6 +10,7 @@ import com.sqmusicplus.base.entity.*;
 import com.sqmusicplus.base.entity.vo.*;
 import com.sqmusicplus.base.service.DownloadInfoService;
 import com.sqmusicplus.config.AjaxResult;
+import com.sqmusicplus.config.IgnoreDownloadException;
 import com.sqmusicplus.parser.TextMusicPlayListParser;
 import com.sqmusicplus.parser.UrlMusicPlayListParser;
 import com.sqmusicplus.plug.base.PlugBrType;
@@ -133,7 +134,25 @@ public class ALLController {
         if (searchHanderAbstract==null){
             return AjaxResult.error("未知的搜索类型");
         }
-        Music music = searchHanderAbstract.querySongById(id);
+        Music music = null;
+        try {
+            music = searchHanderAbstract.querySongById(id);
+        } catch (IgnoreDownloadException e) {
+            int i = 0;
+            while (music==null){
+                log.info("歌曲(酷我id){}---->获取歌曲详情歌词信息失败正在重试", id);
+                try {
+                    music = searchHanderAbstract.querySongById(id);
+                } catch (Exception ex) {
+                }
+                i++;
+                if (i>10){
+                    break;
+                }
+            }
+        }
+
+
         return AjaxResult.success(music);
 
     }
@@ -148,7 +167,6 @@ public class ALLController {
     @SaCheckLogin
     @PostMapping("/musicDownload")
     public AjaxResult musicDownload( @RequestBody DownloadSongEntity downloadSong) {
-
         SearchHanderAbstract searchHanderAbstract = null;
         for (SearchHanderAbstract item : searchHanderAbstractList) {
             if(item.getPlugName().equals(downloadSong.getPlugType())){
@@ -158,8 +176,6 @@ public class ALLController {
         if (searchHanderAbstract==null){
             return AjaxResult.error("未知的搜索类型");
         }
-
-
         String searchType = downloadSong.getPlugType();
         PlugBrType plugType;
         if (StringUtils.isEmpty(downloadSong.getPlugTypeValue())){
@@ -169,7 +185,26 @@ public class ALLController {
         }
         PlugBrType finalPlugType = plugType;
         Music music =null;
-        music = searchHanderAbstract.querySongById(downloadSong.getId());
+        try {
+            music = searchHanderAbstract.querySongById(downloadSong.getId());
+        } catch (IgnoreDownloadException e) {
+            int i = 0;
+            while (music==null){
+                log.info("歌曲(酷我id){}---->获取歌曲详情歌词信息失败正在重试", downloadSong.getId());
+                try {
+                    music = searchHanderAbstract.querySongById(downloadSong.getId());
+                } catch (Exception ex) {
+                }
+                i++;
+                if (i>10){
+                    break;
+                }
+            }
+        }
+
+
+
+
         ArrayList<PlugBrType> bits = music.getBits();
         //找出bit最大的
         if (bits!=null&&bits.size()>0){
@@ -382,7 +417,22 @@ public class ALLController {
                     for (PlugSearchMusicResult record : records) {
                         if (parserEntity.getArtistsName().trim().equals(record.getArtistName().trim())){
                              id = record.getId();
-                             music = finalSearchHanderAbstract.querySongById(id);
+                            try {
+                                music = finalSearchHanderAbstract.querySongById(id);
+                            } catch (IgnoreDownloadException e) {
+                            }
+                            int i = 0;
+                            while (music==null){
+                                log.info("歌曲(酷我id){}---->获取歌曲详情歌词信息失败正在重试", id);
+                                try {
+                                    music = finalSearchHanderAbstract.querySongById(id);
+                                } catch (Exception e) {
+                                }
+                                i++;
+                                if (i>10){
+                                    break;
+                                }
+                            }
                              break;
                         }
                     }
@@ -396,7 +446,24 @@ public class ALLController {
                             for (PlugSearchMusicResult record : records1) {
                                 if (parserEntity.getArtistsName().trim().equals(record.getArtistName().trim())){
                                     id = record.getId();
-                                    music = finalSearchHanderAbstract.querySongById(id);
+
+                                        try {
+                                            music = finalSearchHanderAbstract.querySongById(id);
+                                        } catch (IgnoreDownloadException e) {
+                                            int i = 0;
+                                            while (music==null){
+                                                log.info("歌曲(酷我id){}---->获取歌曲详情歌词信息失败正在重试", id);
+                                                try {
+                                                    music = finalSearchHanderAbstract.querySongById(id);
+                                                } catch (Exception ex) {
+                                                }
+                                                i++;
+                                                if (i>10){
+                                                    break;
+                                                }
+                                            }
+                                        }
+
                                     break;
                                 }
                             }

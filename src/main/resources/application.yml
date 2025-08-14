@@ -11,6 +11,7 @@ spring:
 #    url: jdbc:sqlite:/D:\\music\\sqmusic.db
 #    url: jdbc:sqlite:/cache/sqmusic.db
     url: jdbc:mysql://${DB_IP:localhost}:${DB_PORT:3306}/${DB_NAME:sqmusic}?useUnicode=true&useSSL=false&characterEncoding=utf8&serverTimezone=UTC&rewriteBatchedStatements=true&allowMultiQueries=true
+
     driver-class-name: com.mysql.jdbc.Driver
     username: ${DB_USERNAME:root}
     password: ${DB_PASSWORD:root}
@@ -87,6 +88,6 @@ sa-token:
   is-log: false
   is-print: false
 
-version: 2.15.23
+version: 2.15.24
 
 

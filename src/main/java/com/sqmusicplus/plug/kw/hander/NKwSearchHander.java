@@ -3,6 +3,7 @@ package com.sqmusicplus.plug.kw.hander;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.sqmusicplus.base.entity.*;
+import com.sqmusicplus.config.IgnoreDownloadException;
 import com.sqmusicplus.plug.base.PlugBrType;
 import com.sqmusicplus.plug.base.hander.SearchHanderAbstract;
 import com.sqmusicplus.plug.entity.*;
@@ -148,6 +149,10 @@ public class NKwSearchHander extends SearchHanderAbstract {
     public Music querySongById(String SongId) {
         String searchUrl = config.getSongInfoUrl().replaceAll("#\\{musicId}", SongId);
         MusicInfoResult musicInfoResult = DownloadUtils.get(searchUrl, MusicInfoResult.class);
+
+        if (musicInfoResult==null||musicInfoResult.getStatus()!=200){
+            throw new IgnoreDownloadException("酷我音乐歌曲信息获取歌曲信息失败，已开始自动重试。");
+        }
         MusicInfoResult.DataDTO data = musicInfoResult.getData();
         MusicInfoResult.DataDTO.SonginfoDTO songinfo = data.getSonginfo();
         String album = songinfo.getAlbum();
@@ -395,7 +400,25 @@ public class NKwSearchHander extends SearchHanderAbstract {
 
     @Override
     public DownloadEntity downloadSong(String musicid, PlugBrType brType, String musicname, String artistname, String albumname, Boolean isAudioBook, String addSubsonicPlayListName) {
-        Music music = querySongById(musicid);
+        Music music = null;
+        int i = 0;
+        try {
+            music = querySongById(musicid);
+        } catch (IgnoreDownloadException e) {
+        }
+        while (music==null){
+            log.info("歌曲(酷我){}---->获取歌曲详情歌词信息失败正在重试", musicname);
+            try {
+                music = querySongById(musicid);
+            } catch (Exception e) {
+            }
+            i++;
+            if (i>10){
+                break;
+            }
+        }
+
+
         DownloadEntity downloadEntity = new DownloadEntity("nKwSearchHander",musicid, brType, music.getMusicName(), music.getMusicArtists(), music.getMusicAlbum(), isAudioBook, isAudioBook?addSubsonicPlayListName:null);
         return downloadEntity;
     }

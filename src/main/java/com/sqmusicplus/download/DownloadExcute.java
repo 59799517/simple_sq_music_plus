@@ -1,5 +1,6 @@
 package com.sqmusicplus.download;
 
+import cn.hutool.core.exceptions.UtilException;
 import cn.hutool.core.lang.reflect.MethodHandleUtil;
 import cn.hutool.core.util.ReflectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -12,6 +13,7 @@ import com.sqmusicplus.base.entity.SqConfig;
 import com.sqmusicplus.base.service.DownloadInfoService;
 import com.sqmusicplus.base.service.SqConfigService;
 import com.sqmusicplus.config.GlobalStatic;
+import com.sqmusicplus.config.IgnoreDownloadException;
 import com.sqmusicplus.plug.base.PlugBrType;
 import com.sqmusicplus.plug.base.hander.SearchHander;
 import com.sqmusicplus.plug.utils.TypeUtils;
@@ -87,13 +89,20 @@ public class DownloadExcute {
                         Object bean = SpringContextUtil.getBean(record.getSpringName());
                         if (bean instanceof SearchHander){
                             SearchHander searchHander = (SearchHander) bean;
-                            searchHander.dnonloadAndSaveToFile(downloadEntity, searchHander);
+                                searchHander.dnonloadAndSaveToFile(downloadEntity, searchHander);
+                                //捕获内容
                         }else{
-                            ReflectUtil.invoke(bean, "dnonloadAndSaveToFile", downloadEntity, bean);
+                                ReflectUtil.invoke(bean, "dnonloadAndSaveToFile", downloadEntity, bean);
                         }
                         record.setStatus(DownloadStatus.success.getValue());
                         downloadInfoService.updateById(record);
                         log.debug("修改完成状态--->{}",record);
+                    }catch (IgnoreDownloadException e) {
+                        //一般是酷我的歌曲信息获取失败导致的需要从新下载
+                        record.setStatus(DownloadStatus.waiting.getValue());
+                        record.setDownloadMsg(e.getMessage());
+                        downloadInfoService.updateById(record);
+                        log.debug("修改错误状态--->{}",record);
                     } catch (Exception e) {
                         e.printStackTrace();
                         record.setStatus(DownloadStatus.error.getValue());

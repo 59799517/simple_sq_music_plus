@@ -13,14 +13,14 @@ kw:
   #   下载
   downloadurl: http://nmobi.kuwo.cn/mobi.s?f=kuwo&source=jiakong&q=
   #返回json的下载链接
-  downloadurl2: http://mobi.kuwo.cn/mobi.s?f=web&source=jiakong&type=convert_url_with_sign&rid=#{musicId}&br=#{brvalue}
+  downloadurl2: https://mobi.kuwo.cn/mobi.s?f=web&user=0&source=kwplayer_ar_5.0.0.0_B_jiakong_vh.apk&type=convert_url_with_sign&rid=#{musicId}&br=#{brvalue}
 
 
 
   #  歌曲详情以及歌词
-  SongInfoUrl: https://m.kuwo.cn/newh5/singles/songinfoandlrc?musicId=#{musicId}&httpsStatus=1&reqId=969ba290-4b49-11eb-8db2-ebd372233623
+  SongInfoUrl: https://m.kuwo.cn/newh5/singles/songinfoandlrc?musicId=#{musicId}&httpsStatus=1
   #  歌曲封面前缀
-  SongCoverUrl: https://img3.kuwo.cn/star/albumcover/
+  SongCoverUrl: https://star.kuwo.cn/star/albumcover/
   # 歌手封面前缀
   Searheads: https://star.kuwo.cn/star/starheads/
   # 歌手信息
