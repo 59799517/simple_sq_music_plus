@@ -19,6 +19,9 @@ kw:
 
   #  歌曲详情以及歌词
   SongInfoUrl: https://m.kuwo.cn/newh5/singles/songinfoandlrc?musicId=#{musicId}&httpsStatus=1
+  MusicAudioInfoUrl: http://musicpay.kuwo.cn/music.pay?newver=2&uid=0&sid=&android_id=76a84aed3ff799de&from=ar&deviceid=76a84aed3ff799de&ver=11.1.9.1&src=kwplayer_ar_11.1.9.1_kwtest.apk&appuid=2752816366&allpay=1&notrace=0&oaid=bbcdcf642ce70f13&op=query&action=play&signver=new&filter=no&apiversion=2&local=0&quality=H&preload=0&ids=#{musicId}
+  SongImageUrl: http://artistpicserver.kuwo.cn/pic.web?prod=kwplayer_ar_11.3.4.1&corp=kuwo&source=kwplayer_ar_11.3.4.1_hw.apk&type=rid_pic&pictype=url&content=list&size=500&rid=#{musicId}&jfencv=user,android_id
+
   #  歌曲封面前缀
   SongCoverUrl: https://star.kuwo.cn/star/albumcover/
   # 歌手封面前缀

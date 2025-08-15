@@ -67,6 +67,10 @@ public class NKwSearchHander extends SearchHanderAbstract {
                     } catch (Exception ex) {
                        duration = "0";
                     }
+                    String pic = getConfig().getSongCoverUrl() + e.getWebAlbumpicShort();
+                    if (StringUtils.isBlank(e.getAlbum())){
+                        pic = getConfig().getSearheads() + e.getWebArtistpicShort();
+                    }
 
                     plugSearchMusicResults.add(
                             new PlugSearchMusicResult().setAlbumName(e.getAlbum())
@@ -76,7 +80,8 @@ public class NKwSearchHander extends SearchHanderAbstract {
                                     .setId(e.getMusicrid().replaceAll("MUSIC_",""))
                                     .setSearchType(getPlugName())
                                     .setDuration(duration)
-                                    .setName(e.getName()).setPic(getConfig().getSongCoverUrl() + e.getWebAlbumpicShort())
+                                    .setName(e.getName())
+                                    .setPic(pic)
                     );
                 }
                );
@@ -147,35 +152,48 @@ public class NKwSearchHander extends SearchHanderAbstract {
 
     @Override
     public Music querySongById(String SongId) {
-        String searchUrl = config.getSongInfoUrl().replaceAll("#\\{musicId}", SongId);
-        MusicInfoResult musicInfoResult = DownloadUtils.get(searchUrl, MusicInfoResult.class);
 
-        if (musicInfoResult==null||musicInfoResult.getStatus()!=200){
+        String searchUrl = config.getMusicAudioInfoUrl().replaceAll("#\\{musicId}", SongId);
+        MusicAudioInfoResult musicAudioInfoResult = DownloadUtils.get(searchUrl, MusicAudioInfoResult.class);
+
+        if (musicAudioInfoResult==null||musicAudioInfoResult.getErrorcode()!=0||musicAudioInfoResult.getSongs()==null||musicAudioInfoResult.getSongs().size()==0){
             throw new IgnoreDownloadException("酷我音乐歌曲信息获取歌曲信息失败，已开始自动重试。");
         }
-        MusicInfoResult.DataDTO data = musicInfoResult.getData();
-        MusicInfoResult.DataDTO.SonginfoDTO songinfo = data.getSonginfo();
+        String songimgurl = config.getSongImageUrl().replaceAll("#\\{musicId}", SongId);
+        String pic = null;
+        try {
+            pic = DownloadUtils.getBodyStr(songimgurl);
+        } catch (Exception e) {
+        }
+
+        List<MusicAudioInfoResult.SongsDTO> songs = musicAudioInfoResult.getSongs();
+        MusicAudioInfoResult.SongsDTO songinfo = songs.get(0);
         String album = songinfo.getAlbum();
-        String albumId = songinfo.getAlbumId();
+        String albumId = songinfo.getAlbumid()+"";
         String artist = songinfo.getArtist();
-        String artistId = songinfo.getArtistId();
-        String s = songinfo.getPic().replaceAll("/240", "/500");
-        String songName = songinfo.getSongName();
+        String artistId = songinfo.getArtistid()+"";
+        String s = pic;
+        String songName = songinfo.getName();
         String duration = "0";
         try {
-            duration = songinfo.getDuration();
+            duration = songinfo.getDuration()+"";
             BigDecimal bigDecimal = new BigDecimal(duration);
             BigDecimal multiply = bigDecimal.multiply(new BigDecimal(1000));
             duration = multiply.toString();
         } catch (Exception e) {
             duration="0";
         }
-        List<MusicInfoResult.DataDTO.LrclistDTO> lrclist = data.getLrclist();
-        String Lrc = null;
-        if (lrclist != null && lrclist.size() > 0) {
-            Lrc = LrcUtils.krcTolrc(lrclist, album, artist, songName);
-        }
-        return new Music().setId(songinfo.getId()).setMusicImage(s).setMusicLyric(Lrc).setMusicAlbum(album).setMusicArtists(artist).setMusicName(songName).setMusicDuration(Long.parseLong(duration)).setAlbumId(albumId).setArtistsId(artistId);
+        String Lrc = queryLyric(SongId);
+        return new Music()
+                .setId(SongId)
+                .setMusicImage(s)
+                .setMusicLyric(Lrc)
+                .setMusicAlbum(album)
+                .setMusicArtists(artist)
+                .setMusicName(songName)
+                .setMusicDuration(Long.parseLong(duration))
+                .setAlbumId(albumId)
+                .setArtistsId(artistId);
     }
 
     @Override
@@ -261,7 +279,36 @@ public class NKwSearchHander extends SearchHanderAbstract {
     @Deprecated
     @Override
     public String queryLyric(String SongId) {
-        return null;
+        String searchUrl = config.getSongInfoUrl().replaceAll("#\\{musicId}", SongId);
+        MusicInfoResult musicInfoResult = DownloadUtils.get(searchUrl, MusicInfoResult.class);
+
+        int i = 0;
+        while (musicInfoResult==null||musicInfoResult.getStatus()!=200){
+            log.info("歌曲(酷我id){}---->获取歌曲详情歌词信息失败正在重试", musicInfoResult==null||musicInfoResult.getStatus()!=200);
+            try {
+                 musicInfoResult = DownloadUtils.get(searchUrl, MusicInfoResult.class);
+            } catch (Exception ex) {
+            }
+            i++;
+            if (i>10){
+                break;
+            }
+        }
+        if (musicInfoResult==null||musicInfoResult.getStatus()!=200){
+            throw new IgnoreDownloadException("酷我音乐歌曲信息获取歌曲信息失败，已开始自动重试。");
+        }
+        MusicInfoResult.DataDTO data = musicInfoResult.getData();
+        MusicInfoResult.DataDTO.SonginfoDTO songinfo = data.getSonginfo();
+        String album = songinfo.getAlbum();
+        String artist = songinfo.getArtist();
+        String songName = songinfo.getSongName();
+        List<MusicInfoResult.DataDTO.LrclistDTO> lrclist = data.getLrclist();
+        String Lrc = null;
+        if (lrclist != null && lrclist.size() > 0) {
+            Lrc = LrcUtils.krcTolrc(lrclist, album, artist, songName);
+        }
+        return Lrc;
+
     }
 
     @Override
@@ -531,6 +578,9 @@ public class NKwSearchHander extends SearchHanderAbstract {
             String album = StringUtils.isEmpty(abslistDTO.getAlbum().trim()) ? "无专辑" : abslistDTO.getAlbum().trim();
             String aartist = artistSongListResult.getArtist().trim();
             String url = (config.getSongCoverUrl() + abslistDTO.getWebAlbumpicShort()).replaceAll("/120", "/500");
+            if (StringUtils.isBlank(abslistDTO.getAlbum().trim())){
+                url = getConfig().getSearheads() + abslistDTO.getWebArtistpicShort();
+            }
             return new Music().setMusicName(abslistDTO.getName()).setMusicAlbum(album).setMusicArtists(aartist).setMusicImage(url).setOther(JSONObject.parseObject(JSONObject.toJSONString(abslistDTO))).setSearchMusicId(abslistDTO.getMusicrid());
         }).collect(Collectors.toList());
         ImmutableTriple<String, String, List<Music>> stringStringListImmutableTriple = new ImmutableTriple<>(total, pn, collect);
@@ -579,6 +629,9 @@ public class NKwSearchHander extends SearchHanderAbstract {
             String album = StringUtils.isEmpty(abslistDTO.getAlbum()) ? "其他" : abslistDTO.getAlbum();
             String aartist = abslistDTO.getAartist().split("&")[0];
             String url = (config.getSongCoverUrl() + abslistDTO.getWebAlbumpicShort()).replaceAll("/120", "/500");
+            if (StringUtils.isBlank(abslistDTO.getAlbum().trim())){
+                url = getConfig().getSearheads() + abslistDTO.getWebArtistpicShort();
+            }
             return new Music().setMusicName(abslistDTO.getName()).setMusicAlbum(album).setMusicArtists(aartist).setMusicImage(url).setOther(JSONObject.parseObject(JSONObject.toJSONString(abslistDTO))).setSearchMusicId(abslistDTO.getMusicrid());
         }).collect(Collectors.toList());
         if (getSize.intValue() - 1 == pn) {

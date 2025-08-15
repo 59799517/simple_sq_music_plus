@@ -268,8 +268,20 @@ public class DownloadUtils {
         String sync =builder
                 .get().sync();
         return (T)JSONObject.parseObject(sync,clazz);
-
     }
+    public  static String getBodyStr(String url,HashMap<String,String> params){
+        OkHttpUtils builder = OkHttpUtils.builder().url(url);
+
+        if (params!=null){
+            builder.addParam(params);
+        }
+        return  builder
+                .get().sync();
+    }
+
+
+
+
     public static JSONObject getToJsonObject(String url,HashMap<String,String> params){
         OkHttpUtils builder = OkHttpUtils.builder().url(url);
 
@@ -284,6 +296,12 @@ public class DownloadUtils {
     public static <T> T get(String url ,Class<T> clazz){
         return get(url,null,clazz);
     }
+
+    public  static String getBodyStr(String url){
+        OkHttpUtils builder = OkHttpUtils.builder().url(url);
+        return getBodyStr(url,null);
+    }
+
 
     public static JSONObject getToJsonObject(String url){
         return getToJsonObject(url,null);
