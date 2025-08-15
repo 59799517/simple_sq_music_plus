@@ -10,6 +10,7 @@ import com.sqmusicplus.v3.plug.entity.Music;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -47,6 +48,27 @@ public class ParserController {
             return AjaxResult.error("解析失败 仅支持qq 酷我 酷狗概念 网易云");
         }
     }
+
+
+    @SaCheckLogin
+    @PostMapping("/download/parserUrl")
+    public AjaxResult downlaodParserUrl(DownlaodParserUrl  downlaodParserUrl) {
+        try {
+            List<Music> parser = urlMusicPlayListParser.parser(downlaodParserUrl);
+
+            if (parser != null){
+                return AjaxResult.success(parser);
+            }
+            return AjaxResult.error("解析失败 仅支持qq 酷我 酷狗概念 网易云");
+
+        } catch (Exception e) {
+            log.error("解析失败",e);
+            return AjaxResult.error("解析失败 仅支持qq 酷我 酷狗概念 网易云");
+        }
+    }
+
+
+
     @SaCheckLogin
     @PostMapping("/parserText")
     public AjaxResult parserText(String text) {

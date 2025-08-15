@@ -685,6 +685,7 @@ public class NKwSearchHander extends SearchHanderAbstract {
                     .setArtistsIds(ListUtil.of())
                     .setBits(plugBrTypes)
                     .setMusicArtists(ListUtil.of(aartist.split("&")))
+                    .setPlugName(getPlugName())
 //                    .setMusicImage(url)
                     .setDataInfo(JSONObject.parseObject(JSONObject.toJSONString(abslistDTO)));
 

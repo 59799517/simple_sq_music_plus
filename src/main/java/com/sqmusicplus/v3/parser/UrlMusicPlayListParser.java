@@ -98,15 +98,16 @@ public class UrlMusicPlayListParser {
             //歌单
                 String[] split = url.split("/");
                 String id = split[split.length - 1];
-                List<Music> musics = nKwSearchHander.queryAllPlayInfoList(id, 10000, 1);
-                ArrayList<DownloadInfo> downloadInfos = new ArrayList<>();
+                List<Music> musics = nKwSearchHander.queryAllPlayInfoList(id, 100, 1);
                 if (downlaodParserUrl.getIsAudioBook()){
                     for (Music smusic : musics) {
                         smusic.setMusicArtists(ListUtil.of(downlaodParserUrl.getArtist()));
                         smusic.setMusicAlbum(downlaodParserUrl.getArtist());
                     }
                 }
+                return musics;
             }
+
             else if(url.contains("yinyue")||url.contains("play_detail")){
                 String[] split = url.split("/");
                 String id = split[split.length - 1];

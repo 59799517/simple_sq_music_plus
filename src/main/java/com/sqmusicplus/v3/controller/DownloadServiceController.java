@@ -7,6 +7,9 @@ import com.sqmusicplus.v3.base.enums.PlugBrType;
 import com.sqmusicplus.v3.base.service.DownloadInfoService;
 import com.sqmusicplus.v3.config.AjaxResult;
 import com.sqmusicplus.v3.config.exception.SQException;
+import com.sqmusicplus.v3.download.vo.DownlaodParserUrl;
+import com.sqmusicplus.v3.parser.TextMusicPlayListParser;
+import com.sqmusicplus.v3.parser.UrlMusicPlayListParser;
 import com.sqmusicplus.v3.plug.base.hander.SearchHanderAbstract;
 import com.sqmusicplus.v3.plug.entity.*;
 import com.sqmusicplus.v3.utils.MusicUtils;
@@ -38,6 +41,12 @@ public class DownloadServiceController {
 
     @Autowired
     private DownloadInfoService downloadInfoService;
+
+
+    @Autowired
+    private UrlMusicPlayListParser urlMusicPlayListParser;
+    @Autowired
+    private TextMusicPlayListParser textMusicPlayListParser;
 
     /**
      * 下载单曲
@@ -114,12 +123,38 @@ public class DownloadServiceController {
 
     /**
      * 下载解析的URL歌曲
-     * @param musicList
+     * @param downlaodParserUrl 解析的URL
      * @return
      */
     @SaCheckLogin
     @PostMapping("/downloadParserUrl")
-    public AjaxResult downloadParserUrl(@RequestBody List<Music> musicList) {
+    public AjaxResult downloadParserUrl(@RequestBody DownlaodParserUrl downlaodParserUrl) {
+        try {
+            List<Music> parser = urlMusicPlayListParser.parser(downlaodParserUrl);
+            if (parser == null){
+                return AjaxResult.error("解析失败 仅支持qq 酷我 酷狗概念 网易云");
+            }
+            ArrayList<DownloadInfo> downloadInfos = new ArrayList<>();
+            for (Music music : parser) {
+                SearchHanderAbstract plugHander = MusicUtils.getPlugHander(music.getPlugName(), searchHanderAbstractList);
+                DownloadInfo downloadInfo = plugHander.musicToDownloadInfo(music, null, false);
+                downloadInfos.add(downloadInfo);
+            }
+            Boolean add = downloadInfoService.add(downloadInfos);
+            if (add){
+                return AjaxResult.success("下载成功",downloadInfos);
+            }
+
+        } catch (Exception e) {
+            log.error("解析失败",e);
+            return AjaxResult.error("解析失败 仅支持qq 酷我 酷狗概念 网易云");
+        }
+        return AjaxResult.error("下载失败");
+    }
+
+    @SaCheckLogin
+    @PostMapping("/downloadParserUrlResult")
+    public AjaxResult downloadParserUrlResult(@RequestBody List<Music> musicList) {
         ArrayList<DownloadInfo> downloadInfos = new ArrayList<>();
         for (Music music : musicList) {
             SearchHanderAbstract plugHander = MusicUtils.getPlugHander(music.getPlugName(), searchHanderAbstractList);
@@ -132,6 +167,7 @@ public class DownloadServiceController {
         }
         return AjaxResult.error("下载失败");
     }
+
     @SaCheckLogin
     @PostMapping("/downloadParserText")
     public AjaxResult downloadParserText(@RequestBody List<ParserEntity> parserEntities) {
