@@ -1,5 +1,9 @@
 package com.sqmusicplus.plug.kw.hander;
 
+import cn.hutool.core.codec.Base64;
+import cn.hutool.core.util.ArrayUtil;
+import cn.hutool.core.util.ZipUtil;
+import cn.hutool.http.HttpRequest;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.sqmusicplus.base.entity.*;
@@ -12,6 +16,7 @@ import com.sqmusicplus.plug.kw.entity.*;
 import com.sqmusicplus.plug.kw.enums.KwSearchType;
 import com.sqmusicplus.plug.utils.Base64Coder;
 import com.sqmusicplus.plug.utils.KuwoDES;
+import com.sqmusicplus.plug.utils.LrcMergeUtil;
 import com.sqmusicplus.plug.utils.LrcUtils;
 import com.sqmusicplus.utils.DownloadUtils;
 import com.sqmusicplus.utils.StringUtils;
@@ -22,7 +27,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -279,35 +287,88 @@ public class NKwSearchHander extends SearchHanderAbstract {
     @Deprecated
     @Override
     public String queryLyric(String SongId) {
-        String searchUrl = config.getSongInfoUrl().replaceAll("#\\{musicId}", SongId);
-        MusicInfoResult musicInfoResult = DownloadUtils.get(searchUrl, MusicInfoResult.class);
 
+    // 请求参数加密
+        byte[] keyBytes = "yeelion".getBytes(StandardCharsets.UTF_8);
+        int keyLen = keyBytes.length;
+        String params = "user=12345,web,web,web&requester=localhost&req=1&rid=MUSIC_" + SongId + "&lrcx=1";
+        byte[] paramsBytes = params.getBytes(StandardCharsets.UTF_8);
+        int paramsLen = paramsBytes.length;
+        byte[] output = new byte[paramsLen];
         int i = 0;
-        while (musicInfoResult==null||musicInfoResult.getStatus()!=200){
-            log.info("歌曲(酷我id){}---->获取歌曲详情歌词信息失败正在重试", musicInfoResult==null||musicInfoResult.getStatus()!=200);
-            try {
-                 musicInfoResult = DownloadUtils.get(searchUrl, MusicInfoResult.class);
-            } catch (Exception ex) {
-            }
-            i++;
-            if (i>10){
-                break;
+        while (i < paramsLen) {
+            int j = 0;
+            while (j < keyLen && i < paramsLen) {
+                output[i] = (byte) (keyBytes[j] ^ paramsBytes[i]);
+                i++;
+                j++;
             }
         }
-        if (musicInfoResult==null||musicInfoResult.getStatus()!=200){
-            throw new IgnoreDownloadException("酷我音乐歌曲信息获取歌曲信息失败，已开始自动重试。");
+        params = cn.hutool.core.codec.Base64.encode(output);
+
+        // 获取歌词
+        byte[] bodyBytes = cn.hutool.http.HttpRequest.get(getConfig().getLyrIcUrl() + params)
+                .executeAsync()
+                .bodyBytes();
+        if (!"tp=content".equals(new String(bodyBytes, 0, 10))) return "";
+        int index = LrcUtils.indexOf(bodyBytes, "\r\n\r\n".getBytes(StandardCharsets.UTF_8)) + 4;
+        byte[] nBytes = Arrays.copyOfRange(bodyBytes, index, bodyBytes.length);
+        byte[] lrcData = ZipUtil.unZlib(nBytes);
+//        byte[] lrcData = CryptoUtil.decompress(nBytes);
+        // 无 lrcx 参数时，此处直接获得 lrc 歌词
+//        String lrcStr = new String(lrcData, Charset.forName("gb18030"));
+        String lrcDataStr = new String(lrcData, StandardCharsets.UTF_8);
+        byte[] lrcBytes = Base64.decode(lrcDataStr);
+//        byte[] lrcBytes = CryptoUtil.base64DecodeToBytes(lrcDataStr);
+        int lrcLen = lrcBytes.length;
+        output = new byte[lrcLen];
+        i = 0;
+        while (i < lrcLen) {
+            int j = 0;
+            while (j < keyLen && i < lrcLen) {
+                output[i] = (byte) (lrcBytes[i] ^ keyBytes[j]);
+                i++;
+                j++;
+            }
         }
-        MusicInfoResult.DataDTO data = musicInfoResult.getData();
-        MusicInfoResult.DataDTO.SonginfoDTO songinfo = data.getSonginfo();
-        String album = songinfo.getAlbum();
-        String artist = songinfo.getArtist();
-        String songName = songinfo.getSongName();
-        List<MusicInfoResult.DataDTO.LrclistDTO> lrclist = data.getLrclist();
-        String Lrc = null;
-        if (lrclist != null && lrclist.size() > 0) {
-            Lrc = LrcUtils.krcTolrc(lrclist, album, artist, songName);
-        }
-        return Lrc;
+        String lrcStr = new String(output, Charset.forName("gb18030"));
+        lrcStr = LrcUtils.parseKuwoLyricOffset(lrcStr);
+        String s = LrcUtils.splitLyrics(lrcStr);
+        String s1 = LrcUtils.splitTranslation(lrcStr);
+        // Merge类型合并
+        String mergeResult = LrcMergeUtil.mergeLyrics(s, s1, LrcMergeUtil.MergeType.MERGE);
+
+
+//        String searchUrl = config.getSongInfoUrl().replaceAll("#\\{musicId}", SongId);
+//        MusicInfoResult musicInfoResult = DownloadUtils.get(searchUrl, MusicInfoResult.class);
+//
+//        int i = 0;
+//        while (musicInfoResult==null||musicInfoResult.getStatus()!=200){
+//            log.info("歌曲(酷我id){}---->获取歌曲详情歌词信息失败正在重试", musicInfoResult==null||musicInfoResult.getStatus()!=200);
+//            try {
+//                 musicInfoResult = DownloadUtils.get(searchUrl, MusicInfoResult.class);
+//            } catch (Exception ex) {
+//            }
+//            i++;
+//            if (i>10){
+//                break;
+//            }
+//        }
+//        if (musicInfoResult==null||musicInfoResult.getStatus()!=200){
+//            throw new IgnoreDownloadException("酷我音乐歌曲信息获取歌曲信息失败，已开始自动重试。");
+//        }
+//        MusicInfoResult.DataDTO data = musicInfoResult.getData();
+//        MusicInfoResult.DataDTO.SonginfoDTO songinfo = data.getSonginfo();
+//        String album = songinfo.getAlbum();
+//        String artist = songinfo.getArtist();
+//        String songName = songinfo.getSongName();
+//        List<MusicInfoResult.DataDTO.LrclistDTO> lrclist = data.getLrclist();
+//        String Lrc = null;
+//        if (lrclist != null && lrclist.size() > 0) {
+//            Lrc = LrcUtils.krcTolrc(lrclist, album, artist, songName);
+//        }
+//        return Lrc;
+        return mergeResult;
 
     }
 

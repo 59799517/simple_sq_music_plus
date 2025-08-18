@@ -21,6 +21,7 @@ public class KwConfig extends PlugConfig {
     private String BangInfoUrl;
     private String downloadurl;
     private String downloadurl2;
+    private String LyrIcUrl;
     private String SongInfoUrl;
     private String MusicAudioInfoUrl;
     private String SongImageUrl;

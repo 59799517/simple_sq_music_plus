@@ -1,7 +1,10 @@
 package com.sqmusicplus.plug.utils;
 
+import cn.hutool.core.util.ReUtil;
 import com.sqmusicplus.plug.kw.entity.MusicInfoResult;
+import com.sqmusicplus.utils.StringUtils;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -13,6 +16,17 @@ import java.util.List;
  */
 
 public class LrcUtils {
+
+
+    // 逐字时间轴
+    public static final String PAIR = "<\\d+,\\d+>";
+    public static final String PAIR_FMT = "<%s,%s>";
+    public static final String PAIR_REP = "<$1,$2>";
+    // 起始时间
+    public static final String START = "<(\\d+),\\d+>";
+    // 持续时间
+    public static final String DURATION = "<\\d+,(\\d+)>";
+
 
     /**
      * 酷我歌词转为lrc歌词
@@ -91,9 +105,157 @@ public class LrcUtils {
             stringBuffer.append(split[i]);
         }
         return stringBuffer.toString();
-
-
     }
 
+    /**
+     * 解析酷我的偏移值
+     * @param lrc
+     * @return
+     */
+    public static String parseKuwoLyricOffset(String lrc){
+    // 解析酷我的偏移值
+    int offset = 1, offset2 = 1;
+    String kuwoValStr = ReUtil.getGroup1("\\[kuwo:(\\d+)\\]", lrc);
+    if (StringUtils.isNotBlank(kuwoValStr)) {
+        int kuwoVal = Integer.parseInt(kuwoValStr, 8);
+        offset = kuwoVal / 10;
+        offset2 = kuwoVal % 10;
+    }
+    // 解析逐字歌词
+    String lineTimeExp = "\\[\\d+:\\d+(?:[.:]\\d+)?\\]";
+    String[] lsp = lrc.split("\n");
+    StringBuilder sb = new StringBuilder();
+    for (String l : lsp) {
+        List<String> s1List = ReUtil.findAllGroup1("<(\\d+),-?\\d+>", l);
+        if (s1List.isEmpty()) sb.append(l);
+        else {
+            List<String> s2List = ReUtil.findAllGroup1("<\\d+,(-?\\d+)>", l);
+            // 行时间
+            String lineTimeStr = ReUtil.getGroup0(lineTimeExp, l);
+            sb.append(lineTimeStr);
+            String[] sp = removeFirstEmpty(l.replaceFirst(lineTimeExp, "").split("<\\d+,-?\\d+>", -1));
+            for (int k = 0, s = s1List.size(); k < s; k++) {
+                int n1 = Integer.parseInt(s1List.get(k));
+                int n2 = Integer.parseInt(s2List.get(k));
+                int wordStartTime = Math.abs((n1 + n2) / (offset * 2));
+                int wordDuration = Math.abs((n1 - n2) / (offset2 * 2));
+                sb.append(String.format(PAIR_FMT, wordStartTime, wordDuration));
+                sb.append(sp[k]);
+            }
+        }
+        sb.append("\n");
+    }
+    return sb.toString();
+}
+
+public static String  splitLyrics(String lrc){
+    String lineTimeExp = "\\[\\d+:\\d+(?:[.:]\\d+)?\\]";
+    // 分离歌词和翻译
+    String[] sp = lrc.split("\n");
+    StringBuilder sb = new StringBuilder();
+    boolean hasTrans = false;
+    int s = sp.length;
+    for (int j = 0; j < s; j++) {
+        String sentence = sp[j], nextSentence = j + 1 < s ? sp[j + 1] : null;
+        // 歌词中带有翻译时，最后一句是翻译直接跳过
+        if (hasTrans && StringUtils.isEmpty(nextSentence)) break;
+        String time = ReUtil.getGroup0(lineTimeExp, sentence);
+        if (StringUtils.isEmpty(time)) {
+            sb.append(sentence).append("\n");
+            continue;
+        }
+        String nextTime = null;
+        if (StringUtils.isNotEmpty(nextSentence)) nextTime = ReUtil.getGroup0(lineTimeExp, nextSentence);
+        // 歌词中带有翻译，有多个 time 相同的歌词时取不重复的第二个
+        if (!time.equals(nextTime)) sb.append(sentence).append("\n");
+        else hasTrans = true;
+    }
+//    return sb.toString();
+  return   sb.toString().replaceAll("<\\d+,-?\\d+>", "");
+}
+
+    public static String  splitTranslation(String lrc){
+        StringBuilder sb = new StringBuilder();
+        boolean  hasTrans = false;
+
+        String lineTimeExp = "\\[\\d+:\\d+(?:[.:]\\d+)?\\]";
+        // 分离歌词和翻译
+        String[] sp = lrc.split("\n");
+        int s = sp.length;
+
+        String lastTime = null;
+        for (int i = 0; i < s; i++) {
+            String sentence = sp[i], nextSentence = i + 1 < s ? sp[i + 1] : null;
+            String time = ReUtil.getGroup0(lineTimeExp, sentence);
+            if (StringUtils.isEmpty(time)) continue;
+            String nextTime = null;
+            if (StringUtils.isNotEmpty(nextSentence)) nextTime = ReUtil.getGroup0(lineTimeExp, nextSentence);
+            // 歌词中带有翻译，有多个 time 相同的歌词时取重复的第一个；最后一句也是翻译
+            if (hasTrans && nextTime == null || time.equals(nextTime)) {
+                sb.append(lastTime);
+                sb.append(sentence.replaceFirst(lineTimeExp, ""));
+                sb.append("\n");
+                hasTrans = true;
+            }
+            lastTime = time;
+        }
+      return   sb.toString().replaceAll("<\\d+,-?\\d+>", "");
+    }
+
+
+
+
+
+    /**
+     * 返回子数组在原数组中的位置
+     *
+     * @param array
+     * @param subArray
+     * @return
+     */
+    public static int indexOf(byte[] array, byte[] subArray) {
+        int[] next = calculateNext(subArray);
+        int i = 0, j = 0, len = array.length, sLen = subArray.length;
+        while (i < len && j < sLen) {
+            if (array[i] == subArray[j]) {
+                i++;
+                j++;
+            } else {
+                if (j > 0) j = next[j - 1];
+                else i++;
+            }
+        }
+        if (j == sLen) return i - j;
+        return -1;
+    }
+    private static int[] calculateNext(byte[] array) {
+        int i = 1, j = 0, len = array.length;
+        int[] next = new int[len];
+        while (i < len) {
+            if (array[i] == array[j]) {
+                next[i] = j + 1;
+                i++;
+                j++;
+            } else if (j > 0) {
+                j = next[j - 1];
+            } else {
+                next[i] = 0;
+                i++;
+            }
+        }
+        return next;
+    }
+
+    /**
+     * 删除字符串数组中第一个位置上的空值
+     *
+     * @param array
+     * @return
+     */
+    public static String[] removeFirstEmpty(String[] array) {
+        int len = array.length;
+        if (len == 0 || StringUtils.isNotBlank(array[0])) return array;
+        return Arrays.copyOfRange(array, 1, len);
+    }
 
 }

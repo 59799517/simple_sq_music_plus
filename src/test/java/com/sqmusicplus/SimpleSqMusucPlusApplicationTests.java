@@ -1,4 +1,6 @@
 package com.sqmusicplus;
+import cn.hutool.core.codec.Base64;
+import cn.hutool.core.util.ZipUtil;
 import com.alibaba.fastjson.JSONObject;
 
 import com.ejlchina.okhttps.OkHttps;
@@ -8,6 +10,8 @@ import com.sqmusicplus.plug.qq.enums.LoginType;
 import com.sqmusicplus.plug.qq.enums.QRCodeLoginEvents;
 import com.sqmusicplus.plug.qq.hander.QQHander;
 import com.sqmusicplus.plug.qq.util.QQMusicUtil;
+import com.sqmusicplus.plug.utils.LrcMergeUtil;
+import com.sqmusicplus.plug.utils.LrcUtils;
 import com.sqmusicplus.task.ScanQQVIPLikeMusicTask;
 import com.sqmusicplus.utils.DownloadUtils;
 import com.sqmusicplus.utils.OkHttpUtils;
@@ -27,6 +31,8 @@ import java.net.http.HttpHeaders;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.http.HttpRequest.BodyPublishers;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -92,7 +98,80 @@ class SimpleSqMusucPlusApplicationTests {
     }
 
     public static void main(String[] args) {
+        String SongId = "19466604";
 
+        String lyrIcUrl = "http://newlyric.kuwo.cn/newlyric.lrc?";
+
+
+        // 请求参数加密
+        byte[] keyBytes = "yeelion".getBytes(StandardCharsets.UTF_8);
+        int keyLen = keyBytes.length;
+        String params = "user=12345,web,web,web&requester=localhost&req=1&rid=MUSIC_" + SongId + "&lrcx=1";
+        byte[] paramsBytes = params.getBytes(StandardCharsets.UTF_8);
+        int paramsLen = paramsBytes.length;
+        byte[] output = new byte[paramsLen];
+        int i = 0;
+        while (i < paramsLen) {
+            int j = 0;
+            while (j < keyLen && i < paramsLen) {
+                output[i] = (byte) (keyBytes[j] ^ paramsBytes[i]);
+                i++;
+                j++;
+            }
+        }
+        params = cn.hutool.core.codec.Base64.encode(output);
+
+        // 获取歌词
+        byte[] bodyBytes = cn.hutool.http.HttpRequest.get(lyrIcUrl + params)
+                .executeAsync()
+                .bodyBytes();
+        if (!"tp=content".equals(new String(bodyBytes, 0, 10))) return ;
+        int index = LrcUtils.indexOf(bodyBytes, "\r\n\r\n".getBytes(StandardCharsets.UTF_8)) + 4;
+        byte[] nBytes = Arrays.copyOfRange(bodyBytes, index, bodyBytes.length);
+        byte[] lrcData = ZipUtil.unZlib(nBytes);
+//        byte[] lrcData = CryptoUtil.decompress(nBytes);
+        // 无 lrcx 参数时，此处直接获得 lrc 歌词
+//        String lrcStr = new String(lrcData, Charset.forName("gb18030"));
+        String lrcDataStr = new String(lrcData, StandardCharsets.UTF_8);
+        byte[] lrcBytes = Base64.decode(lrcDataStr);
+//        byte[] lrcBytes = CryptoUtil.base64DecodeToBytes(lrcDataStr);
+        int lrcLen = lrcBytes.length;
+        output = new byte[lrcLen];
+        i = 0;
+        while (i < lrcLen) {
+            int j = 0;
+            while (j < keyLen && i < lrcLen) {
+                output[i] = (byte) (lrcBytes[i] ^ keyBytes[j]);
+                i++;
+                j++;
+            }
+        }
+        String lrcStr = new String(output, Charset.forName("gb18030"));
+        System.out.println(lrcStr);
+         lrcStr = LrcUtils.parseKuwoLyricOffset(lrcStr);
+        System.out.println("===================下方原始信息======================");
+        System.out.println(lrcStr);
+        String s = LrcUtils.splitLyrics(lrcStr);
+        System.out.println("=================下方基础信息========================");
+        System.out.println(s);
+        String s1 = LrcUtils.splitTranslation(lrcStr);
+        System.out.println("===================下方翻译信息======================");
+        System.out.println(s1);
+
+        // Merge类型合并
+        String mergeResult = LrcMergeUtil.mergeLyrics(s, s1, LrcMergeUtil.MergeType.MERGE);
+        System.out.println("===================Merge类型合并======================");
+        System.out.println(mergeResult);
+    // Intersect类型合并
+        String intersectResult = LrcMergeUtil.mergeLyrics(s, s1, LrcMergeUtil.MergeType.INTERSECT);
+        System.out.println("===================Intersect类型合并======================");
+        System.out.println(intersectResult);
+
+    // Union类型合并
+        String unionResult = LrcMergeUtil.mergeLyrics(s, s1, LrcMergeUtil.MergeType.UNION);
+
+        System.out.println("===================Union类型合并======================");
+        System.out.println(unionResult);
 
 
 //        String s = String.valueOf(sigHash("MFzb5OFrs0WQflcecG6ILLASd0*UgmQbNAHMTLdWvO4_", 5381));
