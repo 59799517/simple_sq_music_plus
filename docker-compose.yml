@@ -5,7 +5,7 @@ services:
     build:
       context: ./
       dockerfile: Dockerfile.backend
-    container_name: sqmusic_backend
+    container_name: sqmusic_main
     environment:
       - DB_IP=mysql
       - DB_PORT=3306
@@ -16,19 +16,22 @@ services:
       - ./music:/music
     depends_on:
       - mysql
-      - github-project-init
     networks:
       - sq-app-network
+    expose:
+      - "8099"
 
   frontend:
     build:
       context: ./
       dockerfile: Dockerfile.frontend
-    container_name: sqmusic_frontend
-    depends_on:
-      - backend
+      args:
+        - NODE_OPTIONS=--max-old-space-size=4096
+    container_name: sqmusic_web
     networks:
       - sq-app-network
+    expose:
+      - "80"
 
   mysql:
     image: mysql:5.7
@@ -37,7 +40,9 @@ services:
       MYSQL_ROOT_PASSWORD: sqmusicv3password
       MYSQL_DATABASE: sqmusicv3
     volumes:
-      - mysql_data:/var/lib/mysql
+      - ./mysql_data:/var/lib/mysql
+    ports:
+      - "3306:3306"
     networks:
       - sq-app-network
 
@@ -45,45 +50,12 @@ services:
     image: nginx:alpine
     container_name: sqmusic_nginx
     ports:
-      - "80:80"
+      - "8096:80"
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf
-      - ./dist:/usr/share/nginx/html
     depends_on:
       - backend
-    networks:
-      - sq-app-network
-      
-  # GitHub 项目初始化容器
-  github-project-init:
-    image: alpine/git
-    container_name: github_project_init
-    volumes:
-      - ./downloaded-projects:/projects
-    working_dir: /projects
-    command: >
-      sh -c "
-        if [ ! -d "node-project" ]; then
-          git clone https://github.com/example/node-project.git
-        else
-          cd node-project && git pull
-        fi
-      "
-    networks:
-      - sq-app-network
-      
-  # Node.js 应用容器
-  node-app:
-    build:
-      context: ./downloaded-projects/node-project
-      dockerfile: Dockerfile
-    container_name: node_app
-    ports:
-      - "3000:3000"
-    environment:
-      - NODE_ENV=production
-    depends_on:
-      - github-project-init
+      - frontend
     networks:
       - sq-app-network
 
