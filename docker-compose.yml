@@ -4,7 +4,7 @@ services:
   backend:
     build:
       context: ./
-      dockerfile: Dockerfile.backend
+      dockerfile: Dockerfile.main
     container_name: sqmusic_main
     environment:
       - DB_IP=mysql
@@ -24,7 +24,7 @@ services:
   frontend:
     build:
       context: ./
-      dockerfile: Dockerfile.frontend
+      dockerfile: Dockerfile.web
       args:
         - NODE_OPTIONS=--max-old-space-size=4096
     container_name: sqmusic_web
