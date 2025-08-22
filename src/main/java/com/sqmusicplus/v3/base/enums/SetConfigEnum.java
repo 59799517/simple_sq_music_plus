@@ -163,6 +163,11 @@ public enum SetConfigEnum {
      * 酷狗最后一次自动签到时间
      */
     PLUG_KG_SIGN_LAST_TIME("plug.kg.sign.last.time","酷狗最后一次自动签到时间","plug"),
+    /**
+     * 酷狗 concept sign begin-end time
+     */
+
+    PLUG_KG_SIGN_BEGIN_END_TIME("plug.kg.sign.begin-end.time","酷狗概念签到到期信息","plug"),
 
 //    ------------------酷我插件配置-----------------
     /**

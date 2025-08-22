@@ -1,8 +1,10 @@
 package com.sqmusicplus.v3.controller;
 
 import cn.dev33.satoken.annotation.SaCheckLogin;
+import cn.dev33.satoken.stp.SaLoginConfig;
 import cn.dev33.satoken.stp.SaTokenInfo;
 import cn.dev33.satoken.stp.StpUtil;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.sqmusicplus.v3.base.entity.SqConfig;
 import com.sqmusicplus.v3.base.enums.DbBooleanConvert;
 import com.sqmusicplus.v3.base.enums.SetConfigEnum;
@@ -10,12 +12,15 @@ import com.sqmusicplus.v3.config.AjaxResult;
 import com.sqmusicplus.v3.config.SqConfigCache;
 import com.sqmusicplus.v3.plug.kg.hander.KGHander;
 import com.sqmusicplus.v3.plug.netease.hander.NeteaseHander;
+import com.sqmusicplus.v3.plug.qq.entity.QQMusicCookieInfo;
+import com.sqmusicplus.v3.plug.qq.entity.QQMusicQr;
 import com.sqmusicplus.v3.plug.qq.hander.QQHander;
 import com.sqmusicplus.v3.plug.qqvip.QQvipHander;
 import com.sqmusicplus.v3.utils.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.util.Base64Utils;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -43,7 +48,11 @@ public class ConfigController {
     private String version;
 
 
-
+    /**
+     * 登录
+     * @param data
+     * @return
+     */
     @PostMapping("/login")
     public AjaxResult login(@RequestBody HashMap<String,String> data )  {
         String username = data.get("username");
@@ -61,7 +70,7 @@ public class ConfigController {
             return AjaxResult.error("请先设置登录用户");
         }
         if (username.equals(dbname) && password.equals(dbpwd)) {
-            StpUtil.login(9527,device);
+            StpUtil.login(9527, SaLoginConfig.setExtra("device", device));
             SaTokenInfo tokenInfo = StpUtil.getTokenInfo();
             return AjaxResult.success(tokenInfo);
         }else{
@@ -69,14 +78,21 @@ public class ConfigController {
         }
     }
 
+    /**
+     * jwt模式无需退出前段清楚token即可
+     * @return
+     */
     @SaCheckLogin
     @PostMapping("/logout")
-    public AjaxResult logout(@RequestBody HashMap<String,String> data) {
-        String device = data.get("device");
-        StpUtil.logout(9527,device);
+    public AjaxResult logout() {
+//        StpUtil.logout(9527,device);
         return AjaxResult.success();
     }
 
+    /**
+     * 用户是否登上
+     * @return
+     */
     @RequestMapping(value = "isLogin")
     public AjaxResult isLogin() {
         return  StpUtil.isLogin()?AjaxResult.success("登录有效",true):AjaxResult.error("过期",false);
@@ -133,14 +149,14 @@ public class ConfigController {
         return AjaxResult.success(SqConfigCache.PlugOptions);
     }
 
-
+    /**
+     * 获取版本信息
+     * @return
+     */
     @GetMapping("/version")
     public AjaxResult getVersion(){
         return AjaxResult.success("成功", version);
     }
-
-
-
 
 
 

@@ -1,0 +1,29 @@
+# 使用 Node.js 镜像进行构建
+FROM node:16 AS builder
+
+# 设置工作目录
+WORKDIR /app
+
+# 复制前端源码
+COPY vue /app
+
+# 安装依赖
+RUN npm install
+
+# 构建前端项目
+RUN npm run build
+
+# 使用 Nginx 作为生产环境服务器
+FROM nginx:alpine
+
+# 复制构建结果到 Nginx 服务器
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+# 复制 Nginx 配置文件
+COPY nginx.conf /etc/nginx/nginx.conf
+
+# 暴露端口
+EXPOSE 80
+
+# 启动 Nginx
+CMD ["nginx", "-g", "daemon off;"]

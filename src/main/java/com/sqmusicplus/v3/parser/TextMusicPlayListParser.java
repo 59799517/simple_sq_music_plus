@@ -82,27 +82,28 @@ public class TextMusicPlayListParser {
             SearchKeyData searchKeyData = new SearchKeyData();
             searchKeyData.setSearchkey(searchKey).setPageIndex(1).setPageSize(20);
 
-            if (sqConfig.getConfigValue().equals(DbBooleanConvert.YES.getValue().toString())) {
+            if (sqConfig.getConfigValue().equals(DbBooleanConvert.YES.getBooleanValue().toString())) {
 
                 PlugSearchResult<PlugSearchMusicResult> plugSearchMusicResultPlugSearchResult = nKwHander.querySongByName(searchKeyData);
                 //找出匹配的
                 extracted(parserEntity, plugSearchMusicResultPlugSearchResult);
             }
 
-            if (netOpen.getConfigValue().equals(DbBooleanConvert.YES.getValue().toString())) {
-                if (parserEntity.getIsDetection() == null || !parserEntity.getIsDetection()) {
+
+            if ( parserEntity.getIsDetection() == null || !parserEntity.getIsDetection()) {
+                if (netOpen.getConfigValue().equals(DbBooleanConvert.YES.getBooleanValue().toString())) {
                     PlugSearchResult<PlugSearchMusicResult> plugSearchMusicResultPlugSearchResult = neteaseHander.querySongByName(searchKeyData);
                     extracted(parserEntity, plugSearchMusicResultPlugSearchResult);
                 }
             }
-            if (qqvipOpen.getConfigValue().equals(DbBooleanConvert.YES.getValue().toString())) {
-                if (parserEntity.getIsDetection() == null || !parserEntity.getIsDetection()) {
+            if (parserEntity.getIsDetection() == null || !parserEntity.getIsDetection()) {
+                if (qqvipOpen.getConfigValue().equals(DbBooleanConvert.YES.getBooleanValue().toString())) {
                     PlugSearchResult<PlugSearchMusicResult> plugSearchMusicResultPlugSearchResult = qqvipHander.querySongByName(searchKeyData);
                     extracted(parserEntity, plugSearchMusicResultPlugSearchResult);
                 }
             }
-            if (kgOpen.getConfigValue().equals(DbBooleanConvert.YES.getValue().toString())) {
-                if (parserEntity.getIsDetection() == null || !parserEntity.getIsDetection()) {
+            if (parserEntity.getIsDetection() == null || !parserEntity.getIsDetection()) {
+                if (kgOpen.getConfigValue().equals(DbBooleanConvert.YES.getBooleanValue().toString())) {
                     PlugSearchResult<PlugSearchMusicResult> plugSearchMusicResultPlugSearchResult = kGHander.querySongByName(searchKeyData);
                     extracted(parserEntity, plugSearchMusicResultPlugSearchResult);
                 }

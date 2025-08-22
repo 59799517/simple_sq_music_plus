@@ -4,10 +4,12 @@ import cn.dev33.satoken.annotation.SaCheckLogin;
 import com.sqmusicplus.v3.base.entity.vo.ParserEntity;
 import com.sqmusicplus.v3.config.AjaxResult;
 import com.sqmusicplus.v3.download.vo.DownlaodParserUrl;
+import com.sqmusicplus.v3.download.vo.ParserTextParam;
 import com.sqmusicplus.v3.parser.TextMusicPlayListParser;
 import com.sqmusicplus.v3.parser.UrlMusicPlayListParser;
 import com.sqmusicplus.v3.plug.entity.Music;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.tika.utils.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -71,18 +73,21 @@ public class ParserController {
 
     @SaCheckLogin
     @PostMapping("/parserText")
-    public AjaxResult parserText(String text) {
+    public AjaxResult parserText(@RequestBody ParserTextParam param) {
         try {
-            List<ParserEntity> parser = textMusicPlayListParser.parser(text);
+            if (StringUtils.isBlank(param.getText())){
+                return AjaxResult.error("请输入要解析的文本");
+            }
+            List<ParserEntity> parser = textMusicPlayListParser.parser(param.getText());
             List<ParserEntity> parserEntities = textMusicPlayListParser.parserParserEntity(parser);
             if (parser != null){
                 return AjaxResult.success(parserEntities);
             }
-            return AjaxResult.error("解析失败 仅支持qq 酷我 酷狗概念 网易云");
+            return AjaxResult.error("解析失败");
 
         } catch (Exception e) {
             log.error("解析失败",e);
-            return AjaxResult.error("解析失败 仅支持qq 酷我 酷狗概念 网易云");
+            return AjaxResult.error("解析失败");
         }
     }
 

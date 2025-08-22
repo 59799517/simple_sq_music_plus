@@ -86,6 +86,7 @@ sa-token:
   # 是否输出操作日志
   is-log: false
   is-print: false
+  jwt-secret-key: xNQRcY7FgHM1dyJCoZKmmksNT7aR0FlqvRCWJbmD
 
 version: 3.0.0
 

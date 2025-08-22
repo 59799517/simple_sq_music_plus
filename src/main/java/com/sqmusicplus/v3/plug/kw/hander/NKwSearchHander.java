@@ -1,6 +1,9 @@
 package com.sqmusicplus.v3.plug.kw.hander;
 
+import cn.hutool.core.codec.Base64;
 import cn.hutool.core.collection.ListUtil;
+import cn.hutool.core.util.ZipUtil;
+import cn.hutool.http.HttpRequest;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.sqmusicplus.v3.base.entity.DownloadInfo;
@@ -15,17 +18,17 @@ import com.sqmusicplus.v3.plug.entity.*;
 import com.sqmusicplus.v3.plug.kw.config.KwConfig;
 import com.sqmusicplus.v3.plug.kw.entity.*;
 import com.sqmusicplus.v3.plug.kw.enums.KwSearchType;
-import com.sqmusicplus.v3.utils.DownloadUtils;
-import com.sqmusicplus.v3.utils.LrcUtils;
-import com.sqmusicplus.v3.utils.OkHttpUtils;
-import com.sqmusicplus.v3.utils.StringUtils;
+import com.sqmusicplus.v3.utils.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.ImmutableTriple;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -190,60 +193,52 @@ public class NKwSearchHander extends SearchHanderAbstract {
 
     @Override
     public Music querySongById(String SongId) {
-        String searchUrl = config.getSongInfoUrl().replaceAll("#\\{musicId}", SongId);
-        MusicInfoResult musicInfoResult = DownloadUtils.get(searchUrl, MusicInfoResult.class);
-        if (musicInfoResult.getStatus().intValue()!=200) {
-            throw new IgnoreDownloadException("酷我音乐歌曲信息获取歌曲信息失败，多试几次。");
+        String searchUrl = config.getMusicAudioInfoUrl().replaceAll("#\\{musicId}", SongId);
+        MusicAudioInfoResult musicAudioInfoResult = DownloadUtils.get(searchUrl, MusicAudioInfoResult.class);
+
+        if (musicAudioInfoResult==null||musicAudioInfoResult.getErrorcode()!=0||musicAudioInfoResult.getSongs()==null||musicAudioInfoResult.getSongs().size()==0){
+            throw new IgnoreDownloadException("酷我音乐歌曲信息获取歌曲信息失败，已开始自动重试。");
         }
-        MusicInfoResult.DataDTO data = musicInfoResult.getData();
-        MusicInfoResult.DataDTO.SonginfoDTO songinfo = data.getSonginfo();
+        String songimgurl = config.getSongImageUrl().replaceAll("#\\{musicId}", SongId);
+        String pic = null;
+        try {
+            pic = DownloadUtils.getBodyStr(songimgurl);
+        } catch (Exception e) {
+        }
+
+        List<MusicAudioInfoResult.SongsDTO> songs = musicAudioInfoResult.getSongs();
+        MusicAudioInfoResult.SongsDTO songinfo = songs.get(0);
         String album = songinfo.getAlbum();
-        String albumId = songinfo.getAlbumId();
+        String albumId = songinfo.getAlbumid()+"";
         String artist = songinfo.getArtist();
-        String artistId = songinfo.getArtistId();
-        String s = songinfo.getPic().replaceAll("/240", "/500");
-        String songName = songinfo.getSongName();
+        String artistId = songinfo.getArtistid()+"";
+        String s = pic;
+        String songName = songinfo.getName();
         String duration = "0";
         try {
-            duration = songinfo.getDuration();
+            duration = songinfo.getDuration()+"";
             BigDecimal bigDecimal = new BigDecimal(duration);
             BigDecimal multiply = bigDecimal.multiply(new BigDecimal(1000));
             duration = multiply.toString();
         } catch (Exception e) {
             duration="0";
         }
-        List<MusicInfoResult.DataDTO.LrclistDTO> lrclist = data.getLrclist();
-        String Lrc = null;
-        if (lrclist != null && lrclist.size() > 0) {
-            Lrc = LrcUtils.krcTolrc(lrclist, album, artist, songName);
-        }
+        String Lrc = queryLyric(SongId);
         return new Music()
-                .setId(songinfo.getId())
+                .setId(SongId)
                 .setMusicImage(s)
                 .setMusicLyric(Lrc)
                 .setMusicAlbum(album)
-                .setMusicArtists(ListUtil.of(artist.split("&")))
+                .setMusicArtists(ListUtil.of(artist))
                 .setMusicName(songName)
                 .setMusicDuration(Long.parseLong(duration))
                 .setAlbumId(albumId)
-                .setDataInfo(JSONObject.parseObject(JSONObject.toJSONString(data)))
                 .setArtistsIds(ListUtil.of(artistId));
     }
 
     @Override
     public Music querySongById(DownloadInfo downloadInfo) {
-        String downloadBrTypes = downloadInfo.getDownloadBrTypes();
-        Music music = querySongById(downloadInfo.getDownloadMusicId());
-        String[] split = downloadBrTypes.split(",");
-        ArrayList<PlugBrType> brTypes = new ArrayList<>();
-        for (String s : split) {
-            PlugBrType plugBrType = PlugBrType.findById(s);
-            brTypes.add(plugBrType);
-        }
-        music.setBits(brTypes)
-                .setBit(brTypes.get(0).getBit());
-        return music;
-
+        return querySongById(downloadInfo.getDownloadMusicId());
     }
 
     @Override
@@ -373,19 +368,57 @@ public class NKwSearchHander extends SearchHanderAbstract {
     @Deprecated
     @Override
     public String queryLyric(String SongId) {
-        String searchUrl = config.getSongInfoUrl().replaceAll("#\\{musicId}", SongId);
-        MusicInfoResult musicInfoResult = DownloadUtils.get(searchUrl, MusicInfoResult.class);
-        MusicInfoResult.DataDTO data = musicInfoResult.getData();
-        MusicInfoResult.DataDTO.SonginfoDTO songinfo = data.getSonginfo();
-        String album = songinfo.getAlbum();
-        String artist = songinfo.getArtist();
-        String songName = songinfo.getSongName();
-        List<MusicInfoResult.DataDTO.LrclistDTO> lrclist = data.getLrclist();
-        String Lrc = null;
-        if (lrclist != null && lrclist.size() > 0) {
-            Lrc = LrcUtils.krcTolrc(lrclist, album, artist, songName);
+        // 请求参数加密
+        byte[] keyBytes = "yeelion".getBytes(StandardCharsets.UTF_8);
+        int keyLen = keyBytes.length;
+        String params = "user=12345,web,web,web&requester=localhost&req=1&rid=MUSIC_" + SongId + "&lrcx=1";
+        byte[] paramsBytes = params.getBytes(StandardCharsets.UTF_8);
+        int paramsLen = paramsBytes.length;
+        byte[] output = new byte[paramsLen];
+        int i = 0;
+        while (i < paramsLen) {
+            int j = 0;
+            while (j < keyLen && i < paramsLen) {
+                output[i] = (byte) (keyBytes[j] ^ paramsBytes[i]);
+                i++;
+                j++;
+            }
         }
-        return Lrc;
+        params = cn.hutool.core.codec.Base64.encode(output);
+
+        // 获取歌词
+        byte[] bodyBytes = HttpRequest.get(getConfig().getLyrIcUrl() + params)
+                .executeAsync()
+                .bodyBytes();
+        if (!"tp=content".equals(new String(bodyBytes, 0, 10))) return "";
+        int index = LrcUtils.indexOf(bodyBytes, "\r\n\r\n".getBytes(StandardCharsets.UTF_8)) + 4;
+        byte[] nBytes = Arrays.copyOfRange(bodyBytes, index, bodyBytes.length);
+        byte[] lrcData = ZipUtil.unZlib(nBytes);
+//        byte[] lrcData = CryptoUtil.decompress(nBytes);
+        // 无 lrcx 参数时，此处直接获得 lrc 歌词
+//        String lrcStr = new String(lrcData, Charset.forName("gb18030"));
+        String lrcDataStr = new String(lrcData, StandardCharsets.UTF_8);
+        byte[] lrcBytes = Base64.decode(lrcDataStr);
+//        byte[] lrcBytes = CryptoUtil.base64DecodeToBytes(lrcDataStr);
+        int lrcLen = lrcBytes.length;
+        output = new byte[lrcLen];
+        i = 0;
+        while (i < lrcLen) {
+            int j = 0;
+            while (j < keyLen && i < lrcLen) {
+                output[i] = (byte) (lrcBytes[i] ^ keyBytes[j]);
+                i++;
+                j++;
+            }
+        }
+        String lrcStr = new String(output, Charset.forName("gb18030"));
+        lrcStr = LrcUtils.parseKuwoLyricOffset(lrcStr);
+        String s = LrcUtils.splitLyrics(lrcStr);
+        String s1 = LrcUtils.splitTranslation(lrcStr);
+        // Merge类型合并
+        String mergeResult = LrcMergeUtil.mergeLyrics(s, s1, LrcMergeUtil.MergeType.MERGE);
+        return mergeResult;
+
     }
 
     @Override

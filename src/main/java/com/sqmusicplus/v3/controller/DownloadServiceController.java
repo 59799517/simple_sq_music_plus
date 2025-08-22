@@ -8,12 +8,14 @@ import com.sqmusicplus.v3.base.service.DownloadInfoService;
 import com.sqmusicplus.v3.config.AjaxResult;
 import com.sqmusicplus.v3.config.exception.SQException;
 import com.sqmusicplus.v3.download.vo.DownlaodParserUrl;
+import com.sqmusicplus.v3.download.vo.ParserTextParam;
 import com.sqmusicplus.v3.parser.TextMusicPlayListParser;
 import com.sqmusicplus.v3.parser.UrlMusicPlayListParser;
 import com.sqmusicplus.v3.plug.base.hander.SearchHanderAbstract;
 import com.sqmusicplus.v3.plug.entity.*;
 import com.sqmusicplus.v3.utils.MusicUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.tika.utils.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -152,6 +154,10 @@ public class DownloadServiceController {
         return AjaxResult.error("下载失败");
     }
 
+
+
+
+
     @SaCheckLogin
     @PostMapping("/downloadParserUrlResult")
     public AjaxResult downloadParserUrlResult(@RequestBody List<Music> musicList) {
@@ -168,9 +174,48 @@ public class DownloadServiceController {
         return AjaxResult.error("下载失败");
     }
 
+
     @SaCheckLogin
     @PostMapping("/downloadParserText")
-    public AjaxResult downloadParserText(@RequestBody List<ParserEntity> parserEntities) {
+    public AjaxResult downloadParserText(@RequestBody ParserTextParam param) {
+        if (StringUtils.isBlank(param.getText())) {
+            return AjaxResult.error("请输入要解析的文本");
+        }
+        Thread thread = new Thread(() -> {
+            try {
+
+                List<ParserEntity> parser = textMusicPlayListParser.parser(param.getText());
+                List<ParserEntity> parserEntities = textMusicPlayListParser.parserParserEntity(parser);
+
+                if (parserEntities != null) {
+                    ArrayList<DownloadInfo> downloadInfos = new ArrayList<>();
+                    for (ParserEntity parserEntity : parserEntities) {
+                        PlugSearchMusicResult plugSearchMusicResult = parserEntity.getPlugSearchMusicResult();
+                        SearchHanderAbstract plugHander = MusicUtils.getPlugHander(plugSearchMusicResult.getPlugName(), searchHanderAbstractList);
+                        DownloadInfo downloadInfo = plugHander.musicToDownloadInfo(plugSearchMusicResult, null, false);
+                        downloadInfos.add(downloadInfo);
+                    }
+                    Boolean add = downloadInfoService.add(downloadInfos);
+                    if (add) {
+                        return;
+                    }
+                }
+//                return ;
+
+            } catch (Exception e) {
+                log.error("解析失败", e);
+//                return ;
+            }
+
+        });
+        thread.start();
+        return AjaxResult.success("开始解析并下载，稍后在下载中查看！");
+    }
+
+
+    @SaCheckLogin
+    @PostMapping("/downloadParserTextResult")
+    public AjaxResult downloadParserTextResult(@RequestBody List<ParserEntity> parserEntities) {
         ArrayList<DownloadInfo> downloadInfos = new ArrayList<>();
         for (ParserEntity parserEntity : parserEntities) {
             PlugSearchMusicResult plugSearchMusicResult = parserEntity.getPlugSearchMusicResult();

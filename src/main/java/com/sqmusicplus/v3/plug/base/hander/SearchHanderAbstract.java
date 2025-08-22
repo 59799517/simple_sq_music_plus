@@ -64,11 +64,7 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
     @Override
     public void dnonloadAndSaveToFile(DownloadInfo downloadInfo, SearchHander searchHander) {
         try {
-            //获取歌曲详情(数据在下载之前已经校验完成)
-//            Music music = searchHander.musicInfoToMuisc(downloadInfo.getDownloadMusicInfo());
-//            DownloadInfo downloadInfo = plugHander.musicToDownloadInfo(music, maxBr, false);
             Music music = searchHander.querySongById(downloadInfo);
-
             if (music == null) {
                 throw new RuntimeException("下载失败歌曲信息不完整歌曲详情转化歌曲失败:" + JSONObject.toJSONString(downloadInfo));
             }
@@ -119,7 +115,6 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
                 String downliadpath = musicPath + File.separator + baseMusicArtistName;
                 //人物图片
                 File Artistsfile = FileUtils.findFile(downliadpath + File.separator, "cover");
-
 
                 if (Artistsfile == null || (!Artistsfile.exists() && !isAudioBook)) {
                     try {
@@ -290,6 +285,7 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
 
         //创建歌词
         try {
+
             if (StringUtils.isNotEmpty(music.getMusicLyric())) {
                 String name = FileUtil.getPrefix(onSuccess);
                 log.debug("lrc地址{}", onSuccess.getParentFile() + File.separator + name + ".lrc");

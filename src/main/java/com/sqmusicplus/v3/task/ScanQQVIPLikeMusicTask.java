@@ -58,7 +58,7 @@ public class ScanQQVIPLikeMusicTask {
         String myLikeAlbumSyncConfig = SqConfigCache.getSqConfigValue(SetConfigEnum.PLUG_QQVIP_SYNC_MY_LIKE_ALBUM);
         String myLikeArtistsSyncConfig = SqConfigCache.getSqConfigValue(SetConfigEnum.PLUG_QQVIP_SYNC_MY_LIKE_ARTISTS);
 
-            if (StringUtils.isNotBlank(qqopenconfigKey)&& Boolean.parseBoolean(qqopenconfigKey)) {
+            if (StringUtils.isNotBlank(qqopenconfigKey)&& Boolean.parseBoolean(myLikeSongSyncConfig)) {
 
                 if (StringUtils.isNotBlank(myLikeSongSyncConfig)&& Boolean.parseBoolean(myLikeSongSyncConfig)){
                     log.info("扫描QQVIP同步我喜欢单曲");

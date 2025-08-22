@@ -73,7 +73,7 @@ public class SqConfigCache {
             String key = setConfigEnum.getKey();
             return sqConfigMap.get(key).getConfigValue();
         } catch (Exception e) {
-            return null;
+            return "";
         }
     }
     /**

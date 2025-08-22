@@ -157,9 +157,6 @@ public class KGHander extends SearchHanderAbstract {
             SearchMusicResult.DataDTO.ListsDTO.HQDTO hq = listsDTO.getHq();//320
             Long fileSize = listsDTO.getFileSize();//128
             ArrayList<PlugBrType> brTypes = new ArrayList<>();
-            if (fileSize!=null&&fileSize>0){
-                brTypes.add(PlugBrType.KG_MP3_128);
-            }
             if (sq!=null){
                 Long fileSize1 = sq.getFileSize();
                 if (fileSize1!=null&&fileSize1>0){
@@ -172,8 +169,11 @@ public class KGHander extends SearchHanderAbstract {
                     brTypes.add(PlugBrType.KG_MP3_320);
                 }
             }
-
-
+            if (fileSize!=null&&fileSize>0){
+                brTypes.add(PlugBrType.KG_MP3_128);
+            }
+            Long duration = listsDTO.getDuration();
+            duration*=1000;
             plugSearchMusicResults.add(new PlugSearchMusicResult().setAlbumName(listsDTO.getAlbumName())
                     .setAlbumid(listsDTO.getAlbumID())
                     .setArtistName(listsDTO.getSingers().stream().map(e -> e.getName()).collect(Collectors.toList()))
@@ -181,7 +181,8 @@ public class KGHander extends SearchHanderAbstract {
                     .setId(listsDTO.getFileHash())
                     .setPlugName(getPlugName())
                     .setBrTypes(brTypes)
-                    .setDuration(listsDTO.getDuration().toString())
+                    .setDuration(duration.toString())
+                     .setDataInfo(JSONObject.parseObject(JSONObject.toJSONString(listsDTO)))
                     .setName(listsDTO.getOriSongName()).setPic(listsDTO.getImage().replaceAll("\\{size}",getConfig().getImageSize())));
         }
         plugSearchResult.setSearchIndex(searchKeyData.getPageIndex())
@@ -226,9 +227,11 @@ public class KGHander extends SearchHanderAbstract {
         List<SearchArtistResult.DataDTO.ListsDTO> lists = data.getLists();
         plugSearchMusicResults = lists.stream().map(listsDTO -> new PlugSearchArtistResult().setArtistName(listsDTO.getAuthorName())
                 .setArtistid(listsDTO.getAuthorId().toString())
+                 .setDataInfo(JSONObject.parseObject(JSONObject.toJSONString(listsDTO)))
                 .setPlugName(getPlugName())
                 .setPic(listsDTO.getAvatar().replaceAll("\\{size}",getConfig().getImageSize()))
                 .setTotal(listsDTO.getAlbumCount().toString()))
+
                 .collect(Collectors.toCollection(ArrayList::new));
         plugSearchResult.setSearchIndex(searchKeyData.getPageIndex())
                 .setSearchSize(searchKeyData.getPageSize())
@@ -277,9 +280,11 @@ public class KGHander extends SearchHanderAbstract {
                 .setAlbumid(listsDTO.getAlbumid().toString())
                 .setArtistName(listsDTO.getSingers().stream().map(e -> e.getName()).collect(Collectors.joining("&")))
                 .setArtistid(listsDTO.getSingers().stream().map(e -> e.getId().toString()).collect(Collectors.joining(",")))
-                .setPlugName(getPlugName())
+                .setPlugName(getPlugName()).setDataInfo(JSONObject.parseObject(JSONObject.toJSONString(listsDTO)))
                 .setPic(listsDTO.getImg().replaceAll("\\{size}",getConfig().getImageSize()))
                 .setTotal(listsDTO.getSongcount().toString()))
+
+
                 .collect(Collectors.toCollection(ArrayList::new));
         plugSearchResult.setSearchIndex(searchKeyData.getPageIndex())
                 .setSearchSize(searchKeyData.getPageSize())
@@ -324,6 +329,7 @@ public class KGHander extends SearchHanderAbstract {
 
                 SongInfoResult.DataDTO.InfoDTO info = dataDTO.getInfo();
                 Long duration = info.getDuration();
+                duration*=1000;
                 String musicimage = info.getImage().replaceAll("\\{size}",getConfig().getImageSize());
                 if (StringUtils.isEmpty(musicimage)){
                     SongInfoResult.DataDTO.TransParamDTO transParam = dataDTO.getTransParam();
@@ -368,9 +374,10 @@ public class KGHander extends SearchHanderAbstract {
                                 }
 
                                 try {
-                                    String hash = dataDTO1.getAudioInfo().getHash();
-                                    if (StringUtils.isNotEmpty(hash)){
-                                        plugBrTypes.add(PlugBrType.KG_MP3_128);
+                                    String hashFlac = dataDTO1.getAudioInfo().getHashFlac();
+
+                                    if (StringUtils.isNotEmpty(hashFlac)){
+                                        plugBrTypes.add(PlugBrType.KG_Flac_2000);
                                     }
                                 } catch (Exception e) {
                                 }
@@ -382,13 +389,14 @@ public class KGHander extends SearchHanderAbstract {
                                 } catch (Exception e) {
                                 }
                                 try {
-                                    String hashFlac = dataDTO1.getAudioInfo().getHashFlac();
-
-                                    if (StringUtils.isNotEmpty(hashFlac)){
-                                        plugBrTypes.add(PlugBrType.KG_Flac_2000);
+                                    String hash = dataDTO1.getAudioInfo().getHash();
+                                    if (StringUtils.isNotEmpty(hash)){
+                                        plugBrTypes.add(PlugBrType.KG_MP3_128);
                                     }
                                 } catch (Exception e) {
                                 }
+
+
 //                                String hashHigh = dataDTO1.getAudioInfo().getHashHigh();
 //                                if (StringUtils.isNotEmpty(hashHigh)) {
 //                                    plugBrTypes.add(PlugBrType.KG_Flac_3000);
@@ -601,7 +609,7 @@ public class KGHander extends SearchHanderAbstract {
         String brType = downloadInfo.getDownloadBrType();
         PlugBrType plugBrType = PlugBrType.findById(brType);
 
-
+        DownloadUrlResult downloadUrlResult = new DownloadUrlResult();
         OkHttpUtils builder = OkHttpUtils.builder();
         HashMap<String, String> para = new HashMap<>();
         para.put("hash", downloadInfo.getDownloadMusicId());
@@ -611,7 +619,8 @@ public class KGHander extends SearchHanderAbstract {
         if (StringUtils.isNotEmpty(cooKie)){
             para.put("cookie", cooKie);
         }else{
-            return null;
+            downloadUrlResult.setErrorMsg("下载链接获取失败：登录信息失效或者过期");
+            return downloadUrlResult;
         }
 
         String sync = builder.url(getBaseURL() + getConfig().getDownloadUrl())
@@ -619,7 +628,8 @@ public class KGHander extends SearchHanderAbstract {
                 .get().sync();
         DownloadResult bean = JSONObject.parseObject(sync, DownloadResult.class);
         if (bean.getStatus() != 1){
-                return null;
+            downloadUrlResult.setErrorMsg("下载链接获取失败：未返回下载链接");
+            return downloadUrlResult;
         }
         String url="" ;
         String type;
@@ -632,7 +642,7 @@ public class KGHander extends SearchHanderAbstract {
         }
         type = bean.getExtName();
         bit = bean.getBitRate().toString();
-        DownloadUrlResult downloadUrlResult = new DownloadUrlResult();
+
         downloadUrlResult.setUrl(url);
         downloadUrlResult.setPlugBrTypeId(downloadInfo.getDownloadBrType());
         downloadUrlResult.setBit(bit);
@@ -751,7 +761,7 @@ public class KGHander extends SearchHanderAbstract {
             Music music = new Music().setId(audioInfo.getHash())
                     .setBits(brTypes)
                     .setMusicName(base.getAudioName())
-                    .setMusicDuration(audioInfo.getDuration())
+                    .setMusicDuration(audioInfo.getDuration()*1000)
                     .setMusicAlbum(albumInfo.getAlbumName())
                     .setMusicArtists(authors.stream().map(AlubmSongResult.DataDTO.SongsDTO.AuthorsDTO::getAuthorName).collect(Collectors.toList()))
                     .setMusicImage(transParam.getUnionCover().replaceAll("\\{size}", "400"))
@@ -846,29 +856,30 @@ public class KGHander extends SearchHanderAbstract {
             String sync = builder.url(getBaseURL() + getConfig().getSignUrl())
                     .addParam("cookie", token)
                     .get().sync();
-            if (StringUtils.isNotEmpty(sync)){
-                SignResult signResult = JSONObject.parseObject(sync, SignResult.class);
-                if (signResult.getStatus() == 1){
-                    String signInfoUrl = builder.url(getBaseURL() + getConfig().getSignInfoUrl())
-                            .addParam("cookie", token)
-                            .get().sync();
-                    SignResultInfo signResultInfo = JSONObject.parseObject(signInfoUrl, SignResultInfo.class);
-                    Integer status = signResultInfo.getStatus();
-                    if (status == 1){
-                        List<SignResultInfo.DataDTO.ListDTO> list = signResultInfo.getData().getList();
-                        for (SignResultInfo.DataDTO.ListDTO listDTO : list) {
-                            if (listDTO.getDay().equals(date)) {
-                                Integer receiveVip = listDTO.getReceiveVip();
-                                if (receiveVip ==1) {
-                                    SqConfigCache.updateConfigToDb(SetConfigEnum.PLUG_KG_SIGN_LAST_TIME,listDTO.getDay());
-                                }
-                            }
-                        }
+//            if (StringUtils.isNotEmpty(sync)){
+//                SignResult signResult = JSONObject.parseObject(sync, SignResult.class);
+//                if (signResult.getStatus() == 1){
+//
+//                }
+//            }
+
+            String signInfoUrl = builder.url(getBaseURL() + getConfig().getSignInfoUrl())
+                    .addParam("cookie", token)
+                    .get().sync();
+            SignResultInfo signResultInfo = JSONObject.parseObject(signInfoUrl, SignResultInfo.class);
+            Integer status = signResultInfo.getStatus();
+            if (status == 1){
+                List<SignResultInfo.DataDTO.BusiVipDTO> busiVip = signResultInfo.getData().getBusiVip();
+                SignResultInfo.DataDTO.BusiVipDTO busiVipDTO = busiVip.get(0);
+                if (StringUtils.isNoneBlank(busiVipDTO.getVipBeginTime())) {
+                    Integer receiveVip = busiVipDTO.getIsVip();
+                    if (receiveVip ==1) {
+                        SqConfigCache.updateConfigToDb(SetConfigEnum.PLUG_KG_SIGN_LAST_TIME,busiVipDTO.getVipBeginTime());
+                        SqConfigCache.updateConfigToDb(SetConfigEnum.PLUG_KG_SIGN_BEGIN_END_TIME,busiVipDTO.getVipBeginTime()+"-"+busiVipDTO.getVipEndTime());
                     }
-
-
                 }
             }
+
 
         }
         return false;

@@ -331,4 +331,24 @@ public class DownloadUtils {
         return "";
     }
 
+    /**
+     * 获取body的字符串不转化
+     * @param url
+     * @param params
+     * @return
+     */
+    public  static String getBodyStr(String url,HashMap<String,String> params){
+        OkHttpUtils builder = OkHttpUtils.builder().url(url);
+
+        if (params!=null){
+            builder.addParam(params);
+        }
+        return  builder
+                .get().sync();
+    }
+    public  static String getBodyStr(String url){
+        OkHttpUtils builder = OkHttpUtils.builder().url(url);
+        return getBodyStr(url,null);
+    }
+
 }

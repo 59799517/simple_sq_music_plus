@@ -49,7 +49,7 @@ public class PlugController {
     @GetMapping("/kg/getQrImage")
     public AjaxResult getKgQrimage(){
         SqConfig kgopenconfigKey = SqConfigCache.getSqConfig(SetConfigEnum.PLUG_KG_OPEN.getKey());
-        if (kgopenconfigKey.getConfigValue().equals(DbBooleanConvert.YES.getValue().toString())){
+        if (kgopenconfigKey.getConfigValue().equals(DbBooleanConvert.YES.getBooleanValue().toString())){
             return AjaxResult.success("成功", kGHander.getQrImage());
         }
         return AjaxResult.error("酷狗插件未开启");
@@ -63,7 +63,7 @@ public class PlugController {
     @GetMapping("/kg/checkQrCodeStatus")
     public AjaxResult  getKGcheckQrCodeStatus(){
         SqConfig kgopenconfigKey = SqConfigCache.getSqConfig(SetConfigEnum.PLUG_KG_OPEN.getKey());
-        if (kgopenconfigKey.getConfigValue().equals(DbBooleanConvert.YES.getValue().toString())){
+        if (kgopenconfigKey.getConfigValue().equals(DbBooleanConvert.YES.getBooleanValue().toString())){
             return AjaxResult.success("成功", kGHander.checkQrCodeStatus());
         }
         return AjaxResult.error("酷狗插件未开启");
@@ -75,7 +75,7 @@ public class PlugController {
     @GetMapping("/kg/getWxQrImage")
     public AjaxResult  getWxQrImage(){
         SqConfig kgopenconfigKey = SqConfigCache.getSqConfig(SetConfigEnum.PLUG_KG_OPEN.getKey());
-        if (kgopenconfigKey.getConfigValue().equals(DbBooleanConvert.YES.getValue().toString())){
+        if (kgopenconfigKey.getConfigValue().equals(DbBooleanConvert.YES.getBooleanValue().toString())){
             return AjaxResult.success("成功", kGHander.getWxQrImage());
         }
         return AjaxResult.error("酷狗插件未开启");
@@ -89,7 +89,7 @@ public class PlugController {
     @GetMapping("/kg/checkWxQrCodeStatus")
     public AjaxResult  checkWxQrCodeStatus(){
         SqConfig kgopenconfigKey = SqConfigCache.getSqConfig(SetConfigEnum.PLUG_KG_OPEN.getKey());
-        if (kgopenconfigKey.getConfigValue().equals(DbBooleanConvert.YES.getValue().toString())){
+        if (kgopenconfigKey.getConfigValue().equals(DbBooleanConvert.YES.getBooleanValue().toString())){
             return AjaxResult.success("成功", kGHander.checkWxQrCodeStatus());
         }
         return AjaxResult.error("酷狗插件未开启");
@@ -102,7 +102,7 @@ public class PlugController {
     @GetMapping("/kg/refreshToken")
     public AjaxResult refreshKGToken(){
         SqConfig kgopenconfigKey = SqConfigCache.getSqConfig(SetConfigEnum.PLUG_KG_OPEN.getKey());
-        if (kgopenconfigKey.getConfigValue().equals(DbBooleanConvert.YES.getValue().toString())){
+        if (kgopenconfigKey.getConfigValue().equals(DbBooleanConvert.YES.getBooleanValue().toString())){
             boolean b = kGHander.refreshToken();
             return  b?AjaxResult.success("成功"):AjaxResult.error("失败");
         }
@@ -112,7 +112,7 @@ public class PlugController {
     @GetMapping("/kg/signIn")
     public AjaxResult  kgSignIn(){
         SqConfig kgopenconfigKey = SqConfigCache.getSqConfig(SetConfigEnum.PLUG_KG_OPEN.getKey());
-        if (kgopenconfigKey.getConfigValue().equals(DbBooleanConvert.YES.getValue().toString())){
+        if (kgopenconfigKey.getConfigValue().equals(DbBooleanConvert.YES.getBooleanValue().toString())){
             boolean b = kGHander.signIn();
             return  b?AjaxResult.success("成功"):AjaxResult.error("失败");
         }
@@ -137,7 +137,7 @@ public class PlugController {
     @GetMapping("/qqvip/checkQrCodeStatus")
     public AjaxResult  getQQvipcheckQrCodeStatus() {
         SqConfig sqConfig = SqConfigCache.getSqConfig(SetConfigEnum.PLUG_QQVIP_OPEN.getKey());
-        if (sqConfig.getConfigValue().equals(DbBooleanConvert.YES.getValue().toString())){
+        if (sqConfig.getConfigValue().equals(DbBooleanConvert.YES.getBooleanValue().toString())){
             SqConfig sqConfigCookie = SqConfigCache.getSqConfig(SetConfigEnum.PLUG_QQVIP_COOKIE.getKey());
             if (sqConfigCookie != null && StringUtils.isNotBlank(sqConfigCookie.getConfigValue())) {
                 QQMusicCookieInfo qqMusicCookieInfo = qqHander.refreshToken();
