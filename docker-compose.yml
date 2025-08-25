@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  backend:
+  sqmusic_main:
     build:
       context: ./
       dockerfile: Dockerfile.main
@@ -15,23 +15,27 @@ services:
     volumes:
       - ./music:/music
     depends_on:
-      - mysql
+      mysql:
+        condition: service_healthy
     networks:
       - sq-app-network
     expose:
       - "8099"
 
-  frontend:
+  sqmusic_web:
     build:
       context: ./
-      dockerfile: Dockerfile.web
+      dockerfile: Dockerfile.frontend
       args:
         - NODE_OPTIONS=--max-old-space-size=4096
     container_name: sqmusic_web
+    ports:
+      - "8096:80"
     networks:
       - sq-app-network
-    expose:
-      - "80"
+    depends_on:
+      - sqmusic_main
+
 
   mysql:
     image: mysql:5.7
@@ -45,23 +49,12 @@ services:
       - "3306:3306"
     networks:
       - sq-app-network
-
-  nginx:
-    image: nginx:alpine
-    container_name: sqmusic_nginx
-    ports:
-      - "8096:80"
-    volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf
-    depends_on:
-      - backend
-      - frontend
-    networks:
-      - sq-app-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 networks:
   sq-app-network:
     driver: bridge
-
-volumes:
-  mysql_data:

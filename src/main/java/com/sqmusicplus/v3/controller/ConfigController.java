@@ -70,7 +70,7 @@ public class ConfigController {
             return AjaxResult.error("请先设置登录用户");
         }
         if (username.equals(dbname) && password.equals(dbpwd)) {
-            StpUtil.login(9527, SaLoginConfig.setExtra("device", device));
+            StpUtil.login(9527, SaLoginConfig.setExtra("device", device).setIsLastingCookie(false));
             SaTokenInfo tokenInfo = StpUtil.getTokenInfo();
             return AjaxResult.success(tokenInfo);
         }else{
