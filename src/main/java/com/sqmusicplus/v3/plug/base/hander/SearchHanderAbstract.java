@@ -22,6 +22,7 @@ import com.sqmusicplus.v3.utils.DownloadUtils;
 import com.sqmusicplus.v3.utils.FileUtils;
 import com.sqmusicplus.v3.utils.MusicUtils;
 import com.sqmusicplus.v3.utils.StringUtils;
+import com.sqmusicplus.v3.utils.SafeFileUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -101,8 +102,16 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
                 throw new RuntimeException(downloadInfo.getDownloadMusicname() + "(未获取到播放链接)下载失败:" + downloadUrlResult.getErrorMsg());
             }
 
-            DownloadUtils.download(downloadUrlResult.getUrl(), type, onSuccess ->
+            DownloadUtils.download(downloadUrlResult.getUrl(), type, onProcess->{
+                log.debug("歌曲：{} 进度：{} , byte信息：{}/{}",music.getMusicName(),onProcess.getProgress(),onProcess.getBytesRead(),onProcess.getTotalBytes());
+            },onSuccess ->
             {
+                log.debug("歌曲：{} 文件下载完成处理后续步骤",music.getMusicName());
+            }, onFailure -> {
+                onFailure.printStackTrace();
+                log.debug("下载失败(文件写入异常){}", music.getMusicName());
+                throw new RuntimeException("下载失败:" + music.getMusicName());
+            },onComplete -> {
                 Artists artists = searchHander.queryArtistById(baseArtistsID.get(0));
                 String getSearheads = "";
                 try {
@@ -118,7 +127,15 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
 
                 if (Artistsfile == null || (!Artistsfile.exists() && !isAudioBook)) {
                     try {
-                        DownloadUtils.download(downloadurl, downliadpath, onArtistsPhoto -> {
+                        DownloadUtils.download(downloadurl, downliadpath,onProcess->{
+                            log.debug("歌曲歌手图片：{} 进度：{} , byte信息：{}/{}",music.getMusicName(),onProcess.getProgress(),onProcess.getBytesRead(),onProcess.getTotalBytes());
+                        },onSuccess ->
+                        {
+                            log.debug("歌曲歌手图片：{} 文件下载完成处理后续步骤",music.getMusicName());
+                        },onFailure -> {
+                            onFailure.printStackTrace();
+                            log.debug("歌曲歌手图片下载失败：{}", music.getMusicName());
+                        }, onArtistsPhoto -> {
                             try {
                                 String suffix = FileTypeUtil.getType(onArtistsPhoto);
                                 FileUtil.copy(onArtistsPhoto, new File(downliadpath + File.separator + "cover." + suffix), false);
@@ -126,22 +143,24 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
                                 //取出文件名后缀
                                 FileUtil.copy(onArtistsPhoto, new File(downliadpath + File.separator + "folder." + suffix), true);
                             } catch (Exception e) {
-                                FileUtil.del(onArtistsPhoto);
+                                SafeFileUtil.safeDelete(onArtistsPhoto);
                             } finally {
                                 try {
                                     File parentFile = onArtistsPhoto.getParentFile();
-                                    FileUtil.del(onArtistsPhoto);
+                                    SafeFileUtil.safeDelete(onArtistsPhoto);
                                     boolean dirEmpty = FileUtil.isDirEmpty(parentFile);
                                     if (dirEmpty) {
-                                        FileUtil.del(parentFile);
+                                        SafeFileUtil.safeDelete(parentFile);
                                     }
 
                                 } catch (IORuntimeException ignored) {
+                                    ignored.printStackTrace();
                                 }
                             }
                             artists.setMusicArtistsPhoto("cover");
                         });
-                    } catch (Exception ignored) {
+                    } catch (Exception e) {
+                        e.printStackTrace();
                     }
                 }
                 //专辑图片
@@ -163,7 +182,15 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
                 //专辑图片下载与标签写入
                 if (albumfile == null || (!albumfile.exists() && downloadalubimage)) {
                     try {
-                        DownloadUtils.download(albumImg, imagePath, onAlbumImg -> {
+                        DownloadUtils.download(albumImg, imagePath, onProcess->{
+                            log.debug("歌曲专辑图片：{} 进度：{} , byte信息：{}/{}",music.getMusicName(),onProcess.getProgress(),onProcess.getBytesRead(),onProcess.getTotalBytes());
+                        },onSuccess ->
+                        {
+                            log.debug("歌曲专辑图片：{} 文件下载完成处理后续步骤",music.getMusicName());
+                        },onFailure -> {
+                            onFailure.printStackTrace();
+                            log.debug("歌曲专辑图片下载失败：{}", music.getMusicName());
+                        },onAlbumImg -> {
                             File cover = null;
                             try {
                                 String suffix = FileTypeUtil.getType(onAlbumImg);
@@ -173,30 +200,29 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
                                     FileUtil.copyFile(cover, Artistsfile);
                                 }
                             } catch (Exception e) {
-                                FileUtil.del(onAlbumImg);
+                                SafeFileUtil.safeDelete(onAlbumImg);
                             } finally {
                                 try {
                                     File parentFile = onAlbumImg.getParentFile();
                                     boolean dirEmpty = FileUtil.isDirEmpty(parentFile);
                                     if (dirEmpty) {
-                                        FileUtil.del(parentFile);
+                                        SafeFileUtil.safeDelete(parentFile);
                                     }
                                 } catch (IORuntimeException ignored) {
 
                                 }
                             }
                             album.setAlbumImg("cover");
-                            extracted(music, onSuccess, onAlbumImg, downloadInfo);
+                            extracted(music, onComplete, onAlbumImg, downloadInfo);
                         });
                     } catch (Exception e) {
-                        extracted(music, onSuccess, albumfile, downloadInfo);
+                        e.printStackTrace();
+                        log.debug("下载专辑封面失败：{}", downloadInfo.getDownloadMusicname());
+                        extracted(music, onComplete, albumfile, downloadInfo);
                     }
                 } else {
-                    extracted(music, onSuccess, albumfile, downloadInfo);
+                    extracted(music, onComplete, albumfile, downloadInfo);
                 }
-            }, onFailure -> {
-                log.debug("下载失败(文件写入异常){}", music.getMusicName());
-                throw new RuntimeException("下载失败:" + music.getMusicName());
             });
 
         } catch (Exception e) {

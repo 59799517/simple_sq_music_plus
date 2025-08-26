@@ -11,10 +11,12 @@ package com.sqmusicplus.v3.download.vo;
 public class DownloadProgress {
     private long bytesRead;
     private long totalBytes;
+    private int progress;
 
-    public DownloadProgress(long bytesRead, long totalBytes) {
+    public DownloadProgress(long bytesRead, long totalBytes,int progress) {
         this.bytesRead = bytesRead;
         this.totalBytes = totalBytes;
+        this.progress = progress;
     }
 
     public long getBytesRead() {
@@ -26,6 +28,9 @@ public class DownloadProgress {
     }
 
     public int getProgress() {
-        return totalBytes == 0 ? 0 : (int) ((bytesRead * 100) / totalBytes);
+        return progress;
     }
+    //    public int getProgress() {
+//        return totalBytes == 0 ? 0 : (int) ((bytesRead * 100) / totalBytes);
+//    }
 }

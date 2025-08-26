@@ -83,6 +83,11 @@ public class DownloadExcute {
                                 record.setDownloadMsg(e.getMessage());
                                 downloadInfoService.updateById(record);
                                 return;
+                            }catch (Exception e){
+                                e.printStackTrace();
+                                record.setDownloadStatus(DownloadStatus.error.getValue());
+                                record.setDownloadMsg(e.getMessage());
+                                downloadInfoService.updateById(record);
                             }
                         }else{
                             try {
@@ -93,6 +98,11 @@ public class DownloadExcute {
                                 record.setDownloadMsg(e.getMessage());
                                 downloadInfoService.updateById(record);
                                 return;
+                            }catch (Exception e){
+                                e.printStackTrace();
+                                record.setDownloadStatus(DownloadStatus.error.getValue());
+                                record.setDownloadMsg(e.getMessage());
+                                downloadInfoService.updateById(record);
                             }
                         }
                         record.setDownloadStatus(DownloadStatus.success.getValue());

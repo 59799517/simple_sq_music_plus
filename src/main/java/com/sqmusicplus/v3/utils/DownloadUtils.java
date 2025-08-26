@@ -43,62 +43,72 @@ public class DownloadUtils {
        File file = new File(s);
        download(url, file,null, onProcess, onSuccess, null,null);
     }
+    public static void download(String url, File  file, Consumer<DownloadProgress> onProcess, Consumer<File> onSuccess,Consumer<Exception> onFailure,Consumer<File> onComplete) {
+        download(url, file,null, onProcess, onSuccess, onFailure,onComplete);
+    }
+    public static void download(String url, String  file, Consumer<DownloadProgress> onProcess, Consumer<File> onSuccess,Consumer<Exception> onFailure,Consumer<File> onComplete) {
+        File file1 = new File(file);
+        download(url, file1,null, onProcess, onSuccess, onFailure,onComplete);
+    }
 
     public static void download(String url ,File file,Consumer<File> onSuccess,Consumer<Exception> onFailure){
+        download(url,file,null,null,onSuccess,onFailure,null);
+    }
+    public static void download(String url ,String path,Consumer<File> onSuccess,Consumer<Exception> onFailure){
+        File file = new File(path);
         download(url,file,null,null,onSuccess,onFailure,null);
     }
     public static void download(String url ,File file,HashMap<String,String> headers,Consumer<File> onSuccess,Consumer<Exception> onFailure){
         download(url,file,headers,null,onSuccess,onFailure,null);
     }
-    public static void download(String url ,File file,Consumer<File> onSuccess,Consumer<Exception> onFailure,Consumer<String> onComplete){
+    public static void download(String url ,File file,Consumer<File> onSuccess,Consumer<Exception> onFailure,Consumer<File> onComplete){
         download(url,file,null,null,onSuccess,onFailure,onComplete);
     }
-    public static void download(String url , File file, HashMap<String,String> headers, Consumer<File> onSuccess, Consumer<Exception> onFailure, Consumer<String> onComplete){
+    public static void download(String url , File file, HashMap<String,String> headers, Consumer<File> onSuccess, Consumer<Exception> onFailure, Consumer<File> onComplete){
         download(url,file,headers,null,onSuccess,onFailure,onComplete);
     }
 
+
     /**
-     * 下载文件
-     *
-     * @param url       下载地址
-     * @param target      保存的文件 或者文件夹
-     * @param headers   请求头（可为 null）
-     * @param onProcess 下载进度回调
+     * @param url 下载连接
+     * @param target 储存地址（无文件信息回自动创建）
+     * @param headers url头文件信息
+     * @param onProcess 进度回调
      * @param onSuccess 下载成功回调
      * @param onFailure 下载失败回调
-     * @param onComplete 下载完成回调（返回执行信息，如 "completed"）
+     * @param onComplete 下载完成回调
      */
-    public static void download(
-            String url,
-            File target,
-            HashMap<String, String> headers,
-            Consumer<DownloadProgress> onProcess,
-            Consumer<File> onSuccess,
-            Consumer<Exception> onFailure,
-            Consumer<String> onComplete) {
+    public static void download( String url,
+                          File target,
+                          HashMap<String, String> headers,
+                          Consumer<DownloadProgress> onProcess,
+                          Consumer<File> onSuccess,
+                          Consumer<Exception> onFailure,
+                          Consumer<File> onComplete) {
+                Request.Builder builder = new Request.Builder()
+                        .url(url)
+                        .addHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36");
 
-        if(okHttpClient==null){
-            okHttpClient = getOkHttpClient();
-        }
-
-        Request.Builder builder = new Request.Builder()
-                .url(url)
-                .addHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36");
-
-        if (headers != null) {
-            headers.put("Accept", "application/xml;version=1");
-            headers.forEach(builder::addHeader);
-        } else {
-            builder.addHeader("Accept", "application/xml;version=1");
-        }
-
-        Request request = builder.build();
-
-        new Thread(() -> {
-            try (Response response = okHttpClient.newCall(request).execute()) {
-                if (!response.isSuccessful()) {
-                    throw new IOException("Unexpected code " + response);
+                if (headers != null) {
+                    headers.put("Accept", "application/xml;version=1");
+                    headers.forEach(builder::addHeader);
+                } else {
+                    builder.addHeader("Accept", "application/xml;version=1");
                 }
+
+                Request request = builder.build();
+    if (okHttpClient== null){
+        okHttpClient = getOkHttpClient();
+    }
+
+        okHttpClient.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                // 下载失败
+                onFailure.accept(e);
+            }
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
 
                 ResponseBody body = response.body();
                 if (body == null) {
@@ -110,53 +120,63 @@ public class DownloadUtils {
                 if (target.isDirectory()) {
                     String fileName = getHeaderFileName(response); // 从 URL 提取文件名
                     file = new File(target, fileName);
+                    target.mkdirs();
                 } else {
                     file = target;
+                    file.getParentFile().mkdirs();
                 }
 
 
-                long totalBytesRead = 0;
-                long contentLength = body.contentLength();
+                InputStream is = null;
+                byte[] buf = new byte[2048];
+                int len = 0;
+                FileOutputStream fos = null;
 
-                try (InputStream is = body.byteStream();
-                     OutputStream os = new FileOutputStream(file)) {
-
-                    byte[] buffer = new byte[8192];
-                    int bytesRead;
-
-                    while ((bytesRead = is.read(buffer)) != -1) {
-                        os.write(buffer, 0, bytesRead);
-                        totalBytesRead += bytesRead;
-
-                        if (onProcess != null) {
-                            DownloadProgress progress = new DownloadProgress(totalBytesRead, contentLength);
-                            onProcess.accept(progress);
-                        }
+                try {
+                    is = response.body().byteStream();
+                    long total = response.body().contentLength();
+                    fos = new FileOutputStream(file);
+                    long sum = 0;
+                    while ((len = is.read(buf)) != -1) {
+                        fos.write(buf, 0, len);
+                        sum += len;
+                        int progress = (int) (sum * 1.0f / total * 100);
+                        // 下载中
+                        onProcess.accept(new DownloadProgress(sum, total, progress));
                     }
-
-                    os.flush();
-
-                    if (onSuccess != null) {
-                        onSuccess.accept(file);
-                    }
-
-                } catch (IOException e) {
-                    if (onFailure != null) {
-                        onFailure.accept(e);
-                    }
-                }
-
-            } catch (Exception e) {
-                if (onFailure != null) {
+                    fos.flush();
+                    // 下载完成
+                    onSuccess.accept(file);
+                } catch (Exception e) {
                     onFailure.accept(e);
-                }
-            } finally {
-                if (onComplete != null) {
-                    onComplete.accept("Download completed");
+                } finally {
+                    try {
+                        if (is != null)
+                            is.close();
+                    } catch (IOException e) {
+                    }
+                    try {
+                        if (fos != null)
+                            fos.close();
+                    } catch (IOException e) {
+                    }
+                    onComplete.accept(file);
                 }
             }
-        }).start();
+        });
     }
+
+
+
+
+
+
+
+
+
+
+
+
 
     public static void download(String url, String path, Consumer<File> onSuccess) {
         download(url,path,null,null,onSuccess);
@@ -183,7 +203,6 @@ public class DownloadUtils {
             return true;
         }
     };
-
 
 
 
@@ -226,6 +245,9 @@ public class DownloadUtils {
             }
             OutputStream os = new FileOutputStream(file);
             os.write(inputStream.readAllBytes());
+            os.flush();
+            // 确保文件完全写入磁盘
+            ((FileOutputStream) os).getFD().sync();
             os.close();
             result = true;
         }catch (IOException e)
@@ -318,8 +340,40 @@ public class DownloadUtils {
     private static String getHeaderFileName(Response response) {
         String dispositionHeader = response.header("Content-Disposition");
         if (!TextUtils.isEmpty(dispositionHeader)) {
-            dispositionHeader.replace("attachment;filename=", "");
-            dispositionHeader.replace("filename*=utf-8", "");
+            // 处理 filename*=utf-8''encoded_filename 格式
+            if (dispositionHeader.contains("filename*=")) {
+                String[] parts = dispositionHeader.split("filename\\*=");
+                if (parts.length > 1) {
+                    String encodedFilename = parts[1];
+                    // 移除可能的引号
+                    encodedFilename = encodedFilename.replace("\"", "");
+                    // 处理 UTF-8'' 格式
+                    if (encodedFilename.contains("UTF-8''")) {
+                        String[] utf8Parts = encodedFilename.split("UTF-8''");
+                        if (utf8Parts.length > 1) {
+                            try {
+                                return java.net.URLDecoder.decode(utf8Parts[1], "UTF-8");
+                            } catch (Exception e) {
+                                return utf8Parts[1];
+                            }
+                        }
+                    }
+                    return encodedFilename;
+                }
+            }
+            // 处理普通的 filename= 格式
+            else if (dispositionHeader.contains("filename=")) {
+                String[] parts = dispositionHeader.split("filename=");
+                if (parts.length > 1) {
+                    String filename = parts[1];
+                    // 移除可能的引号
+                    filename = filename.replace("\"", "");
+                    return filename;
+                }
+            }
+            // 原有逻辑作为备选方案
+            dispositionHeader = dispositionHeader.replace("attachment;filename=", "");
+            dispositionHeader = dispositionHeader.replace("filename*=utf-8", "");
             String[] strings = dispositionHeader.split("; ");
             if (strings.length > 1) {
                 dispositionHeader = strings[1].replace("filename=", "");
@@ -328,7 +382,73 @@ public class DownloadUtils {
             }
             return "";
         }
-        return "";
+        
+        // 如果没有Content-Disposition头，则根据Content-Type生成随机文件名
+        String contentType = response.header("Content-Type");
+        return generateRandomFileName(contentType);
+    }
+
+    /**
+     * 根据Content-Type生成随机文件名
+     * @param contentType Content-Type头
+     * @return 随机文件名
+     */
+    private static String generateRandomFileName(String contentType) {
+        String extension = getFileExtensionFromContentType(contentType);
+        String fileName = "file_" + System.currentTimeMillis() + "_" + (int)(Math.random() * 10000);
+        if (!extension.isEmpty()) {
+            fileName += "." + extension;
+        }
+        return fileName;
+    }
+
+    /**
+     * 根据Content-Type获取文件扩展名
+     * @param contentType Content-Type头
+     * @return 文件扩展名
+     */
+    private static String getFileExtensionFromContentType(String contentType) {
+        if (TextUtils.isEmpty(contentType)) {
+            return "";
+        }
+        
+        switch (contentType.toLowerCase()) {
+            case "image/jpeg":
+                return "jpg";
+            case "image/png":
+                return "png";
+            case "image/gif":
+                return "gif";
+            case "image/webp":
+                return "webp";
+            case "audio/mpeg":
+                return "mp3";
+            case "audio/flac":
+                return "flac";
+            case "audio/wav":
+                return "wav";
+            case "audio/mp4":
+                return "m4a";
+            case "video/mp4":
+                return "mp4";
+            case "text/plain":
+                return "txt";
+            case "text/html":
+                return "html";
+            case "application/json":
+                return "json";
+            case "application/pdf":
+                return "pdf";
+            case "application/zip":
+                return "zip";
+            default:
+                // 尝试从content-type中提取扩展名
+                if (contentType.contains("/")) {
+                    String[] parts = contentType.split("/");
+                    return parts[1].split(";")[0]; // 处理如 "text/html; charset=utf-8" 的情况
+                }
+                return "";
+        }
     }
 
     /**

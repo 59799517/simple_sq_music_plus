@@ -148,7 +148,7 @@ public class NKwSearchHander extends SearchHanderAbstract {
                 new PlugSearchArtistResult().setArtistName(e.getArtist())
                 .setArtistid(e.getArtistid())
                 .setPlugName(getPlugName())
-                .setPic(e.getHtsPicpath().replaceAll("/240", "/500"))
+                .setPic(e.getHtsPicpath().replaceAll("/120", "/500"))
                         .setArtistName(e.getArtist())
                 .setDataInfo(JSONObject.parseObject(JSONObject.toJSONString(e)))
                  .setTotal(e.getAlbumnum()))
@@ -248,7 +248,7 @@ public class NKwSearchHander extends SearchHanderAbstract {
         Artists artists = new Artists();
         artists.setMusicArtistsName(artisInfoResult.getName())
                 .setMusicArtistsAlias(artisInfoResult.getAartist())
-                .setMusicArtistsPhoto(artisInfoResult.getPic().replaceAll("/240", "/500"))
+                .setMusicArtistsPhoto(artisInfoResult.getPic().replaceAll("/120", "/500"))
                 .setMusicArtistsDescribe(artisInfoResult.getDesc())
                 .setDataInfo(JSONObject.parseObject(JSONObject.toJSONString(artisInfoResult)));
         return artists;

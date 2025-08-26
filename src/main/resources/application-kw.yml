@@ -13,7 +13,7 @@ kw:
   #   下载
   downloadurl: http://nmobi.kuwo.cn/mobi.s?f=kuwo&source=jiakong&q=
   #返回json的下载链接
-  downloadurl2: http://mobi.kuwo.cn/mobi.s?f=web&source=jiakong&type=convert_url_with_sign&rid=#{musicId}&br=#{brvalue}
+  downloadurl2: https://mobi.kuwo.cn/mobi.s?f=web&user=0&source=kwplayer_ar_5.0.0.0_B_jiakong_vh.apk&type=convert_url_with_sign&rid=#{musicId}&br=#{brvalue}
   # PC端歌词获取（加密）
   LyrIcUrl: http://newlyric.kuwo.cn/newlyric.lrc?
   #  歌曲详情以及歌词
@@ -42,3 +42,7 @@ kw:
   #搜索提示
   SearchTip: https://kuwo.cn/openapi/v1/www/search/searchKey?key=#{SearchTip}&httpsStatus=1
 
+#或者 user desc加密
+#  下载链接：http://mobi.kuwo.cn/mobi.s?f=web&user=0611d9b202ca0820&android_id=0611d9b202ca0820&prod=kwplayer_ar_11.3.0.0&corp=kuwo&newver=3&vipver=11.3.0.0&source=kwwear_ar_2.2.3_Fwatch.apk&p2p=1&q36=8899378ed08282acc723cdbc100010615202&approval=false&loginUid=0&loginSid=0&appuid=2788274549&allpay=0&notrace=0&oaid=3d3e1ab6-b5a1-4767-be7c-55fe63786812&type=convert_url_with_sign&br=4000kflac&format=flac&sig=0&rid=6187932&priority=bitrate&network=4G&localUid=-1&mode=audition&from=PC&token=bad205aa9e8a50181d948b1cafc16091&bc_token=1462dab652d0a688811e13bddf48596a&timestamp=1755249729&uid=2788274549
+
+# http://nmobi.kuwo.cn/mobi.s?f=web&source=kwwear_ar_2.2.3_Fwatch.apk&type=convert_url_with_sign&rid=6187932&br=4000kflac&from=PC

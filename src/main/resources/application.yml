@@ -1,8 +1,8 @@
-#DB_IP: 100.122.250.55
-#DB_PORT: 7006
-#DB_NAME: sqmusicv3
-#DB_USERNAME: root
-#DB_PASSWORD: 11111
+DB_IP: 100.122.250.55
+DB_PORT: 7006
+DB_NAME: sqmusicv3
+DB_USERNAME: root
+DB_PASSWORD: 11111
 server:
   port: 8099
 spring:
@@ -70,6 +70,7 @@ logging:
   level:
     com.sqmusicplus: info
     org.springframework: warn
+    org.jaudiotagger: warn
 sa-token:
   # token 名称 (同时也是cookie名称)
   token-name: sqmusic
