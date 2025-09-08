@@ -20,9 +20,14 @@ import com.sqmusicplus.utils.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.util.Base64Utils;
 import org.springframework.web.bind.annotation.*;
 
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -307,7 +312,51 @@ public class SetController {
             }
         return AjaxResult.error("登录信息失效请重新扫码登录！");
     }
+    /**
+     * 导出歌单设置
+     */
+    @GetMapping("/exportSongList")
+    public ResponseEntity<byte[]> exportSongList(){
+        List<SqConfig> configKey = configService.list(new QueryWrapper<SqConfig>().like("config_key", "plug.qqvip.songlistid"));
+        JSONArray resultList = new JSONArray();
+        for (SqConfig sqConfig : configKey) {
+            String configValue = sqConfig.getConfigValue();
+            if (StringUtils.isNotBlank(configValue)){
+                JSONObject data = new JSONObject();
+                String[] split = configValue.split(",");
+                String key = sqConfig.getConfigKey();
+                String[] split1 = key.split("\\.");
+                String songlistid = split1[split1.length - 1];
+                String configName = sqConfig.getConfigName();
+                String plugTpye = split1[split1.length - 3];
+                data.put("plugTpye", plugTpye);
 
+                // 查找第一个左括号和右括号的位置
+                int start = configName.indexOf("(");
+                int end = configName.indexOf(")");
 
-
+                // 提取括号内的内容
+                if (start != -1 && end != -1 && start < end) {
+                    String result = configName.substring(start + 1, end);
+//                    System.out.println("原始字符串: " + configName);
+//                    System.out.println("提取结果: " + result);
+                    data.put("songlistname", result);
+                } else {
+//                    System.out.println("未找到括号内容");
+                }
+                data.put("songlistid", songlistid);
+                data.put("songlistids", split);
+                resultList.add(data);
+            }
+        }
+        // 转换为JSON字符串并转换为字节数组
+        String jsonString = resultList.toJSONString();
+        byte[] bytes = jsonString.getBytes(StandardCharsets.UTF_8);
+        // 设置响应头
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setContentDispositionFormData("attachment", "songListConfig.json");
+        headers.setContentLength(bytes.length);
+        return new ResponseEntity<>(bytes, headers, HttpStatus.OK);
+    }
 }
