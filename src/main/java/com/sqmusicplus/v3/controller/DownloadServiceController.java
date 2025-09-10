@@ -155,9 +155,11 @@ public class DownloadServiceController {
     }
 
 
-
-
-
+    /**
+     * 下载解析的URL歌曲（替代解析方法）
+     * @param musicList
+     * @return
+     */
     @SaCheckLogin
     @PostMapping("/downloadParserUrlResult")
     public AjaxResult downloadParserUrlResult(@RequestBody List<Music> musicList) {
@@ -174,7 +176,11 @@ public class DownloadServiceController {
         return AjaxResult.error("下载失败");
     }
 
-
+    /**
+     * 下载解析的文本歌曲(替代解析方法)
+     * @param param
+     * @return
+     */
     @SaCheckLogin
     @PostMapping("/downloadParserText")
     public AjaxResult downloadParserText(@RequestBody ParserTextParam param) {
@@ -212,7 +218,11 @@ public class DownloadServiceController {
         return AjaxResult.success("开始解析并下载，稍后在下载中查看！");
     }
 
-
+    /**
+     * 批量下载解析的文本歌曲 替代解析方法
+     * @param parserEntities
+     * @return
+     */
     @SaCheckLogin
     @PostMapping("/downloadParserTextResult")
     public AjaxResult downloadParserTextResult(@RequestBody List<ParserEntity> parserEntities) {

@@ -35,6 +35,12 @@ public class ParserController {
     private UrlMusicPlayListParser urlMusicPlayListParser;
     @Autowired
     private TextMusicPlayListParser textMusicPlayListParser;
+
+    /**
+     * 解析URL歌曲（弃用）
+     * @param downlaodParserUrl
+     * @return
+     */
     @SaCheckLogin
     @PostMapping("/parserUrl")
     public AjaxResult parserUrl(DownlaodParserUrl  downlaodParserUrl) {
@@ -51,7 +57,11 @@ public class ParserController {
         }
     }
 
-
+    /**
+     * 下载解析好的歌曲信息（弃用）
+     * @param downlaodParserUrl
+     * @return
+     */
     @SaCheckLogin
     @PostMapping("/download/parserUrl")
     public AjaxResult downlaodParserUrl(DownlaodParserUrl  downlaodParserUrl) {
@@ -69,7 +79,11 @@ public class ParserController {
         }
     }
 
-
+    /**
+     * 解析文本歌曲（弃用）
+     * @param param
+     * @return
+     */
 
     @SaCheckLogin
     @PostMapping("/parserText")

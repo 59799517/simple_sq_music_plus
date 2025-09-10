@@ -28,7 +28,11 @@ public class TaskController {
     @Autowired
     private DownloadInfoService downloadInfoService;
 
-
+    /**
+     * 获取任务列表
+     * @param downloadInfo
+     * @return
+     */
     @PostMapping("/list")
     public AjaxResult list(@RequestBody DownloadInfoSearch downloadInfo){
         LambdaQueryWrapper<DownloadInfo> downloadInfoLambdaQueryWrapper = new LambdaQueryWrapper<>();

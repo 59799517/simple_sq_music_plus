@@ -4,10 +4,15 @@ import cn.dev33.satoken.annotation.SaCheckLogin;
 import cn.dev33.satoken.stp.SaLoginConfig;
 import cn.dev33.satoken.stp.SaTokenInfo;
 import cn.dev33.satoken.stp.StpUtil;
+import cn.hutool.core.collection.ListUtil;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.sqmusicplus.v3.base.entity.SqConfig;
+import com.sqmusicplus.v3.base.entity.SqSync;
 import com.sqmusicplus.v3.base.enums.DbBooleanConvert;
 import com.sqmusicplus.v3.base.enums.SetConfigEnum;
+import com.sqmusicplus.v3.base.service.SqSyncService;
 import com.sqmusicplus.v3.config.AjaxResult;
 import com.sqmusicplus.v3.config.SqConfigCache;
 import com.sqmusicplus.v3.plug.kg.hander.KGHander;
@@ -18,12 +23,20 @@ import com.sqmusicplus.v3.plug.qq.hander.QQHander;
 import com.sqmusicplus.v3.plug.qqvip.QQvipHander;
 import com.sqmusicplus.v3.utils.StringUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.util.Base64Utils;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * @Classname ConfigController
@@ -46,7 +59,8 @@ public class ConfigController {
     private KGHander kGHander;
     @Value("${version}")
     private String version;
-
+    @Autowired
+    private SqSyncService syncService;
 
     /**
      * 登录
@@ -251,6 +265,57 @@ public class ConfigController {
             }
         }
     }
+
+
+    /**
+     * 导入V2.x版本歌单配置
+     * 上传json文件 文件名称为file
+     *需要校验数据后缀是否是json
+     *
+     *
+     */
+    @PostMapping("/importSongList")
+    public AjaxResult importSongList(@RequestParam("file") MultipartFile file) {
+//       获取文件中的内容
+        String json = null;
+        try {
+            InputStream inputStream = file.getInputStream();
+            json = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
+            JSONArray array = JSONArray.parseArray(json);
+            ArrayList<SqSync> sqSyncs = new ArrayList<>();
+
+            log.info("=======本次共计导入歌单设置：{}条===========", array.size());
+            for (int i = 0; i < array.size(); i++) {
+                JSONObject jsonObject = array.getJSONObject(i);
+                String songlistname = jsonObject.getString("songlistname");
+                String plugTpye = jsonObject.getString("plugTpye");
+                String songlistid = jsonObject.getString("songlistid");
+                JSONArray jsonArray = jsonObject.getJSONArray("songlistids");
+                log.info("导入已下载歌单类型{}名称：{}({})歌曲个数：{}",plugTpye,songlistname,songlistid, jsonArray.size());
+                for (int i1 = 0; i1 < jsonArray.size(); i1++) {
+                    String string = jsonArray.getString(i1);
+                    SqSync sqSync = new SqSync();
+                    sqSync.setPlugName(plugTpye);
+                    sqSync.setPlayListName(songlistname);
+                    sqSync.setPlayListId(songlistid);
+                    sqSync.setMusicId(string);
+                    sqSyncs.add(sqSync);
+                }
+
+            }
+            //sqSyncs 每300条分割插入数据库
+            for (List<SqSync> syncs : ListUtil.partition(sqSyncs, 300)) {
+                syncService.saveBatch(syncs);
+            }
+        } catch (IOException e) {
+//            throw new RuntimeException(e);
+            return AjaxResult.error("导入失败");
+        }
+        log.info("==========本次歌单导入完成==============");
+        return AjaxResult.success("导入成功");
+
+    }
+
 
 
 

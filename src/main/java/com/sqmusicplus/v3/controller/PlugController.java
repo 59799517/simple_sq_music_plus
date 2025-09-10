@@ -108,6 +108,11 @@ public class PlugController {
         }
         return AjaxResult.error("酷狗插件未开启");
     }
+
+    /**
+     * 酷狗签到
+     * @return
+     */
     @SaCheckLogin
     @GetMapping("/kg/signIn")
     public AjaxResult  kgSignIn(){
