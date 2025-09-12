@@ -4,6 +4,7 @@ import cn.hutool.core.codec.Base64;
 import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.util.ZipUtil;
 import cn.hutool.http.HttpRequest;
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.sqmusicplus.v3.base.entity.DownloadInfo;
@@ -233,6 +234,7 @@ public class NKwSearchHander extends SearchHanderAbstract {
                 .setMusicName(songName)
                 .setMusicDuration(Long.parseLong(duration))
                 .setAlbumId(albumId)
+                .setDataInfo(JSON.parseObject(JSONObject.toJSONString(songinfo)))
                 .setArtistsIds(ListUtil.of(artistId));
     }
 

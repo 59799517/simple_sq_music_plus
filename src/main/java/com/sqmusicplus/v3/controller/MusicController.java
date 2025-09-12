@@ -105,8 +105,8 @@ public class MusicController {
      *获取歌词
      */
     @SaCheckLogin
-    @GetMapping("/getLyric")
-    public AjaxResult getLyric(SearchMusicByIdParam param){
+    @PostMapping("/getLyric")
+    public AjaxResult getLyric(@RequestBody SearchMusicByIdParam param){
         SearchHanderAbstract plugHander = MusicUtils.getPlugHander(param.getPlugName(),searchHanderAbstractList);
         String lyric = plugHander.queryLyric(param.getId());
         return AjaxResult.success(lyric);
