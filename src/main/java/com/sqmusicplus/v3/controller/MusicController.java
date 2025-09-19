@@ -88,6 +88,21 @@ public class MusicController {
         return AjaxResult.success(plugSearchArtistResultPlugSearchResult);
     }
 
+
+    /**
+     * 根据歌手ID查询歌手全部专辑
+     */
+    @SaCheckLogin
+    @GetMapping("/artistAlbumById")
+    public AjaxResult ArtistAlbumById(SearchMusicByIdParam param){
+        SearchHanderAbstract plugHander = MusicUtils.getPlugHander(param.getPlugName(),searchHanderAbstractList);
+        Artists artists = plugHander.queryArtistById(param.getId());
+        List<Album> albumsByArtist = plugHander.getAlbumsByArtist(param.getId());
+        artists.setAlbums(albumsByArtist);
+        return AjaxResult.success(artists);
+    }
+
+
     /**
      * 搜索专辑
      * @param param 搜索条件
@@ -101,6 +116,19 @@ public class MusicController {
         PlugSearchResult<PlugSearchAlbumResult> plugSearchAlbumResultPlugSearchResult = plugHander.queryAlbumByName(searchKeyData);
         return AjaxResult.success(plugSearchAlbumResultPlugSearchResult);
     }
+    /**
+     * 获取专辑信息 根据id
+     */
+
+    @SaCheckLogin
+    @GetMapping("/albumInfoById")
+    public AjaxResult albumInfoById(SearchMusicByIdParam param){
+        SearchHanderAbstract plugHander = MusicUtils.getPlugHander(param.getPlugName(),searchHanderAbstractList);
+        Album album = plugHander.queryAlbumById(param.getId());
+        return AjaxResult.success(album);
+    }
+
+
     /**
      *获取歌词
      */

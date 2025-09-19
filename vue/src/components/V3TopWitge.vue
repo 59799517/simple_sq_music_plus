@@ -26,7 +26,12 @@ const activate = (place) => {
         <h2>SqMusic</h2>
         <p>
           <n-gradient-text :size="12" type="success" >
-            &nbsp;{{stconfigInfoStore.version}}
+            &nbsp;前端: {{stconfigInfoStore.version}}
+          </n-gradient-text>
+        </p>
+        <p v-if="stconfigInfoStore.version !== stconfigInfoStore.backendVersion">
+          <n-gradient-text :size="12" type="info" >
+            &nbsp;后端: {{stconfigInfoStore.backendVersion}}
           </n-gradient-text>
         </p>
       </div>

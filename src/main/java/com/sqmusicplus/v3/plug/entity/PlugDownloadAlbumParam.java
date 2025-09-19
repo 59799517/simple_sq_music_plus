@@ -12,7 +12,7 @@ import lombok.Data;
 @Data
 public class PlugDownloadAlbumParam extends PlugSearchAlbumResult{
     /**
-     * 手动选择码率
+     * 手动选择码率（空则自动适配最高音质）
      */
     private Integer bit;
 }

@@ -1,6 +1,7 @@
 package com.sqmusicplus.v3.plug.qq.entity;
 
 import cn.hutool.core.codec.Base64;
+import cn.hutool.core.collection.ListUtil;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.sqmusicplus.v3.plug.entity.Album;
@@ -22,6 +23,7 @@ import lombok.NoArgsConstructor;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 /**
  * @Classname QQSearchEntity
@@ -388,6 +390,28 @@ public class QQSearchEntity {
                 """;
         String format = String.format(msg, albummid);
         return format;
+    }
+
+    /**
+     * 歌手简介
+     */
+    public  String artistsInfoRequestParam(String artistmid) {
+        String msg = """
+                {
+                          	"req": {
+                          		"method": "GetSingerDetail",
+                          		"module": "music.musichallSinger.SingerInfoInter",
+                          		"param": {
+                                      "singer_mids": ["%s"],
+                                       "groups": 1,
+                                       "wikis": 1
+                          		}
+                          	}
+                          }
+                """;
+        String format = String.format(msg, artistmid);
+        return format;
+
     }
 
 
@@ -796,11 +820,39 @@ public class QQSearchEntity {
                 });
 
             }
+            String musicID = e.getJSONObject("songInfo").getString("mid");
             String string = e.getJSONObject("songInfo").getString("name");
             String albumname =  e.getJSONObject("songInfo").getJSONObject("album").getString("name");
+            Long l = e.getJSONObject("songInfo").getLong("interval") * 1000;
             String albumImageconfig = qqConfig.getAlbumImage();
             String url =  albumImageconfig.replaceAll("#\\{pmid}", e.getJSONObject("songInfo").getJSONObject("album").getString("pmid"));
-            Music music = new Music().setMusicName(string).setMusicAlbum(albumname).setMusicArtists(artist).setArtistsIds(artistid).setMusicImage(url).setDataInfo(e);
+            Long flac = e.getJSONObject("songInfo").getJSONObject("file").getLong("size_flac");
+            Long mp3320 = e.getJSONObject("songInfo").getJSONObject("file").getLong("size_320mp3");
+            Long mp3128 = e.getJSONObject("songInfo").getJSONObject("file").getLong("size_128mp3");
+//        String mediaMid = mapper1.getMapper("file").getString("media_mid");
+            ArrayList<PlugBrType> longs = new ArrayList<>();
+            if (flac != null&&flac.longValue()>0){
+                longs.add(PlugBrType.QQVIP_Flac_2000);
+            }
+            if (mp3320 != null&&mp3320.longValue()>0){
+                longs.add(PlugBrType.QQVIP_MP3_320);
+            }
+            if (mp3128 != null&&mp3128.longValue()>0){
+                longs.add(PlugBrType.QQVIP_MP3_128);
+            }
+
+            Music music = new Music()
+                    .setId(musicID)
+                    .setMusicImage(url)
+                    .setMusicAlbum(albumname)
+                    .setMusicArtists(artist)
+                    .setArtistsIds(artistid)
+                    .setMusicName(string)
+                    .setMusicDuration(l)
+                    .setAlbumId(albumid.get())
+                    .setDataInfo(e)
+                    .setPlugName(getPlugName())
+                    .setBits(longs);
             collect.add(music);
         });
 
@@ -815,6 +867,26 @@ public class QQSearchEntity {
                  .setAlbumArtistId(artistid.get(0))
                 .setDataInfo(jsonObject);
     }
+
+    public Artists artistsInfoToArtist(JSONObject jsonObject, QQConfig qqConfig) {
+        JSONObject jsonObject1 = jsonObject.getJSONObject("req").getJSONObject("data");
+        JSONObject jsonObject2 = jsonObject1.getJSONArray("singer_list").getJSONObject(0);
+        JSONObject jsonObject3 = jsonObject2.getJSONObject("basic_info");
+
+        String artistImage = qqConfig.getArtistImage();
+        String pic = artistImage.replaceAll("#\\{pmid}", jsonObject3.getString("singer_mid"));
+
+        return new Artists()
+                .setMusicArtistsName(jsonObject3.getString("name"))
+                .setId(jsonObject3.getString("singer_mid"))
+                .setMusicArtistsPhoto(pic)
+                .setDataInfo(jsonObject);
+
+
+    }
+
+
+
     public  List<Music> albumInfoToAlbumMusic(JSONObject jsonObject, QQConfig qqConfig) {
 
         JSONArray jsonArray = jsonObject.getJSONObject("AlbumSongList").getJSONObject("data").getJSONArray("songList");

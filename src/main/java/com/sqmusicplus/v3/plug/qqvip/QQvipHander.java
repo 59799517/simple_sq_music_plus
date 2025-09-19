@@ -103,8 +103,8 @@ public class QQvipHander extends SearchHanderAbstract {
     }
 
     @Override
-    public List<Album> getAlbumsByArtist(String artistId, Integer pageIndex, Integer pageSize) {
-        return qqHander.getAlbumsByArtist(artistId, pageIndex, pageSize);
+    public List<Album> getAlbumsByArtist(String artistId) {
+        return qqHander.getAlbumsByArtist(artistId);
     }
 
     @Override

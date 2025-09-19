@@ -197,8 +197,22 @@ public class QQHander extends SearchHanderAbstract {
 
     @Override
     public Artists queryArtistById(String artistId) {
-        Artists plugArtistResult = getqqSearchEntity().toPlugArtistResult(artistId, config);
-        return plugArtistResult;
+
+        String searchUrl = config.getSearchUrl();
+        String s = getqqSearchEntity().artistsInfoRequestParam(artistId);
+        String data = OkHttpUtils.builder()
+                .url(searchUrl)
+                .addHeader("Content-Type", "json/application;charset=utf-8")
+                .addHeader("Referer", "https://y.qq.com")
+                .addHeader("User-Agent","QQ%E9%9F%B3%E4%B9%90/73222 CFNetwork/1406.0.3 Darwin/22.4.0")
+                .post(true,s)
+                .sync();
+        JSONObject jsonObject = JSONObject.parseObject(data);
+        Artists artists = getqqSearchEntity().artistsInfoToArtist(jsonObject, config);
+        return artists;
+
+//        Artists plugArtistResult = getqqSearchEntity().toPlugArtistResult(artistId, config);
+//        return plugArtistResult;
 
     }
 
@@ -227,7 +241,7 @@ public class QQHander extends SearchHanderAbstract {
     }
 
     @Override
-    public List<Album> getAlbumsByArtist(String artistId, Integer pageIndex, Integer pageSize) {
+    public List<Album> getAlbumsByArtist(String artistId) {
         String searchUrl = config.getSearchUrl();
         String s = getqqSearchEntity().artistsTransferAlbumParam(artistId);
         String data = OkHttpUtils.builder()

@@ -14,8 +14,8 @@ import com.sqmusicplus.v3.parser.UrlMusicPlayListParser;
 import com.sqmusicplus.v3.plug.base.hander.SearchHanderAbstract;
 import com.sqmusicplus.v3.plug.entity.*;
 import com.sqmusicplus.v3.utils.MusicUtils;
+import com.sqmusicplus.v3.utils.StringUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.tika.utils.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -109,11 +109,14 @@ public class DownloadServiceController {
         if (plugDownloadAlbumParam.getBit()!=null){
             maxBr = PlugBrType.findByPlugNameAndBit(plugDownloadAlbumParam.getPlugName(), plugDownloadAlbumParam.getBit());
         }
+        List<String> artistNameList = null;
         String albumid = plugDownloadAlbumParam.getAlbumid();
-        String[] split = plugDownloadAlbumParam.getArtistName().split("&");
-        List<String> artistNameList = new ArrayList<>();
-        for (String s : split) {
-            artistNameList.add(s.trim());
+        if (StringUtils.isNotBlank(plugDownloadAlbumParam.getArtistName())){
+            String[] split = plugDownloadAlbumParam.getArtistName().split("&");
+            artistNameList= new ArrayList<>();
+            for (String s : split) {
+                artistNameList.add(s.trim());
+            }
         }
         ArrayList<DownloadInfo> downloadInfos = plugHander.downloadAlbum(albumid, maxBr, artistNameList, false, plugDownloadAlbumParam.getAlbumName());
         Boolean add = downloadInfoService.add(downloadInfos);

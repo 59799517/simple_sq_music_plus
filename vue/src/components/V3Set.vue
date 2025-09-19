@@ -1,5 +1,4 @@
 <script setup>
-
 import {
   getAllSet,
   updateConfig,
@@ -8,17 +7,20 @@ import {
   getKgQrCode,
   getKgWxQrCode,
   refreshQQvipCookie,
-  getKgWxQrCodeStatus, getKgQrCodeStatus, kgRefreshToken, kgSign,getQQVipQrCodeStatus
+  getKgWxQrCodeStatus, getKgQrCodeStatus, kgRefreshToken, kgSign,getQQVipQrCodeStatus,getUploadJsonFileUrl
 } from "../utils/api.js"; //引入仓库
 import Cookies from 'js-cookie';
+import { inject } from 'vue';
 
-import { setAuthSending } from "../utils/request.js";
 import userInfoStore from "../stores/user";
 import configInfoStore from "../stores/config";
 import {storeToRefs} from "pinia";
 const stuserInfoStore = userInfoStore();
 const stconfigInfoStore =configInfoStore()
 const { loginDevice,username, token } = storeToRefs(stuserInfoStore); // 响应式
+
+// 注入切换主题方法
+const changetheme = inject("changetheme");
 
 //设置分组
 let configData = ref([]);
@@ -80,9 +82,6 @@ let refreshData= () => {
       window.$message.error("错误信息："+"获取整体设置失败检查服务器是否异常！")
     }
   })
-
-
-
 }
 //刷新数据
 refreshData();
@@ -188,6 +187,11 @@ let clogout=() => {
       window.$message.success("退出成功")
       stuserInfoStore.clearUserInfo()
       stconfigInfoStore.clearData()
+      // 清空cookie
+      console.log("Cookies.get('sqmusic'):"+Cookies.get('sqmusic'))
+      console.log("Cookies.get('token'):"+Cookies.get('token'))
+      Cookies.set('sqmusic', '');
+      Cookies.set('token', '');
       window.location.href="/"
     }else{
       window.$message.error("退出失败："+value.data.msg)
@@ -245,7 +249,7 @@ let fgetKgWxQrCode = ()=>{
 //获得酷狗微信二维码登录状态
 let fgetKgWxQrCodeStatus = ()=>{
   getKgWxQrCodeStatus().then((value)=>{
-    if (value.data.code===200&&value.data.data){
+    if (value.data.code===200&&value.data){
       kgqr.value="";
       window.$message.success("扫码成功")
     }else{
@@ -290,6 +294,23 @@ let fkgSign = ()=>{
   })
 }
 
+let  handleFinish = ({
+                       file,
+                       event
+                     })=>{
+  // console.log("file:"+file.status)
+  // console.log("event:"+JSON.stringify(event))
+  // console.log("file:"+JSON.stringify(file))
+  //
+  if (file.status=='finished'){
+    window.$message.success("配置导入成功!")
+  }else{
+    window.$message.error("配置导入失败!")
+  }
+
+
+
+}
 </script>
 
 <template>
@@ -401,15 +422,29 @@ let fkgSign = ()=>{
       </n-tab-pane>
     </n-tabs>
   </n-card>
-
   <n-card title="登录信息">
-    <div style="display: flex;flex-direction: column">
+    <div style="display: flex;flex-direction: column;width: 100%" >
       <n-p>token：{{token}}</n-p>
       <n-p>username：{{username}}</n-p>
+      <n-button @click="changetheme">切换主题</n-button>
+
+      <div style="width: 100%; display: flex; flex-direction: column;">
+        <n-upload
+            style="width: 100%;"
+            :action=getUploadJsonFileUrl()
+            accept=".json"
+            @finish="handleFinish"
+            :headers="{
+          'sqmusic': token,
+        }"
+        >
+          <n-button style="width: 100%" >导入歌单数据</n-button>
+        </n-upload>
+      </div>
+
       <n-button @click="clogout">退出</n-button>
     </div>
   </n-card>
-
 
 <!--  弹出框-->
   <n-modal
@@ -460,12 +495,16 @@ let fkgSign = ()=>{
           <div style="width: 30px;"></div>
           <n-button @click="closeDialog">取消</n-button>
         </div>
-
       </template>
     </n-card>
   </n-modal>
 </template>
 
-<style scoped>
-
+<style >
+.n-upload-trigger {
+  display: flex !important;
+  box-sizing: border-box !important;
+  opacity: 1 !important;
+  transition: opacity .3s var(--n-bezier) !important;
+}
 </style>
