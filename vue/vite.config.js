@@ -4,10 +4,14 @@ import AutoImport from 'unplugin-auto-import/vite'
 import Components from 'unplugin-vue-components/vite'
 import { NaiveUiResolver } from 'unplugin-vue-components/resolvers'
 import { VitePWA } from 'vite-plugin-pwa'
+import MotionResolver from 'motion-v/resolver'
 
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  define: {
+    __APP_VERSION__: JSON.stringify(process.env.npm_package_version)
+  },
   plugins: [
     vue({
       refTransform: true
@@ -26,7 +30,7 @@ export default defineConfig({
       ]
     }),
     Components({
-      resolvers: [NaiveUiResolver()]
+      resolvers: [NaiveUiResolver(), MotionResolver()]
     }),
     VitePWA({
       manifest: {

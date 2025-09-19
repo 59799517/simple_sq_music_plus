@@ -94,7 +94,7 @@ public class MgHander extends SearchHanderAbstract {
     }
 
     @Override
-    public List<Album> getAlbumsByArtist(String artistId, Integer pageIndex, Integer pageSize) {
+    public List<Album> getAlbumsByArtist(String artistId) {
         return List.of();
     }
 

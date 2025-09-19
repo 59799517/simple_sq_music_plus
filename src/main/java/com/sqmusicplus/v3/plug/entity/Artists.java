@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * <p>
@@ -51,6 +52,10 @@ public class Artists  implements Serializable {
      * 搜索歌手时携带的信息
      */
     private JSONObject dataInfo;
+    /**
+     * 专辑信息搜索可以为空
+     */
+    private List<Album> albums;
 
 
 }

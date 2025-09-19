@@ -106,16 +106,16 @@ public class NKwSearchHander extends SearchHanderAbstract {
                     } catch (Exception ex) {
                        duration = "0";
                     }
-                    String pic = getConfig().getSongCoverUrl() + e.getWebAlbumpicShort();
+                    String pic = (getConfig().getSongCoverUrl() + e.getWebAlbumpicShort()).replaceAll("/120", "/500");
                     if (StringUtils.isBlank(e.getAlbum())){
-                        pic = getConfig().getSearheads() + e.getWebArtistpicShort();
+                        pic = (getConfig().getSearheads() + e.getWebArtistpicShort()).replaceAll("/120", "/500");
                     }
 
                     plugSearchMusicResults.add(
                             new PlugSearchMusicResult().setAlbumName(e.getAlbum())
                                     .setAlbumid(e.getAlbumid())
                                     .setArtistName(ListUtil.of(e.getArtist().split("&")))
-                                    .setArtistids(ListUtil.of(e.getArtistid()))
+                                    .setArtistids(ListUtil.of(e.getAllartistid().split("&")))
                                     .setId(e.getMusicrid().replaceAll("MUSIC_",""))
                                     .setPlugName(getPlugName())
                                     .setDuration(duration)
@@ -250,8 +250,9 @@ public class NKwSearchHander extends SearchHanderAbstract {
         Artists artists = new Artists();
         artists.setMusicArtistsName(artisInfoResult.getName())
                 .setMusicArtistsAlias(artisInfoResult.getAartist())
-                .setMusicArtistsPhoto(artisInfoResult.getPic().replaceAll("/120", "/500"))
+                .setMusicArtistsPhoto((config.getSearheads()+artisInfoResult.getPic()).replaceAll("/120", "/500"))
                 .setMusicArtistsDescribe(artisInfoResult.getDesc())
+                .setId(artistId)
                 .setDataInfo(JSONObject.parseObject(JSONObject.toJSONString(artisInfoResult)));
         return artists;
     }
@@ -265,19 +266,24 @@ public class NKwSearchHander extends SearchHanderAbstract {
         List<AlbumInfoResult.MusiclistDTO> musiclist = albumInfoResult.getMusiclist();
         List<Music> collect = musiclist.stream().map(abslistDTO -> {
             String album = albumInfoResult.getName();
-            String aartist = abslistDTO.getAartist();
+            String aartist = abslistDTO.getArtist();
+            String allartistid = abslistDTO.getAllartistid();
             String url = (config.getSongCoverUrl() + abslistDTO.getWebAlbumpicShort()).replaceAll("/120", "/500");
             String duration = abslistDTO.getDuration();
+            String nMinfo = abslistDTO.getNMinfo();
+            List<PlugBrType> plugBrTypes = NMinfoToPlugBrType(nMinfo);
             return new Music()
                     .setId(abslistDTO.getId())
                     .setMusicImage(url)
                     .setMusicAlbum(album)
                     .setMusicArtists(ListUtil.of(aartist.split("&")))
+                    .setArtistsIds(ListUtil.of(allartistid.split("&")))
                     .setMusicName(abslistDTO.getName())
                     .setMusicDuration(Long.parseLong(duration))
                     .setAlbumId(albumId)
                     .setDataInfo(JSONObject.parseObject(JSONObject.toJSONString(abslistDTO)))
-                    .setArtistsIds(ListUtil.of(abslistDTO.getArtistid()));
+                    .setPlugName(getPlugName())
+                    .setBits(plugBrTypes);
         }).collect(Collectors.toList());
         String alubimage = null;
         try {
@@ -424,7 +430,7 @@ public class NKwSearchHander extends SearchHanderAbstract {
     }
 
     @Override
-    public List<Album> getAlbumsByArtist(String artistId, Integer pageIndex, Integer pageSize) {
+    public List<Album> getAlbumsByArtist(String artistId) {
         try {
             String url = config.getArtistAlbumListUrl().replaceAll("#\\{artistid}", artistId);
             ArtisAlbumListResult artisAlbumListResult = DownloadUtils.get(url, ArtisAlbumListResult.class);
@@ -437,7 +443,7 @@ public class NKwSearchHander extends SearchHanderAbstract {
                         .setAlbumDescribe(e.getInfo())
                         .setAlbumId(e.getAlbumid())
                         .setAlbumName(e.getName())
-                        .setAlbumImg(getConfig().getSearheads() + e.getPic().replaceAll("/120", "/500"))
+                        .setAlbumImg((getConfig().getSongCoverUrl() + e.getPic()).replaceAll("/120", "/500"))
                         .setDataInfo(JSONObject.parseObject(JSONObject.toJSONString(e)))
                 );
             });
@@ -469,7 +475,7 @@ public class NKwSearchHander extends SearchHanderAbstract {
                     .setMusicDuration(Long.parseLong(duration))
                     .setArtistsIds(ListUtil.of(e.getArtistid()))
                     .setMusicArtists(ListUtil.of(e.getArtist()))
-                    .setMusicImage(getConfig().getSearheads() + e.getWebAlbumpicShort().replaceAll("/120", "/500"))
+                    .setMusicImage((getConfig().getSearheads() + e.getWebAlbumpicShort()).replaceAll("/120", "/500"))
                             .setDataInfo(JSONObject.parseObject(JSONObject.toJSONString(e))));
         });
         return music;
@@ -531,7 +537,7 @@ public class NKwSearchHander extends SearchHanderAbstract {
     @Override
     public List<DownloadInfo> downloadArtistAllAlbum(String artistId, PlugBrType brType) {
         ArrayList<DownloadInfo> downloadInfos = new ArrayList<>();
-        List<Album> albumsByArtist = getAlbumsByArtist(artistId,0,0);
+        List<Album> albumsByArtist = getAlbumsByArtist(artistId);
         List<String> collect = albumsByArtist.stream().map(e -> e.getAlbumId()).collect(Collectors.toList());
         collect.forEach(e->downloadInfos.addAll(downloadAlbum(e,brType,null,false,null)));
         return downloadInfos;
@@ -751,7 +757,6 @@ public class NKwSearchHander extends SearchHanderAbstract {
         pageSize=pageSize==null?100:pageSize;
 
         ArrayList<DownloadInfo> downloadEntities = new ArrayList<>();
-//        AtomicReference<String> change = new AtomicReference<>(StringUtils.join(artists, "&"));
         String searchUrl = config.getAlbumInfoUrl().replaceAll("#\\{albumid}", albumsId);
         searchUrl = searchUrl.replaceAll("#\\{pn}", pageNumber.toString());
         searchUrl = searchUrl.replaceAll("#\\{pagesize}", pageSize.toString());
@@ -778,16 +783,15 @@ public class NKwSearchHander extends SearchHanderAbstract {
             String nMinfo = md.getNMinfo();
             List<PlugBrType> plugBrTypes = NMinfoToPlugBrType(nMinfo);
 
-            String url = getConfig().getSearheads() + albumInfoResult.getPic().replaceAll("/120", "/500");
+            String url = (getConfig().getSearheads() + albumInfoResult.getPic()).replaceAll("/120", "/500");
             if (StringUtils.isBlank(albumInfoResult.getName())){
-                url = getConfig().getSearheads() + md.getWebArtistpicShort();
+                url = (getConfig().getSearheads() + md.getWebArtistpicShort()).replaceAll("/120", "/500");
             }
 
             Music music = new Music()
                     .setId(md.getId())
                     .setMusicImage(url)
                     .setMusicAlbum(albumInfoResult.getName())
-                    .setMusicArtists(artists)
                     .setMusicName(md.getName())
                     .setBits(plugBrTypes)
                     .setMusicDuration(Long.parseLong(duration))
@@ -796,6 +800,8 @@ public class NKwSearchHander extends SearchHanderAbstract {
                     .setArtistsIds(ListUtil.of(albumInfoResult.getArtistid()));
             if (isAudioBook) {
                 music.setMusicAlbum(albumName).setMusicArtists(artists);
+            }else{
+                music.setMusicArtists(ListUtil.of(md.getArtist().split("&")));
             }
             DownloadInfo downloadInfo = super.musicToDownloadInfo(music, brType, isAudioBook);
             downloadEntities.add(downloadInfo);

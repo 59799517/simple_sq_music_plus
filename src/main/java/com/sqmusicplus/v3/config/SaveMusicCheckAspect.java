@@ -11,7 +11,7 @@ import org.aspectj.lang.annotation.Pointcut;
 import org.springframework.stereotype.Component;
 
 /**
- * @Classname SaveMusicCheck
+ * @Classname SaveMusicCheckAspect
  * @Description 保存到数据库歌曲切面
  * @Version 1.0.0
  * @Date 2025/7/14 11:57
@@ -19,7 +19,7 @@ import org.springframework.stereotype.Component;
  */
 @Aspect  // 使用@Aspect注解声明一个切面
 @Component
-public class SaveMusicCheck {
+public class SaveMusicCheckAspect {
 
 
     //创建切面

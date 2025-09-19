@@ -1,5 +1,6 @@
 package com.sqmusicplus.v3.plug.netease.hander;
 
+import cn.hutool.core.collection.ListUtil;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.sqmusicplus.v3.base.entity.DownloadInfo;
@@ -48,28 +49,42 @@ public class NeteaseHander extends SearchHanderAbstract {
     public void initPlug(){
         // 设置网易云音乐的地址
         String baseUrl = SqConfigCache.getSqConfigValue(SetConfigEnum.PLUG_NETEASE_BASEURL);
-        MusicEnum.setBASE_URL_163Music(baseUrl);
-        String cookieUrl = SqConfigCache.getSqConfigValue(SetConfigEnum.PLUG_NETEASE_COOKIEURL);
-        if (StringUtils.isNotEmpty(baseUrl)&&StringUtils.isNotEmpty(cookieUrl)){
-            String data = OkHttpUtils.builder()
-                    .url(baseUrl+cookieUrl)
-                    .addHeader("Accept", "application/xml;version=1")
-                    .get()
-                    .sync();
-            JSONObject jsonObject = JSONObject.parseObject(data);
-            if(jsonObject.getInteger("code")==200){
-                neteaseCloudMusicInfo.setCookieString(jsonObject.getString("cookie"));
-                log.info("netease匿名登录成功");
-            }else{
-                log.info("netease匿名登录失败");
-            }
-        }else{
-            String cookie = SqConfigCache.getSqConfigValue(SetConfigEnum.PLUG_NETEASE_COOKIE);
 
-            if (StringUtils.isNotEmpty(cookie)){
-                neteaseCloudMusicInfo.setCookieString(cookie);
+        for (String s : baseUrl.split(";")) {
+            MusicEnum.setBASE_URL_163Music(s);
+            String cookieUrl = SqConfigCache.getSqConfigValue(SetConfigEnum.PLUG_NETEASE_COOKIEURL);
+            if (StringUtils.isNotEmpty(s)&&StringUtils.isNotEmpty(cookieUrl)){
+                JSONObject jsonObject = null;
+                try {
+                    String data = OkHttpUtils.builder()
+                            .url(s+cookieUrl)
+                            .addHeader("Accept", "application/xml;version=1")
+                            .get()
+                            .sync();
+                    jsonObject = JSONObject.parseObject(data);
+                } catch (Exception e) {
+                    log.error("netease使用{}匿名登录失败",s);
+                    continue;
+                }
+                if(jsonObject.getInteger("code")==200){
+                    neteaseCloudMusicInfo.setCookieString(jsonObject.getString("cookie"));
+                    log.info("netease匿名登录成功使用：{}",s);
+                    break;
+                }else{
+                    log.error("netease使用{}匿名登录失败",s);
+                    continue;
+                }
+            }else{
+                String cookie = SqConfigCache.getSqConfigValue(SetConfigEnum.PLUG_NETEASE_COOKIE);
+
+                if (StringUtils.isNotEmpty(cookie)){
+                    neteaseCloudMusicInfo.setCookieString(cookie);
+                }
             }
         }
+
+
+
     }
 
 
@@ -367,8 +382,9 @@ public class NeteaseHander extends SearchHanderAbstract {
                         .setMusicDuration(songsInfoDTO.getDt())
                         .setMusicAlbum(songsInfoDTO.getAl().getName())
                         .setMusicArtists(songsInfoDTO.getAr().stream().map(e -> e.getName()).collect(Collectors.toList()))
-                        .setMusicImage(songsInfoDTO.getAl().getPicUrl())
+                        .setMusicImage(albumDTO.getPicUrl())
                         .setAlbumId(albumDTO.getId().toString())
+                        .setPlugName(getPlugName())
                         .setDataInfo(JSONObject.parseObject(JSONObject.toJSONString(songsInfoDTO)))
                         .setArtistsIds(songsInfoDTO.getAr().stream().map(e -> e.getId().toString()).collect(Collectors.toList()));
                 collect.add(music);
@@ -404,27 +420,39 @@ public class NeteaseHander extends SearchHanderAbstract {
     }
 
     @Override
-    public List<Album> getAlbumsByArtist(String artistId, Integer pageIndex, Integer pageSize) {
-        JSONObject parameter = new JSONObject();// 请求参数
-        parameter.put("id", artistId);
-        parameter.put("limit", pageSize);
-        parameter.put("offset", ((pageIndex-1)*pageSize));
-        JSONObject jsonObject = neteaseCloudMusicInfo.artistAlbum(parameter);
-        ArtistAllAlubuminNeteaseResult artistAllAlubuminNeteaseResult = jsonObject.toJavaObject(ArtistAllAlubuminNeteaseResult.class);
-        List<ArtistAllAlubuminNeteaseResult.HotAlbumsDTO> hotAlbums = artistAllAlubuminNeteaseResult.getHotAlbums();
-        List<Album> albums = hotAlbums.stream().map(e -> {
-            Album album = new Album();
-            album.setAlbumName(e.getName())
-                    .setAlbumId(e.getId().toString())
-                    .setAlbumImg(e.getPicUrl())
-                    .setAlbumDescribe(e.getDescription())
-                    .setAlbumTime(e.getPublishTime().toString())
-                    .setAlbumArtistId(e.getArtist().getId().toString())
-                    .setDataInfo(JSONObject.parseObject(JSONObject.toJSONString(e)))
-                    .setAlbumArtist(e.getArtist().getName());
-            return album;
-        }).collect(Collectors.toList());
-        return albums;
+    public List<Album> getAlbumsByArtist(String artistId) {
+        int pageSize = 50;
+        int pageIndex = 1;
+        boolean more = true;
+        ArrayList<Album> resultAlbum = new ArrayList<>();
+
+        while ( more){
+            JSONObject parameter = new JSONObject();// 请求参数
+            parameter.put("id", artistId);
+            parameter.put("limit", pageSize);
+            parameter.put("offset", ((pageIndex-1)*pageSize));
+            JSONObject jsonObject = neteaseCloudMusicInfo.artistAlbum(parameter);
+            ArtistAllAlubuminNeteaseResult artistAllAlubuminNeteaseResult = jsonObject.toJavaObject(ArtistAllAlubuminNeteaseResult.class);
+            List<ArtistAllAlubuminNeteaseResult.HotAlbumsDTO> hotAlbums = artistAllAlubuminNeteaseResult.getHotAlbums();
+            List<Album> albums = hotAlbums.stream().map(e -> {
+                Album album = new Album();
+                album.setAlbumName(e.getName())
+                        .setAlbumId(e.getId().toString())
+                        .setAlbumImg(e.getPicUrl())
+                        .setAlbumDescribe(e.getDescription())
+                        .setAlbumTime(e.getPublishTime().toString())
+                        .setAlbumArtistId(e.getArtist().getId().toString())
+                        .setDataInfo(JSONObject.parseObject(JSONObject.toJSONString(e)))
+                        .setAlbumArtist(e.getArtist().getName());
+                return album;
+            }).collect(Collectors.toList());
+            resultAlbum.addAll(albums);
+            more = artistAllAlubuminNeteaseResult.getMore();
+            if (!more){
+                pageIndex++;
+            }
+        }
+        return resultAlbum;
     }
 
     @Override

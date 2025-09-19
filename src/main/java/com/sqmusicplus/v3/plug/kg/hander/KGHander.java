@@ -481,6 +481,11 @@ public class KGHander extends SearchHanderAbstract {
             String authorId = dataDTO.getAuthors().get(0).getAuthorId();
             String intro = dataDTO.getIntro();
             List<Music> musics = getAlbumSongByAlbumsId(albumId);
+
+
+
+
+
             return new Album()
                     .setMusics(musics)
                     .setAlbumTime(albumTime)
@@ -534,7 +539,7 @@ public class KGHander extends SearchHanderAbstract {
     }
 
     @Override
-    public List<Album> getAlbumsByArtist(String artistId, Integer pageIndex, Integer pageSize) {
+    public List<Album> getAlbumsByArtist(String artistId) {
         OkHttpUtils builder = OkHttpUtils.builder();
         HashMap<String, String> para = new HashMap<>();
         para.put("id", artistId);
@@ -674,7 +679,7 @@ public class KGHander extends SearchHanderAbstract {
     @Override
     public List<DownloadInfo> downloadArtistAllAlbum(String artistId, PlugBrType brType) {
         ArrayList<DownloadInfo> downloadInfos = new ArrayList<>();
-        for (Album album : getAlbumsByArtist(artistId,0,0)) {
+        for (Album album : getAlbumsByArtist(artistId)) {
             String albumArtist = album.getAlbumArtist();
             ArrayList<String> artists = new ArrayList<>();
             artists.add(albumArtist);
@@ -757,8 +762,8 @@ public class KGHander extends SearchHanderAbstract {
             } catch (Exception e) {
             }
 
-
-            Music music = new Music().setId(audioInfo.getHash())
+            Music music = new Music()
+                    .setId(audioInfo.getHash())
                     .setBits(brTypes)
                     .setMusicName(base.getAudioName())
                     .setMusicDuration(audioInfo.getDuration()*1000)
@@ -766,6 +771,8 @@ public class KGHander extends SearchHanderAbstract {
                     .setMusicArtists(authors.stream().map(AlubmSongResult.DataDTO.SongsDTO.AuthorsDTO::getAuthorName).collect(Collectors.toList()))
                     .setMusicImage(transParam.getUnionCover().replaceAll("\\{size}", "400"))
                     .setAlbumId(base.getAlbumId().toString())
+                    .setDataInfo( JSONObject.parseObject(JSONObject.toJSONString(albumInfo)))
+                    .setPlugName(getPlugName())
                     .setArtistsIds(authors.stream().map(e->e.getAuthorId().toString()).collect(Collectors.toList()));
             musics.add(music);
         }

@@ -7,7 +7,9 @@ import cn.dev33.satoken.stp.StpUtil;
 import cn.hutool.core.collection.ListUtil;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.sqmusicplus.v3.base.entity.DownloadInfo;
 import com.sqmusicplus.v3.base.entity.SqConfig;
 import com.sqmusicplus.v3.base.entity.SqSync;
 import com.sqmusicplus.v3.base.enums.DbBooleanConvert;
@@ -37,6 +39,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @Classname ConfigController
@@ -291,9 +294,25 @@ public class ConfigController {
                 String plugTpye = jsonObject.getString("plugTpye");
                 String songlistid = jsonObject.getString("songlistid");
                 JSONArray jsonArray = jsonObject.getJSONArray("songlistids");
-                log.info("导入已下载歌单类型{}名称：{}({})歌曲个数：{}",plugTpye,songlistname,songlistid, jsonArray.size());
+                log.info("导入识别已下载歌单类型{}名称：{}({})歌曲个数：{}",plugTpye,songlistname,songlistid, jsonArray.size());
+                //已经存在的歌曲信息
+                List<String> dbMusicIds = new ArrayList<>();
+                try {
+                    //找到每个歌单已经存在的信息
+                    LambdaQueryWrapper<SqSync> sqSyncsLambdaQueryWrapper = new LambdaQueryWrapper<>();
+                    sqSyncsLambdaQueryWrapper.eq(SqSync::getPlayListName, songlistname);
+                    sqSyncsLambdaQueryWrapper.eq(SqSync::getPlugName, plugTpye);
+                    List<SqSync> sqSyncs1 = syncService.list(sqSyncsLambdaQueryWrapper);
+                    //已经存在的歌曲信息
+                    dbMusicIds = sqSyncs1.stream().map(SqSync::getMusicId).toList();
+                } catch (Exception e) {
+
+                }
                 for (int i1 = 0; i1 < jsonArray.size(); i1++) {
                     String string = jsonArray.getString(i1);
+                    if (dbMusicIds.contains(string)){
+                        continue;
+                    }
                     SqSync sqSync = new SqSync();
                     sqSync.setPlugName(plugTpye);
                     sqSync.setPlayListName(songlistname);
@@ -301,8 +320,8 @@ public class ConfigController {
                     sqSync.setMusicId(string);
                     sqSyncs.add(sqSync);
                 }
-
             }
+            log.info("本次共计导入{}首歌曲",sqSyncs.size());
             //sqSyncs 每300条分割插入数据库
             for (List<SqSync> syncs : ListUtil.partition(sqSyncs, 300)) {
                 syncService.saveBatch(syncs);

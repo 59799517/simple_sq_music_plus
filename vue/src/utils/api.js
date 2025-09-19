@@ -109,6 +109,51 @@ export function searchTips(plugName,keyword) {
     });
 }
 
+/**
+ * 获取歌曲播放链接
+ */
+export function getMusicUrl(data,brType) {
+    data["brType"] = brType;
+    return request({
+        url: baseUrl +musicUrl+ "/getDownloadUrl",
+        method: "post",
+        data:data
+    });
+}
+/**
+ * 获取歌曲播放链接
+ */
+export function getLyric(id,plugName) {
+    return request({
+        url: baseUrl +musicUrl+ "/getLyric",
+        method: "post",
+        data: {"id":id,"plugName":plugName}
+    });
+}
+
+/**
+ * 根据歌手ID查询歌手信息和专辑信息
+ */
+export function getArtistInfo(id,plugName) {
+    return request({
+        url: baseUrl +musicUrl+ "/artistAlbumById",
+        method: "get",
+        params:{"id":id,"plugName":plugName},
+    });
+}
+/**
+ * 获取专辑信息
+ */
+export function getAlbumInfo(id,plugName) {
+    return request({
+        url: baseUrl +musicUrl+ "/albumInfoById",
+        method: "get",
+        params:{"id":id,"plugName":plugName},
+    });
+}
+
+
+
 
 /**
  * 搜索歌曲专辑等整体搜索
@@ -130,19 +175,27 @@ export function musicSearch(plugName,searType = "music",keyword,pageSize=20,page
         });
     }else if (searType === "album"){
         return request({
-            url: baseUrl + "/searchAlbum/"+plugType+"/"+keyword+"/"+pageSize+"/"+pageIndex,
-            method: "get"
+            url: baseUrl + musicUrl+"/searchAlbum",
+            method: "get",
+            params:{"plugName":plugName,"keyword":keyword,"pageSize":pageSize,"pageIndex":pageIndex}
+
         });
     }else if (searType === "artist"){
         return request({
-            url: baseUrl + "/searchArtist/"+plugType+"/"+keyword+"/"+pageSize+"/"+pageIndex,
-            method: "get"
+            url: baseUrl + musicUrl+"/searchArtist",
+            method: "get",
+            params:{"plugName":plugName,"keyword":keyword,"pageSize":pageSize,"pageIndex":pageIndex}
+
         });
+
     }else if (searType === "artistAllSong"){
         return request({
-            url: baseUrl + "/searchArtist/"+plugType+"/"+keyword+"/"+pageSize+"/"+pageIndex,
-            method: "get"
+            url: baseUrl + musicUrl+"/searchArtist",
+            method: "get",
+            params:{"plugName":plugName,"keyword":keyword,"pageSize":pageSize,"pageIndex":pageIndex}
+
         });
+
     }
 }
 
@@ -159,68 +212,34 @@ export function musicDownload(data,brType) {
         data:data
     });
 }
-/**
- * 获取单曲播放链接
- * @param id
- * @param plugType 插件名称
- * @param br 2000是 flac
- * @returns {*}
- */
-export function getPlayUrL(id="0",plugType="kw") {
-    return request({
-        url: baseUrl + "/musicUrl/"+plugType+"/"+id,
-        method: "get",
-    });
-}
 
 /**
- * 根据歌手id下载全部专辑歌曲
- * @param id
- * @param plugType
- * @param br
- * @returns {*}
- * @constructor
+ * 根据专辑ID下载专辑内所有歌曲
  */
-export function ArtistDownload(id="0",plugType="kw",br=2000) {
+export function musicDownloadAlbum(data) {
     return request({
-        url: baseUrl + "/ArtistDownload",
+        url: baseUrl +downloadUrl+ "/downloadAlbum",
         method: "post",
-        data:{"id":id,"plugType":plugType,"br":br}
-    });
-}
-
-
-/**
- * 根据专辑id下载全部专辑
- * @param id
- * @param plugType
- * @param br
- * @returns {*}
- * @constructor
- */
-export function AlbumDownload(id="0",plugType="kw",br=2000) {
-    return request({
-        url: baseUrl + "/AlbumDownload",
-        method: "post",
-        data:{"id":id,"plugType":plugType,"br":br}
+        data:data
     });
 }
 
 /**
- * 根据歌手id下载全部歌曲（部分无专辑信息的）
- * @param id
- * @param plugType
- * @param br
- * @returns {*}
- * @constructor
+ * 根据歌手ID下载全部专辑内的歌曲
  */
-export function ArtistSongList(id="0",plugType="kw",br=2000) {
+export function musicDownloadArtist(data) {
     return request({
-        url: baseUrl + "/ArtistSongList",
+        url: baseUrl +downloadUrl+ "/downloadArtistAlbum",
         method: "post",
-        data:{"id":id,"plugType":plugType,"br":br}
+        data:data
     });
 }
+
+
+
+
+
+
 
 
 
@@ -258,7 +277,7 @@ export  function refreshStatus(id) {
 
 
 /**
- *
+ * 获取服务器下载信息
  * @param downloadMusicname
  * @param downloadArtistname
  * @param downloadAlbumname
@@ -291,16 +310,6 @@ export function postDownloadInfo(downloadMusicname,downloadArtistname,downloadAl
 
 
 
-/**
- * 删除全部任务（清空全部恩物）
- * @returns {*}
- */
-export function delAllTask() {
-    return request({
-        url: baseUrl + "/downloadInfo/delAllTask",
-        method: "get"
-    });
-}
 
 /**
  * 删除错误任务
@@ -357,18 +366,6 @@ export function refreshTask() {
     });
 }
 
-/**
- * 文本解析
- * @param text
- * @returns {*}
- */
-export function parserText(text) {
-    return request({
-        url: baseUrl + parserUrl+"/parserText",
-        method: "post",
-        data: {"text":text}
-    });
-}
 /**
  * 文本解析下载
  * @param text
@@ -504,5 +501,11 @@ export function refreshQQvipCookie() {
         url: baseUrl + plugUrl+"/qqvip/refreshQQvipCookie",
         method: "get"
     });
+}
+/**
+ * 上传json文件
+ */
+export function getUploadJsonFileUrl() {
+    return baseUrl + configUrl+"/importSongList"
 }
 

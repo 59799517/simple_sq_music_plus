@@ -1,6 +1,5 @@
 package com.sqmusicplus.v3.plug.base.hander;
 
-import cn.hutool.core.exceptions.UtilException;
 import cn.hutool.core.io.FileTypeUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.io.IORuntimeException;
@@ -70,7 +69,9 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
                 throw new RuntimeException("下载失败歌曲信息不完整歌曲详情转化歌曲失败:" + JSONObject.toJSONString(downloadInfo));
             }
             final String baseMusicName = music.getMusicName().trim();
-            final String baseMusicArtistName = music.getMusicArtists().stream().map(String::trim).collect(Collectors.joining("&"));
+            //如果歌手超过7个则只取前7个
+            final String baseMusicArtistName = music.getMusicArtists().stream().map(String::trim).limit(7).collect(Collectors.joining("&"));
+//            final String baseMusicArtistName = music.getMusicArtists().stream().map(String::trim).collect(Collectors.joining("&"));
             final String baseMusicAlbumName = music.getMusicAlbum().trim();
 
             final String baseAlbumID = music.getAlbumId();
@@ -116,7 +117,7 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
                 String getSearheads = "";
                 try {
                     getSearheads = ReflectUtil.invoke(searchHander.getConfig(), "getSearheads");
-                } catch (UtilException ignored) {
+                } catch (Exception ignored) {
                 }
                 //歌手图片地址
                 String downloadurl = getSearheads + artists.getMusicArtistsPhoto();
@@ -241,7 +242,6 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
     public DownloadInfo musicToDownloadInfo(Music music, PlugBrType brType, Boolean isAudioBook) {
         List<PlugBrType> bits = music.getBits();
         if (brType==null){
-
             brType = MusicUtils.getMaxBr(bits);
         }
         String bitsStr = bits.stream().map(plugBrType -> plugBrType.getBit().toString()).collect(Collectors.joining(","));
@@ -275,7 +275,12 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
         }
         String bitsStr = bits.stream().map(plugBrType -> plugBrType.getBit().toString()).collect(Collectors.joining(","));
         String plugBrTypes = bits.stream().map(plugBrType -> plugBrType.getId()).collect(Collectors.joining(","));
+        String jsonString ="";
+        try {
+            jsonString = music.getDataInfo().toJSONString();
+        } catch (Exception e) {
 
+        }
         return new DownloadInfo()
                 .setDownloadGid(music.getId())
                 .setDownloadTime(new Date())
@@ -286,7 +291,7 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
                 .setDownloadMusicname(music.getName())
                 .setDownloadArtistname(String.join("&", music.getArtistName()))
                 .setDownloadAlbumname(music.getAlbumName())
-                .setDownloadMusicInfo(music.getDataInfo().toJSONString())
+                .setDownloadMusicInfo(jsonString)
                 .setDownloadStatus(DownloadStatus.waiting.getValue())
                 .setSpringName(brType.getSpringName())
                 .setAudioBook(isAudioBook? DbBooleanConvert.YES.getValue():DbBooleanConvert.NO.getValue())
@@ -367,10 +372,10 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
         }
         downloadInfo.setDownloadBrType(trim);
 
-        String trim1 = downloadInfo.getDownloadMusicInfo().trim();
-        if (StringUtils.isBlank(trim1)) {
-            throw new RuntimeException("歌曲校验失败：歌曲信息为空");
-        }
+//        String trim1 = downloadInfo.getDownloadMusicInfo().trim();
+//        if (StringUtils.isBlank(trim1)) {
+//            throw new RuntimeException("歌曲校验失败：歌曲信息为空");
+//        }
         String trim2 = downloadInfo.getDownloadPlugName().trim();
         if (StringUtils.isBlank(trim2)) {
             throw new RuntimeException("歌曲校验失败：歌曲插件名称为空");
@@ -380,7 +385,6 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
             throw new RuntimeException("歌曲校验失败：找不到对应的歌曲下载处理器");
         }
         downloadInfo.setSpringName(trim3);
-
         Integer audioBook = downloadInfo.getAudioBook();
         if (audioBook == null) {
             throw new RuntimeException("歌曲校验失败：歌曲是否为有声为空");
@@ -433,7 +437,7 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
         for (String musicArtist : musicArtists) {
             // 忽略的歌手
             for (String s : split) {
-                if (musicArtist.contains(s)) {
+                if (StringUtils.isNotBlank(s)&&musicArtist.contains(s)) {
                     log.info("触发歌手忽略音乐：{}--->{}", music.getMusicName(),s);
                     return null;
                 }
@@ -443,7 +447,7 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
         String ignoreAlbum = SqConfigCache.getSqConfigValue(SetConfigEnum.SYSTEM_SYNC_ALBUM_EXCLUDE);
         String musicAlbum = music.getMusicAlbum().trim();
         for (String s : ignoreAlbum.split("\\|")) {
-            if (musicAlbum.contains(s)) {
+            if (StringUtils.isNotBlank(s)&&musicAlbum.contains(s)) {
                 log.info("触发专辑忽略音乐：{}--->{}", music.getMusicName(),s);
                 return null;
             }
@@ -470,7 +474,7 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
             strings.add("(片段)");
             strings.add("(片段版)");
             for (String s : strings) {
-                if (musicName.contains(s)) {
+                if (StringUtils.isNotBlank(s)&&musicName.contains(s)) {
                     log.info("触发伴奏忽略音乐：{}", musicName);
                     return null;
                 }
@@ -482,7 +486,7 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
         for (String musicArtist : musicArtists) {
             // 忽略的歌手
             for (String s : split) {
-                if (musicArtist.contains(s)) {
+                if (StringUtils.isNotBlank(s)&&musicArtist.contains(s)) {
                     log.info("触发歌手忽略音乐：{}--->{}", downloadInfo.getDownloadMusicname(),s);
                     return null;
                 }
@@ -492,7 +496,8 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
         String ignoreAlbum = SqConfigCache.getSqConfigValue(SetConfigEnum.SYSTEM_SYNC_ALBUM_EXCLUDE);
         String musicAlbum = downloadInfo.getDownloadAlbumname().trim();
         for (String s : ignoreAlbum.split("\\|")) {
-            if (musicAlbum.contains(s)) {
+            if (StringUtils.isNotBlank(s)&&
+                    musicAlbum.contains(s)) {
                 log.info("触发专辑忽略音乐：{}--->{}", downloadInfo.getDownloadMusicname(),s);
                 return null;
             }

@@ -6,6 +6,18 @@
 ##  baseUrl: https://mu-api.yuk0.com
 ##  baseUrl: https://netease.happyking.top
 ##  baseUrl: http://plugin.changsheng.space:3000
+##  baseUrl: https://zm.armoe.cn
+##  baseUrl: https://zmusic.i9mr.com/
+#   baseUrl: https://163api.qijieya.cn
+#   baseUrl: http://dg-t.cn:3000
+#   baseUrl: http://111.229.38.178:3333
+#   baseUrl: https://wyy.xhily.com/
+#   baseUrl: http://45.152.64.114:3005
+#   baseUrl: http://42.193.244.179:3000
+#   baseUrl: https://music-api.focalors.ltd
+
+
+
 ##  cookieUrl: ${netease.baseUrl}/register/anonimous
 ##  cookie:
 ##  downloadUrl: https://csm.sayqz.com/api/?type=apiSongUrlV1&level=#{level}&id=#{id}

@@ -62,17 +62,17 @@ public class ScanQQVIPLikeMusicTask {
 
                 if (StringUtils.isNotBlank(myLikeSongSyncConfig)&& Boolean.parseBoolean(myLikeSongSyncConfig)){
                     log.info("扫描QQVIP同步我喜欢单曲");
-                    syncLikeSong();
+//                    syncLikeSong();
                 }
 
                 if (StringUtils.isNotBlank(myLikePlaylistSyncConfig)&& Boolean.parseBoolean(myLikePlaylistSyncConfig)){
                     log.info("扫描QQVIP同步所有歌单");
-                    syncplaylist();
+//                    syncplaylist();
                 }
 
                 if (StringUtils.isNotBlank(myLikeAlbumSyncConfig)&& Boolean.parseBoolean(myLikeAlbumSyncConfig)){
                     log.info("扫描QQVIP同步所有专辑");
-                    syncalbu();
+//                    syncalbu();
                 }
                 if (StringUtils.isNotBlank(myLikeArtistsSyncConfig)&& Boolean.parseBoolean(myLikeArtistsSyncConfig)){
                     log.info("扫描QQVIP同步所有关注歌手");
@@ -356,8 +356,8 @@ public class ScanQQVIPLikeMusicTask {
 
             LambdaQueryWrapper<SqSync> sqQqmusicMyLike = new LambdaQueryWrapper<SqSync>().eq(SqSync::getPlugName, PlugBrType.QQVIP_Flac_2000.getPlugName())
                     .eq(SqSync::getPlayListId, tid)
-                    .eq(SqSync::getPlayListName, dissname)
-                    .eq(SqSync::getPlayListSha1, playListSha1);
+                    .eq(SqSync::getPlayListName, dissname);
+//                    .eq(SqSync::getPlayListSha1, playListSha1);
 
             List<SqSync> list = syncService.list(sqQqmusicMyLike);
 
@@ -398,8 +398,6 @@ public class ScanQQVIPLikeMusicTask {
                         log.info("{}:忽略下载",music.getMusicName());
                         return;
                     }
-
-
 
                     DownloadInfo downloadInfo = qQvipHander.musicToDownloadInfo(music, brType, DbBooleanConvert.NO.getBooleanValue());
                     downloadInfos.add(downloadInfo);

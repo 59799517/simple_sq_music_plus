@@ -153,7 +153,7 @@ public class Music implements Serializable {
     /**
      * 支持的码率
      */
-    private List<PlugBrType> Bits;
+    private List<PlugBrType> bits;
 
 
 

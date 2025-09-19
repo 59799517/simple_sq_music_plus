@@ -101,12 +101,10 @@ public interface SearchHander {
     /**
      * 根据歌手搜索专辑 （不需要专辑内歌曲信息）
      *
-     * @param artistId  歌手一次
-     * @param pageIndex 页码 最好是不用这参数一次获取全部的
-     * @param pageSize  每页长度 最好是不用这参数一次获取全部的
+     * @param artistId  歌手
      * @return 专辑信息
      */
-    List<Album> getAlbumsByArtist(String artistId, Integer pageIndex, Integer pageSize);
+    List<Album> getAlbumsByArtist(String artistId);
 
     /**
      * 根据专辑id获取专辑下歌曲（有点冗余以后和上方的代码合并一下）
@@ -176,7 +174,7 @@ public interface SearchHander {
     /**
      * 下载歌手全部歌曲
      * @param artistId 歌手id
-     * @param brTypee 码率
+     * @param brType 码率
      * @return
      */
     List<DownloadInfo> downloadArtistAllAlbum(String artistId, PlugBrType brType);
