@@ -1,4 +1,4 @@
-package com.sqmusicplus.v3.config;
+package com.sqmusicplus.v3.config.aspect;
 
 import cn.hutool.core.util.ReflectUtil;
 import com.sqmusicplus.v3.base.entity.DownloadInfo;
