@@ -5,6 +5,7 @@ import cn.dev33.satoken.stp.SaLoginConfig;
 import cn.dev33.satoken.stp.SaTokenInfo;
 import cn.dev33.satoken.stp.StpUtil;
 import cn.hutool.core.collection.ListUtil;
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -13,6 +14,7 @@ import com.sqmusicplus.v3.base.entity.DownloadInfo;
 import com.sqmusicplus.v3.base.entity.SqConfig;
 import com.sqmusicplus.v3.base.entity.SqSync;
 import com.sqmusicplus.v3.base.enums.DbBooleanConvert;
+import com.sqmusicplus.v3.base.enums.PlugBrType;
 import com.sqmusicplus.v3.base.enums.SetConfigEnum;
 import com.sqmusicplus.v3.base.service.SqSyncService;
 import com.sqmusicplus.v3.config.AjaxResult;
@@ -286,46 +288,83 @@ public class ConfigController {
             json = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
             JSONArray array = JSONArray.parseArray(json);
             ArrayList<SqSync> sqSyncs = new ArrayList<>();
+            ArrayList<SqSync> sqSyncsAlub = new ArrayList<>();
+            ArrayList<SqSync> sqSyncsArt = new ArrayList<>();
+
+
 
             log.info("=======本次共计导入歌单设置：{}条===========", array.size());
             for (int i = 0; i < array.size(); i++) {
                 JSONObject jsonObject = array.getJSONObject(i);
-                String songlistname = jsonObject.getString("songlistname");
-                String plugTpye = jsonObject.getString("plugTpye");
-                String songlistid = jsonObject.getString("songlistid");
-                JSONArray jsonArray = jsonObject.getJSONArray("songlistids");
-                log.info("导入识别已下载歌单类型{}名称：{}({})歌曲个数：{}",plugTpye,songlistname,songlistid, jsonArray.size());
-                //已经存在的歌曲信息
-                List<String> dbMusicIds = new ArrayList<>();
-                try {
-                    //找到每个歌单已经存在的信息
-                    LambdaQueryWrapper<SqSync> sqSyncsLambdaQueryWrapper = new LambdaQueryWrapper<>();
-                    sqSyncsLambdaQueryWrapper.eq(SqSync::getPlayListName, songlistname);
-                    sqSyncsLambdaQueryWrapper.eq(SqSync::getPlugName, plugTpye);
-                    List<SqSync> sqSyncs1 = syncService.list(sqSyncsLambdaQueryWrapper);
+                String importType = jsonObject.getString("importType");
+                if (StringUtils.isBlank(importType)||importType.equalsIgnoreCase("playList")){
+
+                    String songlistname = jsonObject.getString("songlistname");
+                    String plugTpye = jsonObject.getString("plugTpye");
+                    String songlistid = jsonObject.getString("songlistid");
+                    JSONArray jsonArray = jsonObject.getJSONArray("songlistids");
+                    log.info("导入识别已下载歌单类型{}名称：{}({})歌曲个数：{}",plugTpye,songlistname,songlistid, jsonArray.size());
                     //已经存在的歌曲信息
-                    dbMusicIds = sqSyncs1.stream().map(SqSync::getMusicId).toList();
-                } catch (Exception e) {
+                    List<String> dbMusicIds = new ArrayList<>();
+                    try {
+                        //找到每个歌单已经存在的信息
+                        LambdaQueryWrapper<SqSync> sqSyncsLambdaQueryWrapper = new LambdaQueryWrapper<>();
+                        sqSyncsLambdaQueryWrapper.eq(SqSync::getPlayListName, songlistname);
+                        sqSyncsLambdaQueryWrapper.eq(SqSync::getPlugName, plugTpye);
+                        List<SqSync> sqSyncs1 = syncService.list(sqSyncsLambdaQueryWrapper);
+                        //已经存在的歌曲信息
+                        dbMusicIds = sqSyncs1.stream().map(SqSync::getMusicId).toList();
+                    } catch (Exception e) {
+
+                    }
+                    for (int i1 = 0; i1 < jsonArray.size(); i1++) {
+                        String string = jsonArray.getString(i1);
+                        if (dbMusicIds.contains(string)){
+                            continue;
+                        }
+                        SqSync sqSync = new SqSync();
+                        sqSync.setPlugName(plugTpye);
+                        sqSync.setPlayListName(songlistname);
+                        sqSync.setPlayListId(songlistid);
+                        sqSync.setMusicId(string);
+                        sqSyncs.add(sqSync);
+                    }
+                    log.info("本次共计导入{}首歌曲",sqSyncs.size());
+                    //sqSyncs 每300条分割插入数据库
+                    for (List<SqSync> syncs : ListUtil.partition(sqSyncs, 300)) {
+                        syncService.saveBatch(syncs);
+                    }
+                }else if(importType.equalsIgnoreCase("likeAlubids")){
+                    JSONArray jsonArray = jsonObject.getJSONArray("alubids");
+                    for (int i1 = 0; i1 < jsonArray.size(); i1++) {
+                        SqSync sqSync = new SqSync();
+                        sqSync.setPlugName( PlugBrType.QQVIP_Flac_2000.getPlugName());
+                        sqSync.setAlbumId(jsonArray.getString(i1));
+                        sqSyncsAlub.add(sqSync);
+                    }
+                    log.info("本次共计导入{}张专辑",sqSyncsAlub.size());
+                    for (List<SqSync> syncs : ListUtil.partition(sqSyncsAlub, 300)) {
+                        syncService.saveBatch(syncs);
+                    }
+
+
+                }else if(importType.equalsIgnoreCase("likeArtistids")){
+                    JSONArray jsonArray = jsonObject.getJSONArray("artistids");
+                    for (int i1 = 0; i1 < jsonArray.size(); i1++) {
+                        SqSync sqSync = new SqSync();
+                        sqSync.setPlugName(PlugBrType.QQVIP_Flac_2000.getPlugName());
+                        sqSync.setArtistId(jsonArray.getString(i1));
+                        sqSyncsArt.add(sqSync);
+                    }
+                    log.info("本次共计导入{}位歌手",sqSyncsArt.size());
+                    for (List<SqSync> syncs : ListUtil.partition(sqSyncsArt, 300)) {
+                        syncService.saveBatch(syncs);
+                    }
+                }
 
                 }
-                for (int i1 = 0; i1 < jsonArray.size(); i1++) {
-                    String string = jsonArray.getString(i1);
-                    if (dbMusicIds.contains(string)){
-                        continue;
-                    }
-                    SqSync sqSync = new SqSync();
-                    sqSync.setPlugName(plugTpye);
-                    sqSync.setPlayListName(songlistname);
-                    sqSync.setPlayListId(songlistid);
-                    sqSync.setMusicId(string);
-                    sqSyncs.add(sqSync);
-                }
-            }
-            log.info("本次共计导入{}首歌曲",sqSyncs.size());
-            //sqSyncs 每300条分割插入数据库
-            for (List<SqSync> syncs : ListUtil.partition(sqSyncs, 300)) {
-                syncService.saveBatch(syncs);
-            }
+
+
         } catch (IOException e) {
 //            throw new RuntimeException(e);
             return AjaxResult.error("导入失败");

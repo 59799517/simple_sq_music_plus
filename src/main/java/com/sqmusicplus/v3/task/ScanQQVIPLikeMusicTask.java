@@ -62,17 +62,17 @@ public class ScanQQVIPLikeMusicTask {
 
                 if (StringUtils.isNotBlank(myLikeSongSyncConfig)&& Boolean.parseBoolean(myLikeSongSyncConfig)){
                     log.info("扫描QQVIP同步我喜欢单曲");
-//                    syncLikeSong();
+                    syncLikeSong();
                 }
 
                 if (StringUtils.isNotBlank(myLikePlaylistSyncConfig)&& Boolean.parseBoolean(myLikePlaylistSyncConfig)){
                     log.info("扫描QQVIP同步所有歌单");
-//                    syncplaylist();
+                    syncplaylist();
                 }
 
                 if (StringUtils.isNotBlank(myLikeAlbumSyncConfig)&& Boolean.parseBoolean(myLikeAlbumSyncConfig)){
                     log.info("扫描QQVIP同步所有专辑");
-//                    syncalbu();
+                    syncalbu();
                 }
                 if (StringUtils.isNotBlank(myLikeArtistsSyncConfig)&& Boolean.parseBoolean(myLikeArtistsSyncConfig)){
                     log.info("扫描QQVIP同步所有关注歌手");
@@ -197,7 +197,7 @@ public class ScanQQVIPLikeMusicTask {
                     sqSync.setPlugName( PlugBrType.QQVIP_Flac_2000.getPlugName());
                     sqSync.setMusicInfo(JSON.toJSONString(item));
                     sqSync.setAlbumId(albummid);
-                    sqSync.setArtistName(albumname);
+                    sqSync.setAlbumName(albumname);
                     //添加完成后保存到已经下载的列表中
                     syncService.save(sqSync);
                 }
