@@ -346,6 +346,27 @@ public class SetController {
                 }
                 data.put("songlistid", songlistid);
                 data.put("songlistids", split);
+                data.put("importType", "playList");
+                resultList.add(data);
+            }
+        }
+        List<SqConfig> alubids = configService.list(new QueryWrapper<SqConfig>().eq("config_key", "plug.qqvip.likeAlubids"));
+        if (alubids!=null&&alubids.size()>0){
+            String configValue = alubids.get(0).getConfigValue();
+            if (StringUtils.isNotBlank(configValue)){
+                JSONObject data = new JSONObject();
+                data.put("importType", "likeAlubids");
+                data.put("alubids", configValue.split(","));
+                resultList.add(data);
+            }
+        }
+        List<SqConfig> Artistids = configService.list(new QueryWrapper<SqConfig>().eq("config_key", "plug.qqvip.likeArtistids"));
+        if (Artistids!=null&&Artistids.size()>0){
+            String configValue = Artistids.get(0).getConfigValue();
+            if (StringUtils.isNotBlank(configValue)){
+                JSONObject data = new JSONObject();
+                data.put("importType", "likeArtistids");
+                data.put("artistids", configValue.split(","));
                 resultList.add(data);
             }
         }
