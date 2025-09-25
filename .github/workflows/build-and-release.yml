@@ -2,7 +2,7 @@ name: Java CI with Maven and Release
 
 on:
   push:
-    branches: [ 2.0 ] # 只在提交到2.0分支时触发
+    branches: [ "3.0" ] # 只在提交到3.0分支时触发
 
 env:
   APP_VERSION: ""
@@ -40,6 +40,13 @@ jobs:
       - name: Build with Maven
         run: |
           mvn -B package --file pom.xml
+      - name: Get JAR file name
+        id: jar_name
+        run: |
+          JAR_FILE=$(ls target/*.jar | grep -v sources | head -n 1)
+          JAR_FILE=$(basename $JAR_FILE)
+          echo "JAR_FILE=$JAR_FILE" >> $GITHUB_ENV
+          echo "jar_file=$JAR_FILE" >> $GITHUB_OUTPUT
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
@@ -47,31 +54,32 @@ jobs:
           path: |
             target/*.jar 
             version.txt
-      - name: Build the Docker image
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Build and push Docker images
         run: |
-          docker version
           # 登录阿里云镜像仓库
-          docker login --username=$DOCKER_USERNAME --password=$DOCKER_PASSWORD registry.cn-hangzhou.aliyuncs.com
-          # 使用Dockerfile构建镜像
-          docker build . --file Dockerfile_jar --tag registry.cn-hangzhou.aliyuncs.com/sqdockler/sq_docker:v$APP_VERSION
-          # 推送镜像到镜像仓库
-          docker push registry.cn-hangzhou.aliyuncs.com/sqdockler/sq_docker:v$APP_VERSION  
-      -  name: Push to GitHub Packages
-         run: |
-           docker version
-            # 登录 GitHub Packages
-           docker login ghcr.io --username=${{ github.actor }} --password=${{ secrets.GITHUB_TOKEN }}
-           
-           # 构建 Docker 镜像
-           docker build . --file Dockerfile_jar --tag ghcr.io/${{ github.actor }}/simple_sq_musuc_plus:v$APP_VERSION
-           
-           # 推送镜像到 GitHub Packages
-           docker push ghcr.io/${{ github.actor }}/simple_sq_musuc_plus:v$APP_VERSION
+          echo $DOCKER_PASSWORD | docker login registry.cn-hangzhou.aliyuncs.com --username=$DOCKER_USERNAME --password-stdin
+          
+          # 登录 GitHub Packages
+          echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          
+          # 构建并推送主应用镜像
+          docker buildx create --use
+          docker buildx build --push \
+            --tag registry.cn-hangzhou.aliyuncs.com/sqdockler/sq_docker:v$APP_VERSION \
+            --tag registry.cn-hangzhou.aliyuncs.com/sqdockler/sq_docker:latest \
+            -f Dockerfile .
+          
+          # 构建并推送GitHub Packages镜像
+          docker buildx build --push \
+            --tag ghcr.io/${{ github.actor }}/simple_sq_musuc_plus:v$APP_VERSION \
+            --tag ghcr.io/${{ github.actor }}/simple_sq_musuc_plus:latest \
+            -f Dockerfile .
 
   release:
     needs: build
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/2.0' }}
     steps:
       - name: Download Artifact
         uses: actions/download-artifact@v4
@@ -91,7 +99,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ steps.app_version.outputs.version }} # 从 artifact 中读取版本号          release_name: Release ${{ env.APP_VERSION }}
+          tag_name: v${{ steps.app_version.outputs.version }}
           release_name: Release ${{ steps.app_version.outputs.version }}
           draft: false
           prerelease: false
@@ -102,6 +110,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./target/MusicServer2.0.jar
-          asset_name: MusicServer${{ steps.app_version.outputs.version }}.jar
+          asset_path: ./target/${{ env.JAR_FILE }}
+          asset_name: ${{ env.JAR_FILE }}
           asset_content_type: application/octet-stream

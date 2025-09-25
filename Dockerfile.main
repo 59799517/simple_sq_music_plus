@@ -12,14 +12,15 @@ From mcr.microsoft.com/openjdk/jdk:17-ubuntu
 
 # 设置默认的环境变量
 #ENV DB_IP="localhost"
-#NV DB_PORT="3306"
+#ENV DB_PORT="3306"
 #ENV DB_NAME="sqmusicv3"
 #ENV DB_USERNAME="root"
 #ENV DB_PASSWORD="root"
 
 WORKDIR /app
 
-COPY --from=builder  /build/target/MusicServer2.0.jar /app/app.jar
+# 使用通配符复制JAR文件，避免硬编码文件名
+COPY --from=builder /build/target/*.jar /app/app.jar
 
 EXPOSE 8099
 

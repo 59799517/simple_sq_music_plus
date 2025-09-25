@@ -59,17 +59,14 @@ public class ScanQQVIPLikeMusicTask {
         String myLikeArtistsSyncConfig = SqConfigCache.getSqConfigValue(SetConfigEnum.PLUG_QQVIP_SYNC_MY_LIKE_ARTISTS);
 
             if (StringUtils.isNotBlank(qqopenconfigKey)&& Boolean.parseBoolean(myLikeSongSyncConfig)) {
-
                 if (StringUtils.isNotBlank(myLikeSongSyncConfig)&& Boolean.parseBoolean(myLikeSongSyncConfig)){
                     log.info("扫描QQVIP同步我喜欢单曲");
                     syncLikeSong();
                 }
-
                 if (StringUtils.isNotBlank(myLikePlaylistSyncConfig)&& Boolean.parseBoolean(myLikePlaylistSyncConfig)){
                     log.info("扫描QQVIP同步所有歌单");
                     syncplaylist();
                 }
-
                 if (StringUtils.isNotBlank(myLikeAlbumSyncConfig)&& Boolean.parseBoolean(myLikeAlbumSyncConfig)){
                     log.info("扫描QQVIP同步所有专辑");
                     syncalbu();
@@ -121,7 +118,6 @@ public class ScanQQVIPLikeMusicTask {
                 if (!excludeNames.contains(name)&&!exclude.contains(mid)){
                     List<DownloadInfo> downloadInfos = qQvipHander.downloadArtistAllSong(mid, PlugBrType.QQVIP_Flac_2000);
                     List<DownloadInfo> downloadInfos1 = qQvipHander.musicIgnoreCheck(downloadInfos);
-
                     downloadInfoService.add(downloadInfos1);
                     SqSync sqSync = new SqSync();
                     sqSync.setPlugName( PlugBrType.QQVIP_Flac_2000.getPlugName());
@@ -130,8 +126,6 @@ public class ScanQQVIPLikeMusicTask {
                     sqSync.setArtistName(name);
                     //添加完成后保存到已经下载的列表中
                     syncService.save(sqSync);
-
-
                 }else{
                     log.info("已排除歌手或者已经下载过了：{} 不下载",name);
                 }

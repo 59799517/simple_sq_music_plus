@@ -19,11 +19,11 @@ ENV DB_PASSWORD="root"
 
 WORKDIR /app
 
-COPY --from=builder  /build/target/MusicServer2.0.jar /app/app.jar
+# 使用通配符复制JAR文件，避免硬编码文件名
+COPY --from=builder /build/target/*.jar /app/app.jar
 
 EXPOSE 8099
 
 VOLUME ["/music"]
 
 CMD ["java", "-jar", "app.jar"]
-
