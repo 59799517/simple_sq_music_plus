@@ -2,7 +2,7 @@ name: Java CI with Maven and Release
 
 on:
   push:
-    branches: [ "3.0" ] # 只在提交到3.0分支时触发
+    branches: [ 3.0 ] # 只在提交到2.0分支时触发
 
 env:
   APP_VERSION: ""
@@ -16,7 +16,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-
       - name: Set up JDK 17
         uses: actions/setup-java@v3
         with:
@@ -24,12 +23,10 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
           cache-dependency-path: 'pom.xml' # optional
-
       - name: Install yq
         run: |
           wget https://github.com/mikefarah/yq/releases/download/v4.16.2/yq_linux_amd64 -O /usr/local/bin/yq
           chmod +x /usr/local/bin/yq
-
       - name: Read Application Version
         id: app_version
         run: |
@@ -38,22 +35,11 @@ jobs:
           echo "APP_VERSION=$VERSION" >> $GITHUB_ENV
           echo "APP_VERSION: $VERSION"
           echo "$VERSION" > version.txt
-
       - name: List Environment Variables
         run: env
-
       - name: Build with Maven
         run: |
           mvn -B package --file pom.xml
-
-      - name: Get JAR file name
-        id: jar_name
-        run: |
-          JAR_FILE=$(ls target/*.jar | grep -v sources | head -n 1)
-          JAR_FILE=$(basename $JAR_FILE)
-          echo "JAR_FILE=$JAR_FILE" >> $GITHUB_ENV
-          echo "jar_file=$JAR_FILE" >> $GITHUB_OUTPUT
-
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
@@ -61,88 +47,61 @@ jobs:
           path: |
             target/*.jar 
             version.txt
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build and push Docker images
+      - name: Build the Docker image
         run: |
+          docker version
           # 登录阿里云镜像仓库
-          echo $DOCKER_PASSWORD | docker login registry.cn-hangzhou.aliyuncs.com --username=$DOCKER_USERNAME --password-stdin
-          
-          # 登录 GitHub Packages
-          echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-          
-          # 构建并推送主应用镜像
-          docker buildx create --use
-          docker buildx build --push \
-            --tag registry.cn-hangzhou.aliyuncs.com/sqdockler/sq_docker:v$APP_VERSION \
-            --tag registry.cn-hangzhou.aliyuncs.com/sqdockler/sq_docker:latest \
-            -f Dockerfile .
-          
-          # 构建并推送GitHub Packages镜像
-          docker buildx build --push \
-            --tag ghcr.io/${{ github.actor }}/simple_sq_music_plus:v$APP_VERSION \
-            --tag ghcr.io/${{ github.actor }}/simple_sq_music_plus:latest \
-            -f Dockerfile .
+          docker login --username=$DOCKER_USERNAME --password=$DOCKER_PASSWORD registry.cn-hangzhou.aliyuncs.com
+          # 使用Dockerfile构建镜像
+          docker build . --file Dockerfile --tag registry.cn-hangzhou.aliyuncs.com/sqdockler/sq_docker:v$APP_VERSION
+          # 推送镜像到镜像仓库
+          docker push registry.cn-hangzhou.aliyuncs.com/sqdockler/sq_docker:v$APP_VERSION
+      -  name: Push to GitHub Packages
+         run: |
+           docker version
+            # 登录 GitHub Packages
+           docker login ghcr.io --username=${{ github.actor }} --password=${{ secrets.GITHUB_TOKEN }}
+           
+           # 构建 Docker 镜像
+           docker build . --file Dockerfile --tag ghcr.io/${{ github.actor }}/simple_sq_musuc_plus:v$APP_VERSION
+           
+           # 推送镜像到 GitHub Packages
+           docker push ghcr.io/${{ github.actor }}/simple_sq_musuc_plus:v$APP_VERSION
 
   release:
     needs: build
     runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/2.0' }}
     steps:
       - name: Download Artifact
         uses: actions/download-artifact@v4
         with:
           name: java-artifact
-
       - name: Display structure of downloaded files
         run: ls -R
-
-      - name: Get JAR file name
-        id: jar_name
-        run: |
-          JAR_FILE=$(ls *.jar | grep -v sources | head -n 1)
-          echo "JAR_FILE=$JAR_FILE" >> $GITHUB_ENV
-          echo "jar_file=$JAR_FILE" >> $GITHUB_OUTPUT
-
       - name: Read Version from Artifact
         id: app_version
         run: |
           VERSION=$(cat version.txt)
           echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "APP_VERSION=$VERSION" >> $GITHUB_ENV
           echo "APP_VERSION: $VERSION"
-
-      - name: Check if tag exists
-        id: check_tag
-        run: |
-          if gh release view v${{ steps.app_version.outputs.version }}; then
-            echo "exists=true" >> $GITHUB_OUTPUT
-          else
-            echo "exists=false" >> $GITHUB_OUTPUT
-          fi
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Create Release
         id: create_release
-        if: steps.check_tag.outputs.exists == 'false'
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: v${{ steps.app_version.outputs.version }}
+          tag_name: ${{ steps.app_version.outputs.version }} # 从 artifact 中读取版本号          release_name: Release ${{ env.APP_VERSION }}
           release_name: Release ${{ steps.app_version.outputs.version }}
           draft: false
           prerelease: false
 
       - name: Upload Release Asset
-        if: steps.check_tag.outputs.exists == 'false'
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ${{ env.JAR_FILE }}
-          asset_name: ${{ env.JAR_FILE }}
+          asset_path: ./target/simple_sq_music_plus.jar
+          asset_name: simple_sq_music_plus{{ steps.app_version.outputs.version }}.jar
           asset_content_type: application/octet-stream
