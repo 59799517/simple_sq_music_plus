@@ -87,6 +87,12 @@ jobs:
           name: java-artifact
       - name: Display structure of downloaded files
         run: ls -R
+      - name: Get JAR file name
+        id: jar_name
+        run: |
+          JAR_FILE=$(ls *.jar | grep -v sources | head -n 1)
+          echo "JAR_FILE=$JAR_FILE" >> $GITHUB_ENV
+          echo "jar_file=$JAR_FILE" >> $GITHUB_OUTPUT
       - name: Read Version from Artifact
         id: app_version
         run: |
