@@ -16,6 +16,7 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+
       - name: Set up JDK 17
         uses: actions/setup-java@v3
         with:
@@ -23,10 +24,12 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
           cache-dependency-path: 'pom.xml' # optional
+
       - name: Install yq
         run: |
           wget https://github.com/mikefarah/yq/releases/download/v4.16.2/yq_linux_amd64 -O /usr/local/bin/yq
           chmod +x /usr/local/bin/yq
+
       - name: Read Application Version
         id: app_version
         run: |
@@ -35,11 +38,14 @@ jobs:
           echo "APP_VERSION=$VERSION" >> $GITHUB_ENV
           echo "APP_VERSION: $VERSION"
           echo "$VERSION" > version.txt
+
       - name: List Environment Variables
         run: env
+
       - name: Build with Maven
         run: |
           mvn -B package --file pom.xml
+
       - name: Get JAR file name
         id: jar_name
         run: |
@@ -47,6 +53,7 @@ jobs:
           JAR_FILE=$(basename $JAR_FILE)
           echo "JAR_FILE=$JAR_FILE" >> $GITHUB_ENV
           echo "jar_file=$JAR_FILE" >> $GITHUB_OUTPUT
+
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
@@ -54,8 +61,10 @@ jobs:
           path: |
             target/*.jar 
             version.txt
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+
       - name: Build and push Docker images
         run: |
           # 登录阿里云镜像仓库
@@ -73,8 +82,8 @@ jobs:
           
           # 构建并推送GitHub Packages镜像
           docker buildx build --push \
-            --tag ghcr.io/${{ github.actor }}/simple_sq_musuc_plus:v$APP_VERSION \
-            --tag ghcr.io/${{ github.actor }}/simple_sq_musuc_plus:latest \
+            --tag ghcr.io/${{ github.actor }}/simple_sq_music_plus:v$APP_VERSION \
+            --tag ghcr.io/${{ github.actor }}/simple_sq_music_plus:latest \
             -f Dockerfile .
 
   release:
@@ -85,22 +94,39 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: java-artifact
+
       - name: Display structure of downloaded files
         run: ls -R
+
       - name: Get JAR file name
         id: jar_name
         run: |
           JAR_FILE=$(ls *.jar | grep -v sources | head -n 1)
           echo "JAR_FILE=$JAR_FILE" >> $GITHUB_ENV
           echo "jar_file=$JAR_FILE" >> $GITHUB_OUTPUT
+
       - name: Read Version from Artifact
         id: app_version
         run: |
           VERSION=$(cat version.txt)
           echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "APP_VERSION=$VERSION" >> $GITHUB_ENV
           echo "APP_VERSION: $VERSION"
+
+      - name: Check if tag exists
+        id: check_tag
+        run: |
+          if gh release view v${{ steps.app_version.outputs.version }}; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Create Release
         id: create_release
+        if: steps.check_tag.outputs.exists == 'false'
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -111,6 +137,7 @@ jobs:
           prerelease: false
 
       - name: Upload Release Asset
+        if: steps.check_tag.outputs.exists == 'false'
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
