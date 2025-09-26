@@ -32,4 +32,4 @@ build/
 ### VS Code ###
 .vscode/
 ### package-lock 在vue目录下的###
-.vue/package-lock.json
+vue/package-lock.json

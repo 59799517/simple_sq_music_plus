@@ -53,7 +53,7 @@ jobs:
           # 登录阿里云镜像仓库
           docker login --username=$DOCKER_USERNAME --password=$DOCKER_PASSWORD registry.cn-hangzhou.aliyuncs.com
           # 使用Dockerfile构建镜像
-          docker build . --file Dockerfile --tag registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:v$APP_VERSION
+          docker build . --file Dockerfile_jar --tag registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:v$APP_VERSION
           # 推送镜像到镜像仓库
           docker push registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:v$APP_VERSION
       -  name: Push to GitHub Packages
@@ -63,7 +63,7 @@ jobs:
            docker login ghcr.io --username=${{ github.actor }} --password=${{ secrets.GITHUB_TOKEN }}
            
            # 构建 Docker 镜像
-           docker build . --file Dockerfile --tag ghcr.io/${{ github.actor }}/simple_sq_music_plus:v$APP_VERSION
+           docker build . --file Dockerfile_jar --tag ghcr.io/${{ github.actor }}/simple_sq_music_plus:v$APP_VERSION
            
            # 推送镜像到 GitHub Packages
            docker push ghcr.io/${{ github.actor }}/simple_sq_music_plus:v$APP_VERSION
