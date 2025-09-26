@@ -56,6 +56,39 @@ check_tools() {
     success "所有必要工具已安装"
 }
 
+# 检查 sqmusic_mysql 容器是否存在
+check_mysql_container() {
+    info "检查 sqmusic_mysql 容器是否存在..."
+    
+    if docker ps -a --format "{{.Names}}" | grep -q "^sqmusic_mysql$"; then
+        success "发现 sqmusic_mysql 容器"
+        return 0
+    else
+        warn "未发现 sqmusic_mysql 数据库容器"
+        echo ""
+        echo "请选择操作:"
+        echo "  1) 结束脚本"
+        echo "  2) 忽略并继续执行"
+        echo ""
+        read -p "请输入选项 (1 或 2): " choice
+        
+        case $choice in
+            1)
+                info "用户选择结束脚本"
+                exit 0
+                ;;
+            2)
+                warn "用户选择忽略并继续执行"
+                return 0
+                ;;
+            *)
+                error "无效选项，结束脚本"
+                exit 1
+                ;;
+        esac
+    fi
+}
+
 # 检查 GitHub 仓库的最新 release
 check_github_release() {
     local repo_owner=$1
@@ -71,6 +104,9 @@ check_github_release() {
     if echo "$response" | jq -e .tag_name &>/dev/null; then
         local tag_name
         tag_name=$(echo "$response" | jq -r '.tag_name')
+        
+        # 清理标签名称，确保没有多余的空白字符
+        tag_name=$(echo "$tag_name" | tr -d '\n\r ')
         echo "$tag_name"
     else
         error "无法获取仓库 $repo_owner/$repo_name 的 release 信息"
@@ -199,6 +235,9 @@ main() {
     
     # 检查必要工具
     check_tools
+    
+    # 检查 sqmusic_mysql 容器
+    check_mysql_container
     
     # 检查 simple_sq_music_plus 仓库
     local main_repo_owner="59799517"
