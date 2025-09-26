@@ -97,11 +97,11 @@ let loginWeb = (username,password)=>{
     <h2>SqMusic</h2>
     <div class="input-box">
       <label>账号</label>
-      <n-input type="text" placeholder="请输入用户名" v-model:value="loginUsername" />
+      <n-input type="text" :on-update:value="loginUsername"	 placeholder="请输入用户名" v-model:value="loginUsername" />
     </div>
     <div class="input-box">
       <label>密码</label>
-      <n-input type="password"  v-model:value="loginPassword" placeholder="请输入密码" />
+      <n-input type="password"  :on-update:value="loginPassword" v-model:value="loginPassword" placeholder="请输入密码" />
     </div>
     <div class="btn-box">
       <div>

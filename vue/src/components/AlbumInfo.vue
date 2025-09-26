@@ -1,11 +1,12 @@
 <script setup lang="js">
-import { ref, onMounted } from 'vue'
-import { NImage, NGrid, NGridItem, NCard, NSpace, NTag, NAvatar, NEmpty, NSpin, NThing, NGradientText, NEllipsis, NFlex, NButton } from 'naive-ui'
+import { ref, watch,onMounted } from 'vue'
+import { NImage, NGrid, NCard, NSpace, NTag, NEmpty, NSpin, NGradientText, NEllipsis, NFlex, NButton } from 'naive-ui'
 import {getAlbumInfo, musicDownload, musicDownloadAlbum} from '../utils/api.js'
-import playListStore from '../stores/playList.js'
-import { storeToRefs } from 'pinia'
+import configInfoStore from "../stores/config";
+import { usePlayListStore } from "../stores/playList";
 
-const stplayListStore = playListStore()
+const stconfigInfoStore = configInfoStore()
+const stplayListStore = usePlayListStore()
 
 const props = defineProps({
   id: {
@@ -30,10 +31,11 @@ const albumData = ref({
 
 const loading = ref(true)
 
+// 显示播放按钮
+let showbutton = ref(stconfigInfoStore.showPlayButton)
+
 onMounted(() => {
-  console.log("当前专辑参数是：id=" + props.id + ", plugName=" + props.plugName)
   getAlbumInfo(props.id, props.plugName).then(response => {
-    console.log("当前专辑数据是：" + JSON.stringify(response.data.data))
     albumData.value = response.data.data
     loading.value = false
   }).catch(error => {
@@ -41,6 +43,15 @@ onMounted(() => {
     loading.value = false
   })
 })
+
+//监听播放设置
+watch(
+    () => stconfigInfoStore.showPlayButton,
+    (newValue, oldValue) => {
+      console.log("v3专辑按钮显示：", newValue)
+      showbutton.value = newValue
+    }
+);
 
 // 播放歌曲
 const playSong = (data) => {
@@ -182,7 +193,7 @@ const downloadAlbum = () => {
             </div>
           </n-space>
           <n-space>
-            <n-button @click="playAlbum">
+            <n-button @click="playAlbum" v-if="showbutton">
               播放整张专辑
             </n-button>
             <n-button @click="downloadAlbum">
@@ -234,7 +245,7 @@ const downloadAlbum = () => {
                     {{ bits }}
                   </n-tag>
                 </n-flex>
-                <n-button v-if="song.bits.length>0"
+                <n-button v-if="song.bits.length>0 && showbutton"
                   type="success"
                   ghost
                   size="small"

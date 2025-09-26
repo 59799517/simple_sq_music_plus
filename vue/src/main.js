@@ -18,7 +18,7 @@ app.use(pinia)
 // 然后设置前端版本号
 import configInfoStore from './stores/config'
 const configStore = configInfoStore()
-configStore.setVersion('v' + __APP_VERSION__)
+configStore.setUiVersion('v' + __APP_VERSION__)
 
 // 继续其他初始化
 app.use(router).provide('playerData', playerData).mount('#app')

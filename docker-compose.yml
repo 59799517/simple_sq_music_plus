@@ -24,8 +24,8 @@ services:
 
   sqmusic_web:
     build:
-      context: ./
-      dockerfile: Dockerfile.frontend
+      context: ./vue/
+      dockerfile: Dockerfile
       args:
         - NODE_OPTIONS=--max-old-space-size=4096
     container_name: sqmusic_web

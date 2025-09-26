@@ -5,7 +5,7 @@ FROM node:16 AS builder
 WORKDIR /app
 
 # 复制前端源码
-COPY vue /app
+COPY . /app
 
 # 设置 npm 镜像源为淘宝镜像，提高下载速度（可选）
 # RUN npm config set registry https://registry.npmmirror.com
@@ -42,3 +42,4 @@ EXPOSE 80
 
 # 启动 Nginx
 CMD ["nginx", "-g", "daemon off;"]
+

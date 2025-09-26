@@ -23,17 +23,22 @@ const activate = (place) => {
   <div>
     <div class="header">
       <div class="box"  >
-        <h2>SqMusic</h2>
-        <p>
-          <n-gradient-text :size="12" type="success" >
-            &nbsp;前端: {{stconfigInfoStore.version}}
-          </n-gradient-text>
-        </p>
-        <p v-if="stconfigInfoStore.version !== stconfigInfoStore.backendVersion">
-          <n-gradient-text :size="12" type="info" >
-            &nbsp;后端: {{stconfigInfoStore.backendVersion}}
-          </n-gradient-text>
-        </p>
+        <n-popover trigger="hover">
+          <template #trigger>
+            <h2>SqMusic</h2>
+          </template>
+          <p>
+            <n-gradient-text :size="12" type="success" >
+              &nbsp;前端版本: {{stconfigInfoStore.uiversion}}
+            </n-gradient-text>
+          </p>
+          <p v-if="stconfigInfoStore.version !== stconfigInfoStore.backendVersion">
+            <n-gradient-text :size="12" type="info" >
+              &nbsp;后端版本: {{stconfigInfoStore.version}}
+            </n-gradient-text>
+          </p>
+        </n-popover>
+
       </div>
       <div class="box">
         <!-- 修改路径，添加 /home 前缀 -->

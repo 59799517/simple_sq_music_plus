@@ -402,19 +402,22 @@ let  handleFinish = ({
           :tab="pluginName"
       >
         <n-list>
-          <n-list-item v-for="(config, index) in configItems" :key="config.configKey || index">
-            <n-popover trigger="hover">
-              <template #trigger>
-                <n-thing :title="config.configName" :description="config.configValue" />
+          <div v-for="(config, index) in configItems" :key="config.configKey || index">
+            <n-list-item  v-if="config.configShow===1">
+              <n-popover trigger="hover" >
+                <template #trigger>
+                  <n-thing :title="config.configName" :description="config.configValue" />
+                </template>
+                <span>{{config.configRemark}}</span>
+              </n-popover>
+              <template #suffix>
+                <n-button size="small" @click="openModal(config)">
+                  修改
+                </n-button>
               </template>
-              <span>{{config.configRemark}}</span>
-            </n-popover>
-            <template #suffix>
-              <n-button size="small" @click="openModal(config)">
-                修改
-              </n-button>
-            </template>
-          </n-list-item>
+            </n-list-item>
+          </div>
+
         </n-list>
       </n-tab-pane>
       <n-tab-pane name="no-plugins" tab="无插件" v-if="Object.keys(plugConfig).length === 0">

@@ -5,6 +5,8 @@ const configInfoStore = defineStore('configInfo', {
         data: [],
         option: [],
         version: '',
+        uiversion: '',
+        showPlayButton: false,
         float_bottom: 50,
         float_left:300 ,
         motionPosition: {
@@ -20,12 +22,19 @@ const configInfoStore = defineStore('configInfo', {
     actions: {
         setData(data) {
             this.data = data
+            //找到播放按钮设置
+            this.showPlayButton = this.data.find(item => item.configKey === 'system.show.play.url')?.configValue === 'true'
+            console.log('播放按钮是否显示',this.showPlayButton)
+
         },
         setOption(option) {
             this.option = option
         },
         setVersion(version) {
             this.version = version
+        },
+        setUiVersion(version) {
+            this.uiversion = version
         },
         clearData() {
             this.data = []

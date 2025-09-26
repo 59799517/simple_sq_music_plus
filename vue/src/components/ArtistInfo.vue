@@ -93,9 +93,7 @@ const downloadAllAlbums = () => {
 }
 
 onMounted(() => {
-  console.log("当前歌手参数是：id=" + props.id + ", plugName=" + props.plugName)
   getArtistInfo(props.id, props.plugName).then(response => {
-    console.log("当前歌手数据是：" + JSON.stringify(response.data.data))
     artistData.value = response.data.data
     loading.value = false
   }).catch(error => {
@@ -161,9 +159,6 @@ onMounted(() => {
                   </n-gradient-text>
                   </n-ellipsis>
                   <div style="font-size: 12px; color: #999;">{{ decodeText(album.albumTime) }}</div>
-  <!--                <n-button>-->
-  <!--                  查看-->
-  <!--                </n-button>-->
 
                 </n-flex>
               </n-flex>

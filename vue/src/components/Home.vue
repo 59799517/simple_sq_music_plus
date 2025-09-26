@@ -2,7 +2,6 @@
 import TopWitge from "./V3TopWitge.vue";
 import PlayMusic from "./PlayMusic.vue";
 import { useRoute, useRouter } from 'vue-router'
-import vDraggable from "../utils/v-draggable";
 import { ref,watch ,nextTick, onMounted, onUnmounted } from 'vue';
 import {NButton, NSpace,NTag,NImage,NAvatar,NText} from "naive-ui";
 import usePlayListStore from "../stores/playList";
@@ -15,11 +14,9 @@ const stconfigInfoStore =configInfoStore()
 
 
 // 添加一个测试方法，验证 pushPlayListAndPlay 是否存在
-onMounted(() => {
-  console.log('stplayListStore 方法检查:')
-  console.log('pushPlayListAndPlay exists:', typeof stplayListStore.pushPlayListAndPlay === 'function')
-  console.log('addToPlayList exists:', typeof stplayListStore.addToPlayList === 'function')
-})
+// onMounted(() => {
+//
+// })
 
 const audioElement = ref(null)
 const showMusicDetail = ref(false)

@@ -1,7 +1,17 @@
 # Vue 3 + Vite
 
-This template should help get you started developing with Vue 3 in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
 
-## Recommended IDE Setup
+ [simple_sq_music_plus](https://github.com/59799517/simple_sq_music_plus)的前端页面
 
-- [VS Code](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur) + [TypeScript Vue Plugin (Volar)](https://marketplace.visualstudio.com/items?itemName=Vue.vscode-typescript-vue-plugin).
+### 使用方法：
+1. npm install
+2. npm run dev
+
+### 打包
+npm run build
+
+### docker 打包
+docker build -t simple_sq_music_plus_web .
+
+### 修改后端接口地址：
+src/utils/api.js 文件修改即可

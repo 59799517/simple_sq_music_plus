@@ -21,6 +21,9 @@ const stconfigInfoStore =configInfoStore()
 const stplayListStore  = playListStore()
 
 
+
+
+
 // 搜索关键字
 let keyword_value = ref("")
 // 每页长度（禁止修改）
@@ -35,6 +38,8 @@ let item_total = ref(1);
 let search_tips = ref([])
 
 let show_spin = ref(false)
+// 显示播放按钮
+let showbutton = ref(stconfigInfoStore.showPlayButton)
 
 
 
@@ -51,6 +56,21 @@ let show_album_modal = ref(false)
 let album_info_data = ref({
 
 })
+watch(
+    () => stconfigInfoStore.showPlayButton,
+    (newValue, oldValue) => {
+      console.log("v3搜索按钮显示：", stconfigInfoStore.showPlayButton)
+      showbutton.value = stconfigInfoStore.showPlayButton
+    }
+);
+
+
+
+// onMounted(() => {
+//
+// })
+
+
 
 // 播放整张专辑
 const playAlbum = async (row) => {
@@ -132,6 +152,10 @@ let handlePageChange=(curPage)=>{
   pageIndex.value=curPage;
   onSecrch();
 }
+let pageSizeUpdata=(number)=>{
+  pageSizes.value = number
+  onSecrch();
+}
 
 
 //点击搜索或者回车的搜索
@@ -139,7 +163,7 @@ let onSecrch = ()=>{
   window.$loadingBar.start()
   show_spin.value=true;
   musicSearch(plugType_value.value, shear_select_value.value, keyword_value.value, pageSize.value, pageIndex.value).then(value=>{
-    window.$message.info("搜索成功:"+keyword_value.value+"  searType："+shear_select_value.value+"  plugName："+plugType_value.value)
+    // window.$message.info("搜索成功:"+keyword_value.value+"  searType："+shear_select_value.value+"  plugName："+plugType_value.value)
     if (value.data.code === 200) {
       nextTick(()=>{
         list_data.value = value.data.data.records;
@@ -332,7 +356,6 @@ let TableColumns = [
               ghost: true,
               type: 'warning',
               onClick: () => {
-                console.log("点击下载按钮："+JSON.stringify(row))
                 musicDownload(row,tagKey).then(value=>{
                   if (value.data.code===200){
                     window.$message.success("开始下载")
@@ -349,46 +372,6 @@ let TableColumns = [
         )
       })
       return tags
-    }
-  },
-  {
-    title: '播放',
-    maxWidth: 200,
-    width: 100,
-    minWidth: 100,
-    resizable: true,
-    align: 'left',
-    ellipsis: {
-      tooltip: true
-    },
-    render(row) {
-      return h(
-          NButton,
-          {
-            style: {
-              marginRight: '6px'
-            },
-            ghost: true,
-            type: 'success',
-            onClick: () => {
-              stplayListStore.pushPlayListAndPlay(row)
-              console.log("当前播放信息："+JSON.stringify(nowPlay.value))
-              //
-
-
-              // delDownloadInfo(row.id).then(value=>{
-              //   if (value.data.code===200){
-              // window.$message.success("操作成功点击了："+"播放")
-              //   }else{
-              //     window.$message.error("操作失败："+value.data.msg)
-              //   }
-              // })
-            }
-          },
-          {
-            default: () => '播放'
-          }
-      )
     }
   },
 ]
@@ -486,7 +469,9 @@ let album_TableColumns = [
 
     }
 
-  },{
+  },
+
+  {
     title: '操作',
     maxWidth: 200,
     width: 150,
@@ -497,23 +482,55 @@ let album_TableColumns = [
       tooltip: true
     },
     render(row) {
+      if (showbutton.value){
+        return [
+          h(
+              NButton,
+              {
+                style: {
+                  marginRight: '6px'
+                },
+                ghost: true,
+                type: 'success',
+                onClick: () => {
+                  //一会写下载专辑接口
+                  musicDownloadAlbum(row).then(value=>{
+                    if (value.data.code===200){
+                      window.$message.success("开始下载当前专辑：自动适配最高音质下载")
+                    }else{
+                      window.$message.error("操作失败："+value.data.msg)
+                    }
+                  })
+
+                }
+              },
+              {
+                default: () => '下载专辑'
+              }
+          )
+        ]
+      }
       return [
         h(
-          NButton,
-          {
-            style: {
-              marginRight: '6px'
+            NButton,
+            {
+              style: {
+                marginRight: '6px'
+              },
+              ghost: true,
+              type: 'primary',
+              onClick: () => {
+                playAlbum(row)
+              }
             },
-            ghost: true,
-            type: 'primary',
-            onClick: () => {
-              playAlbum(row)
+            {
+              default: () => '播放专辑'
             }
-          },
-          {
-            default: () => '播放专辑'
-          }
         ),
+
+
+
+
         h(
           NButton,
           {
@@ -662,7 +679,41 @@ const computedTableColumns = computed(() => {
   } else if (shear_select_value.value === 'artist') {
     return artist_TableColumns;
   } else {
-    return TableColumns;
+    if (showbutton.value){
+      const baseColumns = [...TableColumns];
+      baseColumns.push({
+        title: '播放',
+        maxWidth: 200,
+        width: 100,
+        minWidth: 100,
+        resizable: true,
+        align: 'left',
+        ellipsis: {
+          tooltip: true
+        },
+        render(row) {
+          return h(
+              NButton,
+              {
+                style: {
+                  marginRight: '6px'
+                },
+                ghost: true,
+                type: 'success',
+                onClick: () => {
+                  stplayListStore.pushPlayListAndPlay(row)
+                }
+              },
+              {
+                default: () => '播放'
+              }
+          )
+        }
+      });
+      return baseColumns;
+    }else{
+      return TableColumns;
+    }
   }
 });
 
@@ -748,11 +799,38 @@ let update_select_type=(value, option)=>{
             :columns="computedTableColumns"
             :data="list_data"
             remote
-            :pagination="paginationRef"
             :on-update:page="handlePageChange"
         />
 
+
+
+
       </div>
+      <n-flex justify="center">
+        <n-card title="">
+          <n-flex justify="center">
+            <n-pagination
+                v-model:page="pageIndex"
+                :item-count="item_total"
+                size="large"
+                :page-sizes="[10,20,50,100]"
+                show-quick-jumper
+                show-size-picker
+                @update:page="handlePageChange"
+                @update:page-size="pageSizeUpdata"
+            >
+              <template #goto >
+                跳转
+              </template>
+              <template #suffix>
+                页
+              </template>
+
+            </n-pagination>
+          </n-flex>
+
+        </n-card>
+      </n-flex>
 
     </div>
 
