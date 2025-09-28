@@ -71,7 +71,7 @@ jobs:
         uses: ad-m/github-push-action@master
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          branch: 3.0
+          branch: ${{ github.ref }}
       - name: List Environment Variables
         run: env
       - name: Build with Maven
