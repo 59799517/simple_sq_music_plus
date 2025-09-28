@@ -7,9 +7,6 @@ server:
   port: 8099
 spring:
   datasource:
-#    url: jdbc:sqlite::resource:sqlite/sqmusic.db
-#    url: jdbc:sqlite:/D:\\music\\sqmusic.db
-#    url: jdbc:sqlite:/cache/sqmusic.db
     url: jdbc:mysql://${DB_IP:localhost}:${DB_PORT:3306}/${DB_NAME:sqmusicv3}?useUnicode=true&useSSL=false&characterEncoding=utf8&serverTimezone=UTC&rewriteBatchedStatements=true&allowMultiQueries=true
     driver-class-name: com.mysql.jdbc.Driver
     username: ${DB_USERNAME:root}
@@ -89,7 +86,7 @@ sa-token:
   is-print: false
   jwt-secret-key: xNQRcY7FgHM1dyJCoZKmcmksNT7aR0FlqvRCWJbmD
 
-version: 3.0.8
+version: 3.0.9
 webversion: 3.0.5
 
 
