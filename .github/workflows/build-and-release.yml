@@ -41,8 +41,13 @@ jobs:
           echo "WEB_VERSION: $WEBVERSION"
           echo "$VERSION" > version.txt
           echo "$WEBVERSION" > webversion.txt
-      - name: Replace version in docker-compose files
+      - name: Generate docker-compose files from templates
         run: |
+          # 从模板生成 docker-compose.yml
+          cp docker-compose-template.yml docker-compose.yml
+          # 从模板生成 docker-compose-local.yml
+          cp docker-compose-local-template.yml docker-compose-local.yml
+          
           # 替换 docker-compose.yml 中的版本号
           sed -i "s/v\[version\]/v$APP_VERSION/g" docker-compose.yml
           sed -i "s/v\[webversion\]/v$WEB_VERSION/g" docker-compose.yml
@@ -51,7 +56,7 @@ jobs:
           sed -i "s/v\[version\]/v$APP_VERSION/g" docker-compose-local.yml
           sed -i "s/v\[webversion\]/v$WEB_VERSION/g" docker-compose-local.yml
           
-          # 显示替换后的文件内容以供验证
+          # 显示生成的文件内容以供验证
           echo "=== docker-compose.yml ==="
           cat docker-compose.yml
           echo -e "\n=== docker-compose-local.yml ==="
