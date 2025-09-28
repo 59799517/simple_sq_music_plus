@@ -2,7 +2,7 @@ name: Java CI with Maven and Release
 
 on:
   push:
-    branches: [ 3.0 ] # 只在提交到2.0分支时触发
+    branches: [ 3.0 ] # 只在提交到3.0分支时触发
 
 env:
   APP_VERSION: ""
@@ -56,6 +56,17 @@ jobs:
           cat docker-compose.yml
           echo -e "\n=== docker-compose-local.yml ==="
           cat docker-compose-local.yml
+      - name: Commit updated docker-compose files
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add docker-compose.yml docker-compose-local.yml
+          git commit -m "Update docker-compose files with version $APP_VERSION and web version $WEB_VERSION" || echo "No changes to commit"
+      - name: Push changes
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ github.ref }}
       - name: List Environment Variables
         run: env
       - name: Build with Maven
@@ -118,7 +129,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ steps.app_version.outputs.version }} # 从 artifact 中读取版本号          release_name: Release ${{ env.APP_VERSION }}
+          tag_name: ${{ steps.app_version.outputs.version }}
           release_name: Release ${{ steps.app_version.outputs.version }}
           draft: false
           prerelease: false
