@@ -2,6 +2,22 @@
 
 # 综合检查脚本：检查Docker网络和容器状态
 
+# 数据库配置
+DB_IP="mysql"
+DB_PORT="3306"
+DB_NAME="sqmusicv3"
+DB_USERNAME="root"
+DB_PASSWORD="sqmusicv3password"
+
+# 音乐目录配置
+MUSIC_DIR_HOST="$(pwd)/../music"
+MUSIC_DIR_CONTAINER="/music"
+
+# 容器名称配置
+CONTAINER_MYSQL="sqmusic_mysql"
+CONTAINER_WEB="sqmusic_web"
+CONTAINER_MAIN="sqmusic_main"
+
 # 定义全局网络名称
 NETWORK_NAME="simple_sq_music_plus_sq-app-network"
 
@@ -226,9 +242,9 @@ update_container() {
     
     if [ "$container_name" = "sqmusic_main" ]; then
         # 拉取最新的 sqmusic_main 镜像
-        info "正在拉取镜像: ghcr.io/59799517/simple_sq_musuc_plus:$latest_version"
-        if docker pull "ghcr.io/59799517/simple_sq_musuc_plus:$latest_version"; then
-            success "成功拉取镜像: ghcr.io/59799517/simple_sq_musuc_plus:$latest_version"
+        info "正在拉取镜像: registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:v$latest_version"
+        if docker pull "registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:v$latest_version"; then
+            success "成功拉取镜像: registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:v$latest_version"
             
             # 停止并删除旧容器
             info "正在停止容器: $container_name"
@@ -242,13 +258,13 @@ update_container() {
             local run_cmd="docker run -d \
                 --name $container_name \
                 --network $NETWORK_NAME \
-                -e DB_IP=mysql \
-                -e DB_PORT=3306 \
-                -e DB_NAME=sqmusicv3 \
-                -e DB_USERNAME=root \
-                -e DB_PASSWORD=sqmusicv3password \
-                -v $(pwd)/music:/music \
-                ghcr.io/59799517/simple_sq_musuc_plus:$latest_version"
+                -e DB_IP=$DB_IP \
+                -e DB_PORT=$DB_PORT \
+                -e DB_NAME=$DB_NAME \
+                -e DB_USERNAME=$DB_USERNAME \
+                -e DB_PASSWORD=$DB_PASSWORD \
+                -v $MUSIC_DIR_HOST:$MUSIC_DIR_CONTAINER \
+                registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:v$latest_version"
             
             info "执行命令: $run_cmd"
             
@@ -258,13 +274,13 @@ update_container() {
                 error "启动新容器失败: $container_name"
             fi
         else
-            error "拉取镜像失败: ghcr.io/59799517/simple_sq_musuc_plus:$latest_version"
+            error "拉取镜像失败: registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:v$latest_version"
         fi
     elif [ "$container_name" = "sqmusic_web" ]; then
         # 拉取最新的 sqmusic_web 镜像
-        info "正在拉取镜像: ghcr.io/59799517/simple_sq_music_plus_web:$latest_version"
-        if docker pull "ghcr.io/59799517/simple_sq_music_plus_web:$latest_version"; then
-            success "成功拉取镜像: ghcr.io/59799517/simple_sq_music_plus_web:$latest_version"
+        info "正在拉取镜像: registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus_web:$latest_version"
+        if docker pull "registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus_web:$latest_version"; then
+            success "成功拉取镜像: registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus_web:$latest_version"
             
             # 停止并删除旧容器
             info "正在停止容器: $container_name"
@@ -279,7 +295,7 @@ update_container() {
                 --name $container_name \
                 --network $NETWORK_NAME \
                 -p 8096:80 \
-                ghcr.io/59799517/simple_sq_music_plus_web:$latest_version"
+                registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus_web:$latest_version"
             
             info "执行命令: $run_cmd"
             
@@ -289,7 +305,7 @@ update_container() {
                 error "启动新容器失败: $container_name"
             fi
         else
-            error "拉取镜像失败: ghcr.io/59799517/simple_sq_music_plus_web:$latest_version"
+            error "拉取镜像失败: registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus_web:$latest_version"
         fi
     fi
 }
@@ -381,7 +397,7 @@ main() {
     fi
     
     # 定义要检查的容器列表
-    containers=("sqmusic_mysql" "sqmusic_web" "sqmusic_main")
+    containers=("$CONTAINER_MYSQL" "$CONTAINER_WEB" "$CONTAINER_MAIN")
     
     # 记录不存在的容器数量
     local not_exist_count=0
@@ -421,7 +437,7 @@ show_help() {
     echo "  -h, --help     显示帮助信息"
     echo ""
     echo "此脚本会按顺序执行以下检查:"
-    echo "  1. 检查Docker网络 sq-app-network 是否存在"
+    echo "  1. 检查Docker网络 $NETWORK_NAME 是否存在"
     echo "  2. 如果网络不存在，提示运行 docker-compose 并退出"
     echo "  3. 如果网络存在，检查容器状态"
     echo "  4. 如果所有容器都不存在，提示运行 docker-compose 并退出"

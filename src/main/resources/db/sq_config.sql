@@ -1,4 +1,4 @@
-INSERT INTO sqmusicv3.sq_config (config_name,config_value,config_key,config_type,config_show,config_remark,config_null_check,config_disabled) VALUES
+INSERT INTO sq_config (config_name,config_value,config_key,config_type,config_show,config_remark,config_null_check,config_disabled) VALUES
                                                                                                                                                   ('音乐下载路径','/music','system.download.path','path',1,'音乐下载路径',1,0),
                                                                                                                                                   ('是否忽略伴奏片段等格式','true','system.ignore.accompaniment','boolean',1,'例如 伴奏，片段等',1,0),
                                                                                                                                                   ('文件存在时不下载','true','system.file.exist.not.download','boolean',1,'文件存在时不下载',1,0),
@@ -9,7 +9,7 @@ INSERT INTO sqmusicv3.sq_config (config_name,config_value,config_key,config_type
                                                                                                                                                   ('排除的歌单名称','示例1|示例2','system.sync.playlist.exclude','input',1,'排除的歌单名称多个|（管道符）分割',0,0),
                                                                                                                                                   ('排除的专辑名称','示例1|示例2','system.sync.album.exclude','input',1,'排除的专辑名称多个|（管道符）分割',0,0),
                                                                                                                                                   ('排除的歌手名称','示例1|示例2','system.sync.artists.exclude','input',1,'排除的歌手名称多个|（管道符）分割',0,0);
-INSERT INTO sqmusicv3.sq_config (config_name,config_value,config_key,config_type,config_show,config_remark,config_null_check,config_disabled) VALUES
+INSERT INTO sq_config (config_name,config_value,config_key,config_type,config_show,config_remark,config_null_check,config_disabled) VALUES
                                                                                                                                                   ('是否显示播放连接','false','system.show.play.url','boolean',1,'是否显示播放连接（下载链接）',1,0),
                                                                                                                                                   ('QQ音乐插件启用','false','plug.qqvip.open','boolean',1,'开启QQvip插件类型',1,0),
                                                                                                                                                   ('QQ音乐自动刷新登录','false','plug.qqvip.auto.refresh.login','boolean',1,'是否开启QQ音乐自动刷新登录信息',1,0),
@@ -20,7 +20,7 @@ INSERT INTO sqmusicv3.sq_config (config_name,config_value,config_key,config_type
                                                                                                                                                   ('QQ音乐cookie','','plug.qqvip.cookie','input',0,'看看就行尽量别改',1,1),
                                                                                                                                                   ('QQ音乐qrcode','','plug.qqvip.qrcode','input',0,'看看就行尽量别改',1,1),
                                                                                                                                                   ('开启网易云音乐插件','true','plug.netease.open','boolean',1,'开启网易云音乐插件',1,0);
-INSERT INTO sqmusicv3.sq_config (config_name,config_value,config_key,config_type,config_show,config_remark,config_null_check,config_disabled) VALUES
+INSERT INTO sq_config (config_name,config_value,config_key,config_type,config_show,config_remark,config_null_check,config_disabled) VALUES
                                                                                                                                                   ('网易云音乐API地址','https://wyy.xhily.com;http://111.229.38.178:3333;http://dg-t.cn:3000;http://plugin.changsheng.space:3000;https://zm.armoe.cn','plug.netease.baseurl','input',1,'类似http://xxx.xxxx.com(后边不要带/)多个;分割',1,0),
                                                                                                                                                   ('网易云音乐AP匿名登录地址','/register/anonimous','plug.netease.cookieurl','input',1,'一般是API地址加上/register/anonimous',1,0),
                                                                                                                                                   ('网易云音乐用户信息','','plug.netease.cookie','input',1,'网易云音乐的cookie',1,0),
@@ -31,7 +31,7 @@ INSERT INTO sqmusicv3.sq_config (config_name,config_value,config_key,config_type
                                                                                                                                                   ('酷狗用户信息','','plug.kg.user.info','input',1,'酷狗用户信息',1,0),
                                                                                                                                                   ('酷狗二维码信息','','plug.kg.qrcode.code','input',0,'酷狗二维码信息',1,1),
                                                                                                                                                   ('酷狗微信二维码信息','','plug.kg.qrcode.wx.code','input',0,'酷狗微信二维码信息',1,1);
-INSERT INTO sqmusicv3.sq_config (config_name,config_value,config_key,config_type,config_show,config_remark,config_null_check,config_disabled) VALUES
+INSERT INTO sq_config (config_name,config_value,config_key,config_type,config_show,config_remark,config_null_check,config_disabled) VALUES
                                                                                                                                                   ('酷狗开启自动下载我收藏的歌单','true','plug.kg.sync.my.collect.playlist','boolean',1,'忽略歌单名称可以通过排除歌单名称设置',1,0),
                                                                                                                                                   ('开启自动签到','true','plug.kg.sign.open','boolean',1,'定时自动获得VIP',1,0),
                                                                                                                                                   ('酷狗最后一次自动签到时间','','plug.kg.sign.last.time','input',1,'酷狗最后一次自动签到时间',1,1),
