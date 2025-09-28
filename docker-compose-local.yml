@@ -5,7 +5,7 @@ services:
     build:
       context: ./
       dockerfile: Dockerfile.main
-    image: sqmusic_main:v3.0.7  # 添加具体版本号
+    image: sqmusic_main:v3.0.8  # 添加具体版本号
     container_name: sqmusic_main
     environment:
       - DB_IP=mysql
