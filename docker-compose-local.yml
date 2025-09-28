@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  sqmusic_main:
+    build:
+      context: ./
+      dockerfile: Dockerfile.main
+    image: sqmusic_main:v3.0.7  # 添加具体版本号
+    container_name: sqmusic_main
+    environment:
+      - DB_IP=mysql
+      - DB_PORT=3306
+      - DB_NAME=sqmusicv3
+      - DB_USERNAME=root
+      - DB_PASSWORD=sqmusicv3password
+    volumes:
+      - ./music:/music
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - sq-app-network
+    expose:
+      - "8099"
+
+  sqmusic_web:
+    build:
+      context: ./vue/
+      dockerfile: Dockerfile
+      args:
+        - NODE_OPTIONS=--max-old-space-size=4096
+    image: sqmusic_web:v3.0.5
+    container_name: sqmusic_web
+    ports:
+      - "8096:80"
+    networks:
+      - sq-app-network
+    depends_on:
+      - sqmusic_main
+
+
+  mysql:
+    image: mysql:5.7
+    container_name: sqmusic_mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: sqmusicv3password
+      MYSQL_DATABASE: sqmusicv3
+    volumes:
+      - ./mysql_data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    networks:
+      - sq-app-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  sq-app-network:
+    driver: bridge
