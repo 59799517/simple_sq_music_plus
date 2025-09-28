@@ -2,7 +2,10 @@ version: '3.8'
 
 services:
   sqmusic_main:
-    image: registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:v[version]
+    build:
+      context: ./
+      dockerfile: Dockerfile.main
+    image: sqmusic_main:v[version]  # 添加具体版本号
     container_name: sqmusic_main
     environment:
       - DB_IP=mysql
@@ -21,7 +24,12 @@ services:
       - "8099"
 
   sqmusic_web:
-    image: registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus_web:v[webversion]
+    build:
+      context: ./vue/
+      dockerfile: Dockerfile
+      args:
+        - NODE_OPTIONS=--max-old-space-size=4096
+    image: sqmusic_web:v[webversion]
     container_name: sqmusic_web
     ports:
       - "8096:80"
@@ -29,6 +37,7 @@ services:
       - sq-app-network
     depends_on:
       - sqmusic_main
+
 
   mysql:
     image: mysql:5.7

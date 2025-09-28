@@ -6,6 +6,7 @@ on:
 
 env:
   APP_VERSION: ""
+  WEB_VERSION: ""
   DOCKER_USERNAME: "${{ secrets.DOCKER_USERNAME }}"
   DOCKER_PASSWORD: "${{ secrets.DOCKER_PASSWORD }}"
 
@@ -31,10 +32,30 @@ jobs:
         id: app_version
         run: |
           VERSION=$(cd src/main/resources && yq e '.version' application.yml)
+          WEBVERSION=$(cd src/main/resources && yq e '.webversion' application.yml)
           echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "webversion=$WEBVERSION" >> $GITHUB_OUTPUT
           echo "APP_VERSION=$VERSION" >> $GITHUB_ENV
+          echo "WEB_VERSION=$WEBVERSION" >> $GITHUB_ENV
           echo "APP_VERSION: $VERSION"
+          echo "WEB_VERSION: $WEBVERSION"
           echo "$VERSION" > version.txt
+          echo "$WEBVERSION" > webversion.txt
+      - name: Replace version in docker-compose files
+        run: |
+          # 替换 docker-compose.yml 中的版本号
+          sed -i "s/v\[version\]/v$APP_VERSION/g" docker-compose.yml
+          sed -i "s/v\[webversion\]/v$WEB_VERSION/g" docker-compose.yml
+          
+          # 替换 docker-compose-local.yml 中的版本号
+          sed -i "s/v\[version\]/v$APP_VERSION/g" docker-compose-local.yml
+          sed -i "s/v\[webversion\]/v$WEB_VERSION/g" docker-compose-local.yml
+          
+          # 显示替换后的文件内容以供验证
+          echo "=== docker-compose.yml ==="
+          cat docker-compose.yml
+          echo -e "\n=== docker-compose-local.yml ==="
+          cat docker-compose-local.yml
       - name: List Environment Variables
         run: env
       - name: Build with Maven
@@ -47,6 +68,9 @@ jobs:
           path: |
             target/*.jar 
             version.txt
+            webversion.txt
+            docker-compose.yml
+            docker-compose-local.yml
       - name: Build the Docker image
         run: |
           docker version
@@ -83,8 +107,11 @@ jobs:
         id: app_version
         run: |
           VERSION=$(cat version.txt)
+          WEBVERSION=$(cat webversion.txt)
           echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "webversion=$WEBVERSION" >> $GITHUB_OUTPUT
           echo "APP_VERSION: $VERSION"
+          echo "WEB_VERSION: $WEBVERSION"
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
@@ -103,5 +130,5 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./target/simple_sq_music_plus.jar
-          asset_name: simple_sq_music_plus{{ steps.app_version.outputs.version }}.jar
+          asset_name: simple_sq_music_plus${{ steps.app_version.outputs.version }}.jar
           asset_content_type: application/octet-stream
