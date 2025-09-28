@@ -36,7 +36,7 @@ docker run -d \
 2. 启动后端服务
 ```dockerfile
 # 拉取后端服务镜像（使用最新版本号）
-docker pull registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus_web:latest
+docker pull registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:v3.0.5
 
 # 运行后端容器
 docker run -d \
@@ -48,19 +48,19 @@ docker run -d \
   -e DB_PASSWORD=sqmusicv3password \
   -v ./music:/music \
   --network simple_sq_music_plus_sq-app-network \
-  registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:v3.0.4
+  registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:v3.0.5
 ```
 3. 启动前段服务
 ```dockerfile
 # 拉取前端服务镜像（使用最新版本号）
-docker pull registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus_web:latest
+docker pull registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus_web:v3.0.5
 
 # 运行前端容器
 docker run -d \
   --name sqmusic_web \
   -p 8096:80 \
   --network simple_sq_music_plus_sq-app-network \
-  registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus_web:v3.0.2
+  registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus_web:v3.0.5
 
 ```
 #### 3.0后续升级脚本可以使用scrpit下的 check_update.sh脚本
