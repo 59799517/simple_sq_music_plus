@@ -97,11 +97,11 @@ let loginWeb = (username,password)=>{
     <h2>SqMusic</h2>
     <div class="input-box">
       <label>账号</label>
-      <n-input type="text" :on-update:value="loginUsername"	 placeholder="请输入用户名" v-model:value="loginUsername" />
+      <n-input type="text" placeholder="请输入用户名" v-model:value="loginUsername" />
     </div>
     <div class="input-box">
       <label>密码</label>
-      <n-input type="password"  :on-update:value="loginPassword" v-model:value="loginPassword" placeholder="请输入密码" />
+      <n-input type="password"  v-model:value="loginPassword" placeholder="请输入密码" />
     </div>
     <div class="btn-box">
       <div>
@@ -132,17 +132,6 @@ a {
   justify-content: center;
   align-items: center;
   height: 100vh;
-  //background-image: url("../../public/qysv.jpg"); /* 在这里插入一张你想要设置的背景图片 */
-
-  /* 背景图垂直、水平均居中 */
-  background-position:center center;
-  /* 背景图不平铺 */
-  background-repeat:no-repeat;
-  /* 当内容高度大于图片高度时，背景图像的位置相对于viewport固定 */
-  background-attachment:fixed;
-  /* 让背景图基于容器大小伸缩 */
-  background-size:cover;
-
 }
 .box {
   display: flex;

@@ -8,20 +8,25 @@ import Login from "./components/Login.vue";
 import configInfoStore from "./stores/config";
 import { getversion } from "./utils/api.js";
 
+// 从本地存储中获取保存的主题设置，默认为dark主题
+const savedTheme = localStorage.getItem('theme');
+let theme = ref(savedTheme === 'light' ? null : darkTheme);
+let name = ref(savedTheme === 'light' ? '' : 'dark');
 
-let theme=ref(darkTheme);
-let name=ref('dark');
 const changetheme = () => {
-
   if (name.value === 'dark') {
     theme.value = null;
-    name.value='';
-  }else{
-    theme.value =darkTheme;
-    name.value='dark';
+    name.value = '';
+    // 保存主题设置到本地存储
+    localStorage.setItem('theme', 'light');
+  } else {
+    theme.value = darkTheme;
+    name.value = 'dark';
+    // 保存主题设置到本地存储
+    localStorage.setItem('theme', 'dark');
   }
 };
-provide("changetheme",changetheme);
+provide("changetheme", changetheme);
 
 // 获取后端版本号
 const configStore = configInfoStore();
