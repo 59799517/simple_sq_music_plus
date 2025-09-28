@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   sqmusic_main:
-    image: registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:v3.0.7
+    image: registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:v[version]
     container_name: sqmusic_main
     environment:
       - DB_IP=mysql
@@ -21,7 +21,7 @@ services:
       - "8099"
 
   sqmusic_web:
-    image: registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus_web:v3.0.5
+    image: registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus_web:v[webversion]
     container_name: sqmusic_web
     ports:
       - "8096:80"
