@@ -10,7 +10,7 @@
     </parent>
     <groupId>com.sqmusicplus</groupId>
     <artifactId>simple-MusicServer</artifactId>
-    <version>1.0.2-Beta</version>
+    <version>3.0</version>
     <packaging>jar</packaging>
     <name>simple_sq_musuc_plus</name>
     <description>simple_sq_musuc_plus</description>

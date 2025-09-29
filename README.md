@@ -36,7 +36,7 @@ emby,jellyfin识别请参考如下配置 https://support.emby.media/support/solu
 ### 2.x迁移3.x版本
 1. 导出已经同步过的歌单、专辑、歌手信息（文件是.json）
 ![img.png](img/img.png)
-2. 3.0版本导入已经同步信息
+2. 3.0版本导入已经同步信息(时间较长耐心等待)
 ![wechat_2025-09-28_163226_700.png](img/wechat_2025-09-28_163226_700.png)
 
 ### 运行项目

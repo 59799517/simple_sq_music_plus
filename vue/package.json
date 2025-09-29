@@ -1,7 +1,7 @@
 {
   "name": "sq_music_plus_v2",
   "private": true,
-  "version": "3.0.5",
+  "version": "3.0.10",
   "type": "module",
   "scripts": {
     "dev": "vite",

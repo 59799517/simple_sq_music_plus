@@ -1,26 +1,40 @@
 <script setup>
-
 import {useRouter } from 'vue-router'
-
-
-import {login,getAllSet,getAllOption,getversion} from "../utils/api.js"; //引入仓库
+import {login,getAllSet,getAllOption,getversion} from "../utils/api.js";
 import userInfoStore from "../stores/user";
 import configInfoStore from "../stores/config";
+import {inject, ref, computed} from "vue";
+
 const stuserInfoStore = userInfoStore();
 const stconfigInfoStore =configInfoStore()
 
 const router = useRouter()
 
+// 从App.vue中注入主题切换函数，获取当前主题
+const changetheme = inject("changetheme", null);
+const savedTheme = localStorage.getItem('theme');
+const isDarkTheme = ref(savedTheme !== 'light');
 
+// 计算标题和标签颜色
+const titleColor = computed(() => {
+  return isDarkTheme.value ? 'rgba(255, 255, 255, 0.9)' : 'rgba(0, 0, 0, 0.9)';
+});
 
-
-
-// //全局监听回车按钮
-// document.onkeydown = function (e) {
-//   if ( e.code === 'Enter') {
-//     loginp()
-//   }
-// }
+// 计算盒子样式
+const boxStyle = computed(() => {
+  return {
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: '380px',
+    height: '540px',
+    border: isDarkTheme.value ? '1px solid rgba(255, 255, 255, 0.5)' : '1px solid rgba(0, 0, 0, 0.2)',
+    background: isDarkTheme.value ? 'rgba(0, 0, 0, 0.3)' : 'rgba(255, 255, 255, 0.7)',
+    backdropFilter: 'blur(10px)',
+    borderRadius: '15px'
+  };
+});
 
 let loginp =()=>{
   console.log("开始登录")
@@ -80,28 +94,46 @@ let loginWeb = (username,password)=>{
   })
 }
 
+// 切换主题函数
+const toggleTheme = () => {
+  // 调用App.vue提供的主题切换函数
+  if (changetheme) {
+    changetheme();
+  }
+  // 切换本地主题状态
+  isDarkTheme.value = !isDarkTheme.value;
+  // 保存到localStorage
+  localStorage.setItem('theme', isDarkTheme.value ? 'dark' : 'light');
+}
 </script>
 
 <template>
-<!--  <n-modal :show="showModal">-->
-<!--    <n-card style="width: 600px" title="登录成功" size="huge" :bordered="false" role="dialog" aria-modal="true">-->
-<!--      返回-->
-<!--    </n-card>-->
-<!--  </n-modal>-->
 <n-form @keyup.enter.native="loginp">
 <div class="cbody">
-
-
-
-  <div class="box" >
-    <h2>SqMusic</h2>
+  <!-- 将切换主题按钮放置在右上角 -->
+  <div class="theme-toggle-button">
+    <n-button @click="toggleTheme" circle>
+      {{ isDarkTheme ? '🌞' : '🌙' }}
+    </n-button>
+  </div>
+  
+  <div class="box" :style="boxStyle">
+    <h2 :style="{ color: titleColor }">SqMusic</h2>
     <div class="input-box">
-      <label>账号</label>
-      <n-input type="text" placeholder="请输入用户名" v-model:value="loginUsername" />
+      <label :style="{ color: titleColor }">账号</label>
+      <n-input 
+        type="text" 
+        placeholder="请输入用户名" 
+        v-model:value="loginUsername"
+      />
     </div>
     <div class="input-box">
-      <label>密码</label>
-      <n-input type="password"  v-model:value="loginPassword" placeholder="请输入密码" />
+      <label :style="{ color: titleColor }">密码</label>
+      <n-input 
+        type="password"  
+        v-model:value="loginPassword" 
+        placeholder="请输入密码"
+      />
     </div>
     <div class="btn-box">
       <div>
@@ -124,28 +156,19 @@ let loginWeb = (username,password)=>{
 }
 a {
   text-decoration: none;
-  color: black;
 }
 .cbody {
-  display: flex;
-  flex-direction: center;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-}
-.box {
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  width: 380px;
-  height: 540px;
-  border: 1px solid rgb(255, 255, 255, 0.5);
-  backdrop-filter: blur(10px);
-  border-radius: 15px;
+  height: 100vh;
+  position: relative;
+}
+.box {
+  transition: all 0.3s ease;
 }
 .box > h2 {
-  color: rgb(255, 255, 255, 0.9);
   margin-bottom: 50px;
 }
 .box .input-box {
@@ -158,28 +181,11 @@ a {
   margin-top: 4px;
   font-size: 14px;
   margin-bottom: 10px;
-  color: rgb(255, 255, 255, 0.9);
-}
-.input-box input {
-  width: 250px;
-  height: 34px;
-  color: black(255, 255, 255, 0.9);
-  background: rgb(255, 255, 255, 0.3);
-  border: 1px solid rgb(255, 255, 255, 0.5);
-  backdrop-filter: blur(10px);
-  border-radius: 5px;
-  transition: 0.2s;
-  padding: 0 10px;
-  outline: none;
-}
-.input-box input :focus {
-  border: 1px solid rgb(255, 255, 255, 0.8);
 }
 .box a {
   display: flex;
   width: 250px;
   flex-direction: column;
-  color: white;
   margin-top: 10px;
   font-size: 14px;
   text-align: end;
@@ -195,22 +201,21 @@ a {
 .box .btn-box > div > button {
   display: flex;
   justify-content: center;
-  align-items: start;
+  align-items: center;
   width: 120px;
   height: 34px;
-  align-items: center;
-  /*   color: rgb(255, 255, 255, 0.9);*/
-   border-radius: 3px;
-   border: 1px solid rgb(58, 58, 58, 0.3); /* 这里是对两个按钮设置的背景颜色修改不同图片时候可以按照你的喜好插入 */
-  /*  background: rgb(58, 58, 58, 0.3);  */
- /* transition: 0.2s; */
+  border-radius: 3px;
+  border: 1px solid rgba(58, 58, 58, 0.3);
+  transition: all 0.3s ease;
 }
-/* 这里是鼠标移动上去的变色同理按你的喜好设置 */
 .box .btn-box > div > button:hover {
-  /* border: 1px solid rgb(59, 47, 49, 0.3); */
-  /*background: rgb(59, 47, 49, 0.9);*/
+  border: 1px solid rgba(59, 47, 49, 0.5);
 }
-.box .btn-box > div > button:nth-child(2) {
-  margin-left: 20px;
+
+/* 右上角主题切换按钮样式 */
+.theme-toggle-button {
+  position: absolute;
+  top: 20px;
+  right: 20px;
 }
 </style>

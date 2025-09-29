@@ -207,6 +207,31 @@ get_latest_version() {
     return 0
 }
 
+# 获取Web版本号（基于主应用版本号）
+get_web_version_by_main_version() {
+    local main_version=$1
+    
+    # 从GitHub下载对应版本的application.yml文件并提取webversion
+    local app_yml_url="https://gh.xmly.dev/https://raw.githubusercontent.com/59799517/simple_sq_musuc_plus/${main_version}/src/main/resources/application.yml"
+    local response
+    response=$(curl -sL "$app_yml_url" 2>/dev/null) || {
+        echo "未知"
+        return 0
+    }
+    
+    # 从application.yml中提取webversion
+    local web_version
+    web_version=$(echo "$response" | grep "webversion:" | cut -d ' ' -f 2)
+    
+    if [ -n "$web_version" ]; then
+        echo "$web_version"
+    else
+        echo "未知"
+    fi
+    
+    return 0
+}
+
 # 检查容器状态
 check_container_status() {
     local container_name=$1
@@ -319,9 +344,9 @@ check_app_versions() {
     main_latest_version=$(get_latest_version "59799517/simple_sq_musuc_plus" "sqmusic_main")
     info "sqmusic_main 最新版本: $main_latest_version"
     
-    # 检查 sqmusic_web 最新版本
+    # 检查 sqmusic_web 最新版本（基于 sqmusic_main 版本）
     local web_latest_version
-    web_latest_version=$(get_latest_version "59799517/simple_sq_music_plus_web" "sqmusic_web")
+    web_latest_version=$(get_web_version_by_main_version "$main_latest_version")
     info "sqmusic_web 最新版本: $web_latest_version"
     
     # 获取当前容器版本
