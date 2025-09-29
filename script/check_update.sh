@@ -265,73 +265,83 @@ update_container() {
     
     info "开始更新 $container_name 到版本 $latest_version"
     
-    if [ "$container_name" = "sqmusic_main" ]; then
-        # 拉取最新的 sqmusic_main 镜像
-        info "正在拉取镜像: registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:v$latest_version"
-        if docker pull "registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:v$latest_version"; then
-            success "成功拉取镜像: registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:v$latest_version"
-            
-            # 停止并删除旧容器
-            info "正在停止容器: $container_name"
-            docker stop "$container_name" 2>/dev/null || warn "容器 $container_name 未运行或不存在"
-            
-            info "正在删除容器: $container_name"
-            docker rm "$container_name" 2>/dev/null || warn "容器 $container_name 不存在"
-            
-            # 启动新容器
-            info "正在启动新容器: $container_name"
-            local run_cmd="docker run -d \
-                --name $container_name \
-                --network $NETWORK_NAME \
-                -e DB_IP=$DB_IP \
-                -e DB_PORT=$DB_PORT \
-                -e DB_NAME=$DB_NAME \
-                -e DB_USERNAME=$DB_USERNAME \
-                -e DB_PASSWORD=$DB_PASSWORD \
-                -v $MUSIC_DIR_HOST:$MUSIC_DIR_CONTAINER \
-                registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:v$latest_version"
-            
-            info "执行命令: $run_cmd"
-            
-            if eval "$run_cmd"; then
-                success "成功启动新容器: $container_name"
+    # 只要容器名称不为空就执行更新
+    if [ -n "$container_name" ]; then
+        # 根据容器名称执行不同的更新逻辑
+        if [ "$container_name" = "sqmusic_main" ]; then
+            # 拉取最新的 sqmusic_main 镜像
+            info "正在拉取镜像: registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:v$latest_version"
+            if docker pull "registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:v$latest_version"; then
+                success "成功拉取镜像: registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:v$latest_version"
+                
+                # 停止并删除旧容器
+                info "正在停止容器: $CONTAINER_MAIN"
+                docker stop "$CONTAINER_MAIN" 2>/dev/null || warn "容器 $CONTAINER_MAIN 未运行或不存在"
+                
+                info "正在删除容器: $CONTAINER_MAIN"
+                docker rm "$CONTAINER_MAIN" 2>/dev/null || warn "容器 $CONTAINER_MAIN 不存在"
+                
+                # 启动新容器
+                info "正在启动新容器: $CONTAINER_MAIN"
+                local run_cmd="docker run -d \
+                    --name $CONTAINER_MAIN \
+                    --restart=always \
+                    --network $NETWORK_NAME \
+                    -e DB_IP=$DB_IP \
+                    -e DB_PORT=$DB_PORT \
+                    -e DB_NAME=$DB_NAME \
+                    -e DB_USERNAME=$DB_USERNAME \
+                    -e DB_PASSWORD=$DB_PASSWORD \
+                    -v $MUSIC_DIR_HOST:$MUSIC_DIR_CONTAINER \
+                    registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:v$latest_version"
+                
+                info "执行命令: $run_cmd"
+                
+                if eval "$run_cmd"; then
+                    success "成功启动新容器: $CONTAINER_MAIN"
+                else
+                    error "启动新容器失败: $CONTAINER_MAIN"
+                fi
             else
-                error "启动新容器失败: $container_name"
+                error "拉取镜像失败: registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:v$latest_version"
+            fi
+        elif [ "$container_name" = "sqmusic_web" ]; then
+            # 拉取最新的 sqmusic_web 镜像
+            info "正在拉取镜像: registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus_web:v$latest_version"
+            if docker pull "registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus_web:v$latest_version"; then
+                success "成功拉取镜像: registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus_web:v$latest_version"
+                
+                # 停止并删除旧容器
+                info "正在停止容器: $CONTAINER_WEB"
+                docker stop "$CONTAINER_WEB" 2>/dev/null || warn "容器 $CONTAINER_WEB 未运行或不存在"
+                
+                info "正在删除容器: $CONTAINER_WEB"
+                docker rm "$CONTAINER_WEB" 2>/dev/null || warn "容器 $CONTAINER_WEB 不存在"
+                
+                # 启动新容器
+                info "正在启动新容器: $CONTAINER_WEB"
+                local run_cmd="docker run -d \
+                    --name $CONTAINER_WEB \
+                    --restart=always \
+                    --network $NETWORK_NAME \
+                    -p 8096:80 \
+                    registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus_web:v$latest_version"
+
+                info "执行命令: $run_cmd"
+                
+                if eval "$run_cmd"; then
+                    success "成功启动新容器: $CONTAINER_WEB"
+                else
+                    error "启动新容器失败: $CONTAINER_WEB"
+                fi
+            else
+                error "拉取镜像失败: registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus_web:v$latest_version"
             fi
         else
-            error "拉取镜像失败: registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:v$latest_version"
+            warn "未找到匹配的容器配置"
         fi
-    elif [ "$container_name" = "sqmusic_web" ]; then
-        # 拉取最新的 sqmusic_web 镜像
-        info "正在拉取镜像: registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus_web:$latest_version"
-        if docker pull "registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus_web:$latest_version"; then
-            success "成功拉取镜像: registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus_web:$latest_version"
-            
-            # 停止并删除旧容器
-            info "正在停止容器: $container_name"
-            docker stop "$container_name" 2>/dev/null || warn "容器 $container_name 未运行或不存在"
-            
-            info "正在删除容器: $container_name"
-            docker rm "$container_name" 2>/dev/null || warn "容器 $container_name 不存在"
-            
-            # 启动新容器
-            info "正在启动新容器: $container_name"
-            local run_cmd="docker run -d \
-                --name $container_name \
-                --network $NETWORK_NAME \
-                -p 8096:80 \
-                registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus_web:$latest_version"
-            
-            info "执行命令: $run_cmd"
-            
-            if eval "$run_cmd"; then
-                success "成功启动新容器: $container_name"
-            else
-                error "启动新容器失败: $container_name"
-            fi
-        else
-            error "拉取镜像失败: registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus_web:$latest_version"
-        fi
+    else
+        warn "容器名称为空，跳过更新"
     fi
 }
 
@@ -375,20 +385,20 @@ check_app_versions() {
     # 调试信息（可选）
     # info "调试: main_latest_clean=$main_latest_clean, main_current_clean=$main_current_clean"
     # info "调试: web_latest_clean=$web_latest_clean, web_current_clean=$web_current_clean"
-    
+
     # 检查 sqmusic_main 是否需要更新
     if [ "$main_latest_clean" = "$main_current_clean" ]; then
-        success "sqmusic_main 当前已是最新版本"
+        success "主程序 当前已是最新版本"
     else
-        warn "sqmusic_main 有新版本可用: $main_latest_version"
+        warn "主程序 有新版本可用: $main_latest_version"
         update_container "sqmusic_main" "$main_latest_version"
     fi
     
     # 检查 sqmusic_web 是否需要更新
     if [ "$web_latest_clean" = "$web_current_clean" ]; then
-        success "sqmusic_web 当前已是最新版本"
+        success "web服务 当前已是最新版本"
     else
-        warn "sqmusic_web 有新版本可用: $web_latest_version"
+        warn "web服务 有新版本可用: $web_latest_version"
         update_container "sqmusic_web" "$web_latest_version"
     fi
     
@@ -436,7 +446,7 @@ main() {
         fi
     done
     
-       # 如果任意一个容器不存在，提示运行docker-compose
+    # 如果任意一个容器不存在，提示运行docker-compose
     if [ $not_exist_count -gt 0 ]; then
         error "检测到有容器不存在，请先运行 docker-compose up 命令创建容器"
         exit 1
