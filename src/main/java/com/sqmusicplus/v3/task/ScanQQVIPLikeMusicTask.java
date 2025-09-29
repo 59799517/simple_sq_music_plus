@@ -413,6 +413,7 @@ public class ScanQQVIPLikeMusicTask {
                 downloadInfoService.add(downloadInfos);
             }
         }
+
     }
 }
 

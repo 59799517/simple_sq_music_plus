@@ -6,6 +6,7 @@ import { ref,watch ,nextTick, onMounted, onUnmounted } from 'vue';
 import {NButton, NSpace,NTag,NImage,NAvatar,NText} from "naive-ui";
 import usePlayListStore from "../stores/playList";
 import configInfoStore from "../stores/config";
+import {getAllOption} from "../utils/api.js";
 
 
 const router = useRouter()
@@ -560,6 +561,17 @@ const handleDragEnd = (event) => {
 
 // 添加鼠标事件监听器
 onMounted(() => {
+
+  getAllOption().then((value)=>{
+    console.log("获取的设置是：",value.data)
+    if (value.data.code===200){
+      stconfigInfoStore.setOption(value.data.data)
+    }else{
+      window.$message.error("错误信息："+"获取参数信息失败检查服务器是否异常！")
+    }
+  })
+
+
   // 添加全局鼠标事件监听器
   document.addEventListener('mousemove', handleDrag);
   document.addEventListener('mouseup', handleDragEnd);

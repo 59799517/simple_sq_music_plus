@@ -54,6 +54,7 @@ docker network create sq-app-network
 # 运行 MySQL 容器
 docker run -d \
   --name sqmusic_mysql \
+  --restart=always \
   -e MYSQL_ROOT_PASSWORD=sqmusicv3password \
   -e MYSQL_DATABASE=sqmusicv3 \
   -v ./mysql_data:/var/lib/mysql \
@@ -69,6 +70,7 @@ docker pull registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:v3.
 # 运行后端容器
 docker run -d \
   --name sqmusic_main \
+  --restart=always \
   -e DB_IP=mysql \
   -e DB_PORT=3306 \
   -e DB_NAME=sqmusicv3 \
@@ -86,6 +88,7 @@ docker pull registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus_web
 # 运行前端容器
 docker run -d \
   --name sqmusic_web \
+  --restart=always \
   -p 8096:80 \
   --network simple_sq_music_plus_sq-app-network \
   registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus_web:v3.0.5

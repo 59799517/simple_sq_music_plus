@@ -7,7 +7,13 @@ import {
   getKgQrCode,
   getKgWxQrCode,
   refreshQQvipCookie,
-  getKgWxQrCodeStatus, getKgQrCodeStatus, kgRefreshToken, kgSign,getQQVipQrCodeStatus,getUploadJsonFileUrl
+  getKgWxQrCodeStatus,
+  getKgQrCodeStatus,
+  kgRefreshToken,
+  kgSign,
+  getQQVipQrCodeStatus,
+  getUploadJsonFileUrl,
+  getAllOption
 } from "../utils/api.js"; //引入仓库
 import Cookies from 'js-cookie';
 import { inject } from 'vue';
@@ -80,6 +86,14 @@ let refreshData= () => {
       });
     }else{
       window.$message.error("错误信息："+"获取整体设置失败检查服务器是否异常！")
+    }
+  })
+  getAllOption().then((value)=>{
+    console.log("获取的设置是：",value.data)
+    if (value.data.code===200){
+      stconfigInfoStore.setOption(value.data.data)
+    }else{
+      window.$message.error("错误信息："+"获取参数信息失败检查服务器是否异常！")
     }
   })
 }
