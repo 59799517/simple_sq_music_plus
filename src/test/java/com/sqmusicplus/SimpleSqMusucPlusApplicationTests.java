@@ -85,52 +85,52 @@ class SimpleSqMusucPlusApplicationTests {
         return format;
     }
 
-    public static void main(String[] args) {
-
-
-        String input = "RELWORD=星辰大海\r\nSNUM=31774\r\nRNUM=1000\r\nTYPE=0";
-        Pattern pattern = Pattern.compile("RELWORD=([^\\r\\n]*)");
-        Matcher matcher = pattern.matcher(input);
-
-        if (matcher.find()) {
-            String result = matcher.group(1); // 获取第一个捕获组的内容
-            System.out.println(result); // 输出: 星辰大海
-        }
-
-
-
-//        String s = String.valueOf(sigHash("MFzb5OFrs0WQflcecG6ILLASd0*UgmQbNAHMTLdWvO4_", 5381));
-//        System.out.println(s);
-//        System.out.println("1980093307".equals(s));
+//    public static void main(String[] args) {
 //
 //
-//        try {
-//            // 1. 获取登录二维码
-//            QQMusicQr qr = getQQLoginQr();
-//            System.out.println("二维码获取成功，Base64长度: " + getQQMusicQrBase64(qr).length());
-//            //转BASE64
-//            String qqMusicQrBase64 = getQQMusicQrBase64(qr);
-//            System.out.println(qqMusicQrBase64);
+//        String input = "RELWORD=星辰大海\r\nSNUM=31774\r\nRNUM=1000\r\nTYPE=0";
+//        Pattern pattern = Pattern.compile("RELWORD=([^\\r\\n]*)");
+//        Matcher matcher = pattern.matcher(input);
 //
-//            // 2. 轮询检查二维码状态
-//            QQMusicQrEventResult status = checkQQQr(qr);
-//            while (status.getQrCodeLoginEvents() != QRCodeLoginEvents.DONE) {
-//                System.out.println("当前状态: " + status.getQrCodeLoginEvents());
-//                Thread.sleep(2000); // 2秒轮询一次
-//                status = checkQQQr(qr);
-//            }
-//
-//            // 3. 获取授权码
-//            QQMusicQrEventResult authResult = getAuthorizeByQQMusicQrEventResult(status);
-//            if (authResult.getQrCodeLoginEvents() == QRCodeLoginEvents.SUCCESS) {
-//                System.out.println("登录成功! 授权码: " + authResult.getCode());
-//            } else {
-//                System.out.println("登录失败: " + authResult.getQrCodeLoginEvents());
-//            }
-//        } catch (Exception e) {
-//            e.printStackTrace();
+//        if (matcher.find()) {
+//            String result = matcher.group(1); // 获取第一个捕获组的内容
+//            System.out.println(result); // 输出: 星辰大海
 //        }
-    }
+//
+//
+//
+////        String s = String.valueOf(sigHash("MFzb5OFrs0WQflcecG6ILLASd0*UgmQbNAHMTLdWvO4_", 5381));
+////        System.out.println(s);
+////        System.out.println("1980093307".equals(s));
+////
+////
+////        try {
+////            // 1. 获取登录二维码
+////            QQMusicQr qr = getQQLoginQr();
+////            System.out.println("二维码获取成功，Base64长度: " + getQQMusicQrBase64(qr).length());
+////            //转BASE64
+////            String qqMusicQrBase64 = getQQMusicQrBase64(qr);
+////            System.out.println(qqMusicQrBase64);
+////
+////            // 2. 轮询检查二维码状态
+////            QQMusicQrEventResult status = checkQQQr(qr);
+////            while (status.getQrCodeLoginEvents() != QRCodeLoginEvents.DONE) {
+////                System.out.println("当前状态: " + status.getQrCodeLoginEvents());
+////                Thread.sleep(2000); // 2秒轮询一次
+////                status = checkQQQr(qr);
+////            }
+////
+////            // 3. 获取授权码
+////            QQMusicQrEventResult authResult = getAuthorizeByQQMusicQrEventResult(status);
+////            if (authResult.getQrCodeLoginEvents() == QRCodeLoginEvents.SUCCESS) {
+////                System.out.println("登录成功! 授权码: " + authResult.getCode());
+////            } else {
+////                System.out.println("登录失败: " + authResult.getQrCodeLoginEvents());
+////            }
+////        } catch (Exception e) {
+////            e.printStackTrace();
+////        }
+//    }
 
 
 @Autowired
@@ -139,7 +139,7 @@ private QQHander qqHander;
     private ScanQQVIPLikeMusicTask scanQQVIPLikeMusicTask;
     @Test
     public void test()  {
-        scanQQVIPLikeMusicTask.excute();
+        scanQQVIPLikeMusicTask.syncalbu();
 
     }
 

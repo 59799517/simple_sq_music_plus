@@ -81,7 +81,6 @@ public class ScanQQVIPLikeMusicTask {
         GetFollowSingerList getFollowSingerList = qQvipHander.likeArtists(1);
         Integer code = getFollowSingerList.getCode();
         if (code != null && code.intValue() ==  0) {
-            ArrayList<String> exclude = new ArrayList<>();
             DataVDTO data = getFollowSingerList.getData();
             List<ListVDTO> list = data.getList();
             Integer total = data.getTotal();
@@ -90,17 +89,15 @@ public class ScanQQVIPLikeMusicTask {
                 GetFollowSingerList getFollowSingerList1 = qQvipHander.likeArtists(i);
                 list.addAll(getFollowSingerList1.getData().getList());
             }
-            LambdaQueryWrapper<SqSync> sqQqmusicMyLike = new LambdaQueryWrapper<SqSync>().eq(SqSync::getPlugName, PlugBrType.QQVIP_Flac_2000.getPlugName())
-                    .isNotNull(SqSync::getArtistId);
+            
+            // 对list进行去重，根据mid字段去重，只关注本次列表中不重复
+            List<ListVDTO> distinctList = list.stream()
+                    .collect(Collectors.toMap(ListVDTO::getMid, item -> item, (existing, replacement) -> existing))
+                    .values()
+                    .stream()
+                    .collect(Collectors.toList());
 
-            //已经下载的
-            List<SqSync> dbSqSync = syncService.list(sqQqmusicMyLike);
             ArrayList<String> excludeNames = new ArrayList<>();
-
-            if (dbSqSync!=null) {
-                List<String> collect = dbSqSync.stream().map(SqSync::getArtistId).collect(Collectors.toList());
-                exclude.addAll(collect);
-            }
             String sqConfigValue = SqConfigCache.getSqConfigValue(SetConfigEnum.SYSTEM_SYNC_ARTISTS_EXCLUDE);
             //不同步的歌手名称
             if (StringUtils.isNotBlank(sqConfigValue)) {
@@ -112,10 +109,10 @@ public class ScanQQVIPLikeMusicTask {
                 }
             }
 
-            list.forEach(item -> {
+            distinctList.forEach(item -> {
                 String mid = item.getMid();
                 String name = item.getName();
-                if (!excludeNames.contains(name)&&!exclude.contains(mid)){
+                if (!excludeNames.contains(name)) {
                     List<DownloadInfo> downloadInfos = qQvipHander.downloadArtistAllSong(mid, PlugBrType.QQVIP_Flac_2000);
                     List<DownloadInfo> downloadInfos1 = qQvipHander.musicIgnoreCheck(downloadInfos);
                     downloadInfoService.add(downloadInfos1);
@@ -126,20 +123,15 @@ public class ScanQQVIPLikeMusicTask {
                     sqSync.setArtistName(name);
                     //添加完成后保存到已经下载的列表中
                     syncService.save(sqSync);
-                }else{
-                    log.info("已排除歌手或者已经下载过了：{} 不下载",name);
+                } else {
+                    log.info("已排除歌手：{} 不下载", name);
                 }
-
             });
-
-
-
         }
-
     }
 
 
-    private synchronized void syncalbu() {
+    public synchronized void syncalbu() {
 
         CgiGetAlbumFavInfo cgiGetAlbumFavInfo = qQvipHander.userALbymList(1);
         Long code = cgiGetAlbumFavInfo.getCode();
@@ -154,15 +146,12 @@ public class ScanQQVIPLikeMusicTask {
                 CgiGetAlbumFavInfo cgiGetAlbumFavInfo1 = qQvipHander.userALbymList(i);
                 vList.addAll(cgiGetAlbumFavInfo1.getData().getVList());
             }
-            LambdaQueryWrapper<SqSync> sqQqmusicMyLike = new LambdaQueryWrapper<SqSync>().eq(SqSync::getPlugName, PlugBrType.QQVIP_Flac_2000.getPlugName())
-                    .isNotNull(SqSync::getAlbumId);
-
-            //已经下载的
-            List<SqSync> dbSqSync = syncService.list(sqQqmusicMyLike);
-            if (dbSqSync != null) {
-                //已经下载的
-                exclude.addAll(dbSqSync.stream().map(SqSync::getAlbumId).toList());
-            }
+            // 对vList进行去重，根据mid字段去重
+            vList = vList.stream()
+                    .collect(Collectors.toMap(CgiGetAlbumFavInfo.DataDTO.VListDTO::getMid, item -> item, (existing, replacement) -> existing))
+                    .values()
+                    .stream()
+                    .collect(Collectors.toList());
             ArrayList<String> excludeNames = new ArrayList<>();
 
 //           需要排除的
@@ -177,23 +166,34 @@ public class ScanQQVIPLikeMusicTask {
                     }
                 }
             }
-
-
+            //去重
             vList.forEach((item) -> {
                 String albummid = item.getMid();
                 List<String> collect = item.getVSinger().stream().map(item1 -> item1.getName()).collect(Collectors.toList());
                 String albumname = item.getName();
-                if (!excludeNames.contains(albumname)&&!exclude.contains(albummid)) {
+                if (!excludeNames.contains(albumname) && !exclude.contains(albummid)) {
+                    log.info("开始同步专辑：{} (ID: {})", albumname, albummid);
                     ArrayList<DownloadInfo> downloadInfos = qQvipHander.downloadAlbum(albummid, PlugBrType.QQVIP_Flac_2000, collect, false, albumname);
                     List<DownloadInfo> downloadInfos1 = qQvipHander.musicIgnoreCheck(downloadInfos);
-                    downloadInfoService.add(downloadInfos1);
-                    SqSync sqSync = new SqSync();
-                    sqSync.setPlugName( PlugBrType.QQVIP_Flac_2000.getPlugName());
-                    sqSync.setMusicInfo(JSON.toJSONString(item));
-                    sqSync.setAlbumId(albummid);
-                    sqSync.setAlbumName(albumname);
-                    //添加完成后保存到已经下载的列表中
-                    syncService.save(sqSync);
+                    if (downloadInfos1 != null && !downloadInfos1.isEmpty()) {
+                        downloadInfoService.add(downloadInfos1);
+                        SqSync sqSync = new SqSync();
+                        sqSync.setPlugName(PlugBrType.QQVIP_Flac_2000.getPlugName());
+                        sqSync.setMusicInfo(JSON.toJSONString(item));
+                        sqSync.setAlbumId(albummid);
+                        sqSync.setAlbumName(albumname);
+                        // 添加完成后保存到已经下载的列表中
+                        boolean saveSuccess = syncService.save(sqSync);
+                        if (saveSuccess) {
+                            log.info("成功保存专辑同步记录：{} (ID: {})", albumname, albummid);
+                        } else {
+                            log.warn("保存专辑同步记录失败：{} (ID: {})", albumname, albummid);
+                        }
+                    } else {
+                        log.info("专辑《{}》没有需要下载的歌曲或已被忽略", albumname);
+                    }
+                } else {
+                    log.info("跳过已下载或排除的专辑：{} (ID: {})", albumname, albummid);
                 }
             });
 
@@ -221,7 +221,14 @@ public class ScanQQVIPLikeMusicTask {
         PlaylistBaseRead userSelfSongList = qQvipHander.getUserSelfSongList();
         if (userSelfSongList != null && userSelfSongList.getCode() != null && userSelfSongList.getCode() == 0L) {
             PlaylistBaseRead.DataDTO data = userSelfSongList.getData();
-            for (PlaylistBaseRead.DataDTO.VPlaylistDTO vPlaylistDTO : data.getVPlaylist()) {
+            List<PlaylistBaseRead.DataDTO.VPlaylistDTO> vPlaylist = data.getVPlaylist();
+            // 对vPlaylist进行去重，根据tid字段去重
+            vPlaylist = vPlaylist.stream()
+                    .collect(Collectors.toMap(PlaylistBaseRead.DataDTO.VPlaylistDTO::getTid, item -> item, (existing, replacement) -> existing))
+                    .values()
+                    .stream()
+                    .collect(Collectors.toList());
+            for (PlaylistBaseRead.DataDTO.VPlaylistDTO vPlaylistDTO : vPlaylist) {
                 Long dirId = vPlaylistDTO.getDirId();
                 if (dirId != null && dirId != 201L) {
                     Long dirShow = vPlaylistDTO.getDirShow();
@@ -245,7 +252,21 @@ public class ScanQQVIPLikeMusicTask {
         CgiGetPlaylistFavInfo userFavSongList = qQvipHander.getUserFavSongList(1);
         if (userFavSongList != null && userFavSongList.getCode() != null && userFavSongList.getCode() == 0L) {
             CgiGetPlaylistFavInfo.DataDTO data = userFavSongList.getData();
-            for (CgiGetPlaylistFavInfo.DataDTO.VListDTO vListDTO : data.getVList()) {
+            List<CgiGetPlaylistFavInfo.DataDTO.VListDTO> vList = data.getVList();
+            Long total = data.getTotal();
+            Long number = data.getNumber();
+            Long totalPage = total % number == 0 ? total / number : total / number + 1;
+            for (int i = 2; i <= totalPage; i++) {
+                CgiGetPlaylistFavInfo userFavSongList1 = qQvipHander.getUserFavSongList(i);
+                vList.addAll(userFavSongList1.getData().getVList());
+            }
+            // 对vList进行去重，根据tid字段去重
+            vList = vList.stream()
+                    .collect(Collectors.toMap(CgiGetPlaylistFavInfo.DataDTO.VListDTO::getTid, item -> item, (existing, replacement) -> existing))
+                    .values()
+                    .stream()
+                    .collect(Collectors.toList());
+            for (CgiGetPlaylistFavInfo.DataDTO.VListDTO vListDTO : vList) {
                 Long dirId = vListDTO.getDirId();
                 if (dirId != null && dirId != 201L) {
                     Long dirShow = vListDTO.getDirShow();
@@ -258,33 +279,6 @@ public class ScanQQVIPLikeMusicTask {
                             syncsonglist(tid.toString(), dirId.toString(), diss_name);
                         } else {
                             log.info("同步我创建的歌单{}设置跳过不进行同步", diss_name);
-                        }
-
-                    }
-                }
-            }
-
-//如果收藏的有多余的页码
-            Long total = data.getTotal();
-            Long number = data.getNumber();
-            Long totalPage = total % number == 0 ? total / number : total / number + 1;
-            for (int i = 2; i <= totalPage; i++) {
-                CgiGetPlaylistFavInfo userFavSongList1 = qQvipHander.getUserFavSongList(i);
-                CgiGetPlaylistFavInfo.DataDTO data1 = userFavSongList1.getData();
-                for (CgiGetPlaylistFavInfo.DataDTO.VListDTO vListDTO : data1.getVList()) {
-                    Long dirId = vListDTO.getDirId();
-                    if (dirId != null && dirId != 201L) {
-                        Long dirShow = vListDTO.getDirShow();
-                        if (dirShow != null && dirShow == 1) {
-                            String diss_name = vListDTO.getName().trim();
-                            if (!excludeNames.contains(diss_name)) {
-                                log.info("同步我创建的歌单{}的歌曲共找到{}首", diss_name, vListDTO.getSongnum());
-                                //歌单id
-                                Long tid = vListDTO.getTid();
-                                syncsonglist(tid.toString(), dirId.toString(), diss_name);
-                            } else {
-                                log.info("同步我创建的歌单{}设置跳过不进行同步", diss_name);
-                            }
                         }
                     }
                 }
@@ -416,7 +410,3 @@ public class ScanQQVIPLikeMusicTask {
 
     }
 }
-
-
-
-
