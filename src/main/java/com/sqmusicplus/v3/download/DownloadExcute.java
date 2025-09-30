@@ -41,9 +41,6 @@ public class DownloadExcute {
 
     public void getDownloadInfo() {
 
-
-
-
         LambdaQueryWrapper<DownloadInfo> objectLambdaQueryWrapper = new LambdaQueryWrapper<>();
         objectLambdaQueryWrapper.eq(DownloadInfo::getDownloadStatus, DownloadStatus.waiting.value);
         long waitsize = downloadInfoService.count(objectLambdaQueryWrapper);
@@ -77,6 +74,9 @@ public class DownloadExcute {
                             try {
                                 searchHander.dnonloadAndSaveToFile(record, searchHander);
                                 //捕获内容
+                                record.setDownloadStatus(DownloadStatus.success.getValue());
+                                downloadInfoService.updateById(record);
+                                log.debug("修改完成状态--->{}",record);
                             } catch (IgnoreDownloadException e) {
                                 //一般是酷我的歌曲信息获取失败导致的需要从新下载
                                 record.setDownloadStatus(DownloadStatus.waiting.getValue());
@@ -88,10 +88,14 @@ public class DownloadExcute {
                                 record.setDownloadStatus(DownloadStatus.error.getValue());
                                 record.setDownloadMsg(e.getMessage());
                                 downloadInfoService.updateById(record);
+                                log.debug("修改错误状态--->{}",record);
                             }
                         }else{
                             try {
                                 ReflectUtil.invoke(bean, "dnonloadAndSaveToFile", record, bean);
+                                record.setDownloadStatus(DownloadStatus.success.getValue());
+                                downloadInfoService.updateById(record);
+                                log.debug("修改完成状态--->{}",record);
                             } catch (IgnoreDownloadException e) {
                                 //一般是酷我的歌曲信息获取失败导致的需要从新下载
                                 record.setDownloadStatus(DownloadStatus.waiting.getValue());
@@ -103,11 +107,9 @@ public class DownloadExcute {
                                 record.setDownloadStatus(DownloadStatus.error.getValue());
                                 record.setDownloadMsg(e.getMessage());
                                 downloadInfoService.updateById(record);
+                                log.debug("修改错误状态--->{}",record);
                             }
                         }
-                        record.setDownloadStatus(DownloadStatus.success.getValue());
-                        downloadInfoService.updateById(record);
-                        log.debug("修改完成状态--->{}",record);
                     } catch (Exception e) {
                         e.printStackTrace();
                         record.setDownloadStatus(DownloadStatus.error.getValue());

@@ -12,6 +12,9 @@ import org.springframework.stereotype.Service;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.ArrayList;
 
 /**
  * <p>
@@ -31,17 +34,33 @@ public class DownloadInfoServiceImpl extends ServiceImpl<DownloadInfoMapper, Dow
 
 
     @Override
-    public Boolean add(DownloadInfo downloadInfo) {
+    public synchronized Boolean add(DownloadInfo downloadInfo) {
         downloadInfo.setDownloadStatus(DownloadStatus.waiting.getValue());
         boolean save = downloadInfoService.save(downloadInfo);
         return  save;
     }
 
     @Override
-    public Boolean add(List<DownloadInfo> downloadInfo) {
-        downloadInfo.forEach(e->e.setDownloadStatus(DownloadStatus.waiting.getValue()));
-        boolean save = downloadInfoService.saveBatch(downloadInfo);
-        return  save;
+    public synchronized Boolean add(List<DownloadInfo> downloadInfo) {
+        // 使用Set去重，避免重复添加相同歌曲
+        Set<String> uniqueMusicIds = new HashSet<>();
+        List<DownloadInfo> uniqueDownloadInfo = new ArrayList<>();
+        
+        for (DownloadInfo info : downloadInfo) {
+            // 检查歌曲ID是否已存在
+            if (!uniqueMusicIds.contains(info.getDownloadMusicId())) {
+                info.setDownloadStatus(DownloadStatus.waiting.getValue());
+                uniqueMusicIds.add(info.getDownloadMusicId());
+                uniqueDownloadInfo.add(info);
+            }
+        }
+        
+        if (uniqueDownloadInfo.isEmpty()) {
+            return true;
+        }
+        
+        boolean save = downloadInfoService.saveBatch(uniqueDownloadInfo);
+        return save;
     }
 
     @Override

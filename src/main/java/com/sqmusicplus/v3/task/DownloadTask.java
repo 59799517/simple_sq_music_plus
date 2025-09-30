@@ -6,6 +6,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.util.concurrent.atomic.AtomicLong;
+
 /**
  * @Classname DownloadTask
  * @Description 下载定时任务
@@ -19,10 +21,12 @@ public class DownloadTask {
 
     @Autowired
     private DownloadExcute downloadExcute;
+    
 
-    @Scheduled(cron="*/5 * * * * ? ")
+
+    @Scheduled(cron="*/10 * * * * ? ")
     public void excute(){
-      log.debug("=============开始检测下载===============");
+        log.debug("=============开始检测下载===============");
         downloadExcute.getDownloadInfo();
     }
 

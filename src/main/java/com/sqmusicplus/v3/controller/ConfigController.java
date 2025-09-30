@@ -222,7 +222,7 @@ public class ConfigController {
     private void specialPlugConfigUpdate(String configKey, String configValue) {
 //        酷狗
         if (configKey.equals(SetConfigEnum.PLUG_KG_OPEN.getKey())) {
-            if (configValue.equals(DbBooleanConvert.YES.getValue().toString())) {
+            if (configValue.equals(DbBooleanConvert.YES.getBooleanValue().toString())) {
                 HashMap<String, String> KGoption = new HashMap<>();
                 KGoption.put("value", "kg");
                 KGoption.put("label", "某狗-概念版");
@@ -234,7 +234,7 @@ public class ConfigController {
         }
         //        酷我
         if (configKey.equals(SetConfigEnum.PLUG_KW_OPEN.getKey())) {
-            if (configValue.equals(DbBooleanConvert.YES.getValue().toString())) {
+            if (configValue.equals(DbBooleanConvert.YES.getBooleanValue().toString())) {
                 HashMap<String, String> kwoption = new HashMap<>();
                 kwoption.put("value", "kw");
                 kwoption.put("label", "某我");
@@ -246,7 +246,7 @@ public class ConfigController {
         }
         //        酷我
         if (configKey.equals(SetConfigEnum.PLUG_QQVIP_OPEN.getKey())) {
-            if (configValue.equals(DbBooleanConvert.YES.getValue().toString())) {
+            if (configValue.equals(DbBooleanConvert.YES.getBooleanValue().toString())) {
                 HashMap<String, String> QQVIPoption = new HashMap<>();
                 QQVIPoption.put("value", "qqvip");
                 QQVIPoption.put("label", "鹅厂VIP下载（自动同步喜欢的去设置开启）");
@@ -259,7 +259,7 @@ public class ConfigController {
         }
 // 网易
         if (configKey.equals(SetConfigEnum.PLUG_NETEASE_OPEN.getKey())) {
-            if (configValue.equals(DbBooleanConvert.YES.getValue().toString())) {
+            if (configValue.equals(DbBooleanConvert.YES.getBooleanValue().toString())) {
                 HashMap<String, String> neteaseoption = new HashMap<>();
                 neteaseoption.put("value", "netease");
                 neteaseoption.put("label", "猪厂");

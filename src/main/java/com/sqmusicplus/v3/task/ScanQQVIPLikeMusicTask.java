@@ -50,8 +50,8 @@ public class ScanQQVIPLikeMusicTask {
     @Autowired
     private DownloadInfoService downloadInfoService;
 
-    @Scheduled(cron = "0 */10 * * * ? ")
-    public void excute() {
+    @Scheduled(cron = "1 */10 * * * ? ")
+    public synchronized void excute() {
         String qqopenconfigKey = SqConfigCache.getSqConfigValue(SetConfigEnum.PLUG_QQVIP_OPEN);
         String myLikeSongSyncConfig = SqConfigCache.getSqConfigValue(SetConfigEnum.PLUG_QQVIP_SYNC_MY_LIKE_MUSIC);
         String myLikePlaylistSyncConfig = SqConfigCache.getSqConfigValue(SetConfigEnum.PLUG_QQVIP_SYNC_MY_LIKE_PLAYLIST);
@@ -77,7 +77,7 @@ public class ScanQQVIPLikeMusicTask {
                 }
         }
     }
-    private void syncArtist() {
+    private synchronized void syncArtist() {
         GetFollowSingerList getFollowSingerList = qQvipHander.likeArtists(1);
         Integer code = getFollowSingerList.getCode();
         if (code != null && code.intValue() ==  0) {
@@ -139,7 +139,7 @@ public class ScanQQVIPLikeMusicTask {
     }
 
 
-    private void syncalbu() {
+    private synchronized void syncalbu() {
 
         CgiGetAlbumFavInfo cgiGetAlbumFavInfo = qQvipHander.userALbymList(1);
         Long code = cgiGetAlbumFavInfo.getCode();
@@ -203,7 +203,7 @@ public class ScanQQVIPLikeMusicTask {
 
     }
 
-    private void syncplaylist() {
+    private synchronized void syncplaylist() {
         ArrayList<String> excludeNames = new ArrayList<>();
         //不同步的歌单名称
         String sqConfigValue = SqConfigCache.getSqConfigValue(SetConfigEnum.SYSTEM_SYNC_PLAYLIST_EXCLUDE);
@@ -296,7 +296,7 @@ public class ScanQQVIPLikeMusicTask {
     /**
      * 我喜欢的歌单（仅仅是我喜欢的单曲）--------已修改
      */
-    private void syncLikeSong() {
+    private synchronized void syncLikeSong() {
         PlaylistBaseRead userSelfSongList = qQvipHander.getUserSelfSongList();
         if (userSelfSongList != null && userSelfSongList.getCode() != null && userSelfSongList.getCode() == 0L) {
             PlaylistBaseRead.DataDTO data = userSelfSongList.getData();
@@ -319,7 +319,7 @@ public class ScanQQVIPLikeMusicTask {
     /**
      * 根据歌单id获取歌曲并添加到下载列表
      */
-    private void syncsonglist(String tid, String dirid, String dissname) {
+    private synchronized void syncsonglist(String tid, String dirid, String dissname) {
         ArrayList<String> songids;
         DissInfo dissInfo = qQvipHander.songListInfo(tid, dirid, 1L);
         Long code = dissInfo.getCode();

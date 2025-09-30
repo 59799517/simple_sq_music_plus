@@ -36,19 +36,28 @@ export default defineConfig({
       manifest: {
         // 安装应用后显示的应用名
         name: "SqMusic",
+        short_name: "SqMusic",
         description: "SqMusicTool-下载工具",
+        theme_color: "#000000",
+        background_color: "#ffffff",
+        display: "standalone",
+        start_url: "/",
         // 至少配置一个图标
         icons: [{
           // 注意如果应用不是部署在站点根目录则需要相对路径，图片文件放在项目/public/pwa/192x192.png
-          src: "./pwa/logo.png",
+          src: "/pwa/logo.png",
           sizes: "192x192",
+          type: "image/png"
+        }, {
+          src: "/pwa/logo.png",
+          sizes: "512x512",
           type: "image/png"
         }]
       },
       registerType: "autoUpdate",
       workbox: {
         // 对所有匹配的静态资源进行缓存
-        globPatterns: ["**/*.{js,css,html,ico,png,svg}"],
+        globPatterns: ["**/*.{js,css,html,ico,png,svg,webmanifest}"],
       },
       devOptions: {
         enabled: true

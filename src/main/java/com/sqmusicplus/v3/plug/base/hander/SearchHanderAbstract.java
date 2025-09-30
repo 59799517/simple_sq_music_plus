@@ -100,7 +100,11 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
             //获取下载链接
             DownloadUrlResult downloadUrlResult = searchHander.getDownloadUrl(downloadInfo);
             if (downloadUrlResult == null || StringUtils.isEmpty(downloadUrlResult.getUrl())) {
-                throw new RuntimeException(downloadInfo.getDownloadMusicname() + "(未获取到播放链接)下载失败:" + downloadUrlResult.getErrorMsg());
+                try {
+                    throw new RuntimeException(downloadInfo.getDownloadMusicname() + "(未获取到播放链接)下载失败:" + downloadUrlResult.getErrorMsg());
+                } catch (RuntimeException e) {
+                    throw new RuntimeException(downloadInfo.getDownloadMusicname() + "(未获取到播放链接)下载失败:" + e.getMessage());
+                }
             }
 
             DownloadUtils.download(downloadUrlResult.getUrl(), type, onProcess->{
