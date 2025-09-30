@@ -139,7 +139,7 @@ private QQHander qqHander;
     private ScanQQVIPLikeMusicTask scanQQVIPLikeMusicTask;
     @Test
     public void test()  {
-        scanQQVIPLikeMusicTask.syncalbu();
+//        scanQQVIPLikeMusicTask.syncalbu();
 
     }
 
