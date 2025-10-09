@@ -16,6 +16,7 @@ import com.sqmusicplus.v3.base.entity.SqSync;
 import com.sqmusicplus.v3.base.enums.DbBooleanConvert;
 import com.sqmusicplus.v3.base.enums.PlugBrType;
 import com.sqmusicplus.v3.base.enums.SetConfigEnum;
+import com.sqmusicplus.v3.base.service.SqConfigService;
 import com.sqmusicplus.v3.base.service.SqSyncService;
 import com.sqmusicplus.v3.config.AjaxResult;
 import com.sqmusicplus.v3.config.SqConfigCache;
@@ -64,6 +65,9 @@ public class ConfigController {
     private String version;
     @Autowired
     private SqSyncService syncService;
+
+    @Autowired
+    private SqConfigService configService;
 
     /**
      * 登录
@@ -158,7 +162,8 @@ public class ConfigController {
                 data.setConfigValue(DbBooleanConvert.NO.getBooleanValue().toString());
             }
         }
-        SqConfigCache.updateConfigToDb(data.getConfigKey(), data.getConfigValue());
+        List<SqConfig> list = configService.list();
+        SqConfigCache.setSqConfigMap(list);
         //根据key设置一些特殊配置
         specialPlugConfigUpdate(data.getConfigKey(), data.getConfigValue());
         return AjaxResult.success();

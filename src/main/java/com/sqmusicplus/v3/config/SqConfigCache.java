@@ -37,6 +37,9 @@ public class SqConfigCache {
     }
 
     public static void setSqConfigMap(List<SqConfig> sqConfigs) {
+        if( SqConfigCache.sqConfigMap!=null){
+            sqConfigMap.clear();
+        }
         //制作key值对
         HashMap<String, SqConfig> configHashMap = new HashMap<>();
         for (SqConfig sqConfig : sqConfigs) {
