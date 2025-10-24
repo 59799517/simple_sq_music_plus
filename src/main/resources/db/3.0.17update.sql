@@ -1,0 +1,2 @@
+-- 3.0.17更新脚本
+INSERT INTO `sq_config` ( `config_name`, `config_value`, `config_key`, `config_type`, `config_show`, `config_remark`, `config_null_check`, `config_disabled`) VALUES ( '下载歌曲文件名模板', '${musicName} - ${artists}', 'system.download.file.template', 'input', 1, '目前支持\r\n1.${musicName}---歌曲名称\r\n2.${artists}---歌手名称\r\n3.${album}---专辑名称\r\n4.${albumId}---专辑ID\r\n5.${artistsId}---歌手id\r\n默认为${musicName} - ${artists}---歌曲名称 - 歌手名称 （高级支持SpEL表达式具体百度）', 1, 0);

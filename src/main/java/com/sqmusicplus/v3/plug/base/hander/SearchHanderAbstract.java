@@ -17,21 +17,14 @@ import com.sqmusicplus.v3.config.SqConfigCache;
 import com.sqmusicplus.v3.download.DownloadStatus;
 import com.sqmusicplus.v3.download.vo.DownloadUrlResult;
 import com.sqmusicplus.v3.plug.entity.PlugSearchMusicResult;
-import com.sqmusicplus.v3.utils.DownloadUtils;
-import com.sqmusicplus.v3.utils.FileUtils;
-import com.sqmusicplus.v3.utils.MusicUtils;
-import com.sqmusicplus.v3.utils.StringUtils;
-import com.sqmusicplus.v3.utils.SafeFileUtil;
+import com.sqmusicplus.v3.utils.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -64,6 +57,8 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
     @Override
     public void dnonloadAndSaveToFile(DownloadInfo downloadInfo, SearchHander searchHander) {
         try {
+
+
             Music music = searchHander.querySongById(downloadInfo);
             if (music == null) {
                 throw new RuntimeException("下载失败歌曲信息不完整歌曲详情转化歌曲失败:" + JSONObject.toJSONString(downloadInfo));
@@ -79,15 +74,36 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
             final boolean isAudioBook = DbBooleanConvert.findByValue(downloadInfo.getAudioBook());
 
             String musicPath = SqConfigCache.getSqConfigValue(SetConfigEnum.SYSTEM_DOWNLOAD_PATH);
+
             //数据库下载路径
             File file = new File(musicPath);
+
+
+            HashMap<String, Object> pathTemplate = new HashMap<>();
+            String music_path_template = SqConfigCache.getSqConfigValue(SetConfigEnum.SYSTEM_DOWNLOAD_FILE_TEMPLATE);
+            if (StringUtils.isBlank(music_path_template)){
+                music_path_template="${musicName} - ${artists}";
+            }
+
+            String artistsId = baseArtistsID.stream().map(String::trim).limit(7).collect(Collectors.joining("&"));
+            pathTemplate.put("musicName", baseMusicName);
+            pathTemplate.put("artists", baseMusicArtistName);
+            pathTemplate.put("album", baseMusicAlbumName);
+            pathTemplate.put("albumId", baseAlbumID);
+            pathTemplate.put("artistsId", artistsId);
+            String fileName = "";
+            try {
+                fileName = SpelTemplateUtils.formatTemplateWithDollar(music_path_template, pathTemplate);
+            }catch (Exception e){
+                fileName = SpelTemplateUtils.formatTemplateWithDollar("${musicName} - ${artists}", pathTemplate);
+            }
 
             //拼接当前各社区路径  歌手/专辑
             String basepath = baseMusicArtistName + File.separator + baseMusicAlbumName + File.separator;
             //获取当前文件后缀
             String brType = downloadInfo.getDownloadBrType();
             PlugBrType byId = PlugBrType.findById(brType);
-            File type = new File(file, basepath + baseMusicName + " - " + baseMusicArtistName + "." + byId.getType());
+            File type = new File(file, basepath + fileName + "." + byId.getType());
             log.debug("开始下载---->{}", baseMusicName);
             //创建任务
             String sqConfigValue = SqConfigCache.getSqConfigValue(SetConfigEnum.SYSTEM_FILE_EXIST_NOT_DOWNLOAD);
@@ -118,13 +134,13 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
                 throw new RuntimeException("下载失败:" + music.getMusicName());
             },onComplete -> {
                 Artists artists = searchHander.queryArtistById(baseArtistsID.get(0));
-                String getSearheads = "";
-                try {
-                    getSearheads = ReflectUtil.invoke(searchHander.getConfig(), "getSearheads");
-                } catch (Exception ignored) {
-                }
+//                String getSearheads = "";
+//                try {
+//                    getSearheads = ReflectUtil.invoke(searchHander.getConfig(), "getSearheads");
+//                } catch (Exception ignored) {
+//                }
                 //歌手图片地址
-                String downloadurl = getSearheads + artists.getMusicArtistsPhoto();
+                String downloadurl = artists.getMusicArtistsPhoto();
                 //歌手图片保存路径
                 String downliadpath = musicPath + File.separator + baseMusicArtistName;
                 //人物图片

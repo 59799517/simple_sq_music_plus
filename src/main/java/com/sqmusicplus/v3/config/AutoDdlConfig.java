@@ -24,12 +24,8 @@ public class AutoDdlConfig   extends SimpleDdl {
         return CollUtil.newArrayList(
                 "db/sqlInit.sql"
                 ,"db/sq_config.sql"
-//                ,"db/insert_config.sql"
-//                ,"db/v2.13.1_updat.sql"
-//                ,"db/v2.13.3_update.sql"
-//                 ,"db/v2.15.0_update.sql"
-//                ,"db/v2.15.1_update.sql"
-//                ,"db/v2.15.8_update.sql"
+                ,"db/3.0.17update.sql"
+
         );
     }
 

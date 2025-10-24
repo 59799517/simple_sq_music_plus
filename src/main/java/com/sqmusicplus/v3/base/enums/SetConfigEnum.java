@@ -59,6 +59,13 @@ public enum SetConfigEnum {
      */
     SYSTEM_SHOW_PLAY_URL("system.show.play.url","是否显示播放连接（下载链接）","system"),
 
+
+    /**
+     * 下载文件模板
+     */
+    SYSTEM_DOWNLOAD_FILE_TEMPLATE("system.download.file.template","下载文件名称模板","system"),
+
+
 //    ------------QQ插件配置-----------------
 
     /**
@@ -177,7 +184,40 @@ public enum SetConfigEnum {
 
 
 // --------------------------freemp3------------------
-    PLUG_FREEMP3_OPEN("plug.freemp3.open","是否开启freemp3插件","plug");
+    PLUG_FREEMP3_OPEN("plug.freemp3.open","是否开启freemp3插件","plug"),
+
+
+
+//------------------------------apple--------------------
+
+    /**
+     * 是否开启apple插件
+     */
+    PLUG_APPLE_OPEN("plug.apple.open","是否开启apple插件","plug"),
+    /**
+     * storefront代码
+     * 由 ISO 3166 alpha-2 国家/地区代码指定的 iTunes Store 地区。可能的值是 Store front 对象的 id 属性
+     */
+    PLUG_APPLE_STOREFRONT("plug.apple.storefront","storefront代码 由 ISO 3166 alpha-2 国家/地区代码指定的 iTunes Store 地区。可能的值是 Store front 对象的 id 属性","plug"),
+    /**
+     * token
+     */
+    PLUG_APPLE_TOKEN("plug.apple.token","authorization 下的token","plug"),
+    /**
+     * cookie值
+     */
+    PLUG_APPLE_COOKIE("plug.apple.cookie","cookie值json格式","plug"),
+    /**
+     * 媒体用户token
+     */
+    PLUG_APPLE_MEDIAUSERTOKEN("plug.apple.mediausertoken","媒体用户token（无需修改根据cookie解析生成）","plug"),
+    /**
+     * apple 请求头  origin地址
+     */
+    PLUG_APPLE_ORIGIN("plug.apple.origin","apple 请求头  origin地址","plug");
+
+
+
 
 
     /**
