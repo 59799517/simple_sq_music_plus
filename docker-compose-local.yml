@@ -33,7 +33,7 @@ services:
     image: sqmusic_web:v3.0.12
     container_name: sqmusic_web
     ports:
-      - "8096:80"
+      - "8996:80"
     networks:
       - sq-app-network
     depends_on:

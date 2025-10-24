@@ -89,7 +89,7 @@ docker pull registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus_web
 docker run -d \
   --name sqmusic_web \
   --restart=always \
-  -p 8096:80 \
+  -p 8996:80 \
   --network simple_sq_music_plus_sq-app-network \
   registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus_web:v3.0.5
 

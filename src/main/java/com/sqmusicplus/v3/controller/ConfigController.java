@@ -10,6 +10,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.sqmusicplus.v3.base.entity.DownloadInfo;
 import com.sqmusicplus.v3.base.entity.SqConfig;
 import com.sqmusicplus.v3.base.entity.SqSync;
@@ -162,6 +163,10 @@ public class ConfigController {
                 data.setConfigValue(DbBooleanConvert.NO.getBooleanValue().toString());
             }
         }
+        LambdaUpdateWrapper<SqConfig> sqConfigLambdaUpdateWrapper = new LambdaUpdateWrapper<>();
+        sqConfigLambdaUpdateWrapper.eq(SqConfig::getConfigKey, data.getConfigKey())
+                        .set(SqConfig::getConfigValue, data.getConfigValue());
+        configService.update(sqConfigLambdaUpdateWrapper);
         List<SqConfig> list = configService.list();
         SqConfigCache.setSqConfigMap(list);
         //根据key设置一些特殊配置

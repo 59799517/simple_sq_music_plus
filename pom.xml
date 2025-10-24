@@ -18,7 +18,7 @@
     <properties>
         <java.version>17</java.version>
         <jsoup.version>1.15.3</jsoup.version>
-        <jave-all-deps.version>3.3.1</jave-all-deps.version>
+        <jave-all-deps.version>3.5.0</jave-all-deps.version>
         <jaudiotagger.version>2.0.3</jaudiotagger.version>
         <hutool.version>5.8.25</hutool.version>
         <jcommander.version>1.82</jcommander.version>
