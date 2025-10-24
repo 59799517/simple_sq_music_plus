@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   sqmusic_main:
-    image: registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:v3.0.16
+    image: registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:v3.0.17
     container_name: sqmusic_main
     environment:
       - DB_IP=mysql
