@@ -348,7 +348,7 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
         //修改文件
         try {
             if (DbBooleanConvert.findByValue(rewriteMp3tag)) {
-                MusicUtils.setMediaFileInfo(onSuccess, music.getMusicName(), music.getMusicAlbum(), String.join(",", music.getMusicArtists()), "SqMusic", music.getMusicLyric(), albumfile);
+                MusicUtils.setMediaFileInfo(onSuccess, music.getMusicName(), music.getMusicAlbum(), String.join(";", music.getMusicArtists()), "SqMusic", music.getMusicLyric(), albumfile);
                 log.debug("标签写入成功{}", music.getMusicName());
             }
 

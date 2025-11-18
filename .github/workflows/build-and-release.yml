@@ -45,27 +45,19 @@ jobs:
         run: |
           # 从模板生成 docker-compose.yml
           cp docker-compose-template.yml docker-compose.yml
-          # 从模板生成 docker-compose-local.yml
-          cp docker-compose-local-template.yml docker-compose-local.yml
           
           # 替换 docker-compose.yml 中的版本号
           sed -i "s/v\[version\]/v$APP_VERSION/g" docker-compose.yml
           sed -i "s/v\[webversion\]/v$WEB_VERSION/g" docker-compose.yml
           
-          # 替换 docker-compose-local.yml 中的版本号
-          sed -i "s/v\[version\]/v$APP_VERSION/g" docker-compose-local.yml
-          sed -i "s/v\[webversion\]/v$WEB_VERSION/g" docker-compose-local.yml
-          
           # 显示生成的文件内容以供验证
           echo "=== docker-compose.yml ==="
           cat docker-compose.yml
-          echo -e "\n=== docker-compose-local.yml ==="
-          cat docker-compose-local.yml
       - name: Commit updated docker-compose files
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git add docker-compose.yml docker-compose-local.yml
+          git add docker-compose.yml
           git commit -m "Update docker-compose files with version $APP_VERSION and web version $WEB_VERSION" || echo "No changes to commit"
       - name: Push changes
         uses: ad-m/github-push-action@master
@@ -86,7 +78,6 @@ jobs:
             version.txt
             webversion.txt
             docker-compose.yml
-            docker-compose-local.yml
       - name: Build the Docker image
         run: |
           docker version

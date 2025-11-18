@@ -1,8 +1,3 @@
-#DB_IP: 100.122.250.55
-#DB_PORT: 7006
-#DB_NAME: sqmusicv3
-#DB_USERNAME: root
-#DB_PASSWORD: 11111
 server:
   port: 8099
 spring:
@@ -86,7 +81,7 @@ sa-token:
   is-print: false
   jwt-secret-key: xNQRcY7FgHM1dyJCoZKmcmksNT7aR0FlqvRCWJbmD
 
-version: 3.0.19
-webversion: 3.0.13
+version: 3.0.20
+webversion: 3.0.14
 
 
