@@ -25,7 +25,9 @@ import org.springframework.stereotype.Service;
 import java.io.File;
 import java.io.Serializable;
 import java.util.*;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * Created with IntelliJ IDEA.
@@ -63,21 +65,46 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
             if (music == null) {
                 throw new RuntimeException("下载失败歌曲信息不完整歌曲详情转化歌曲失败:" + JSONObject.toJSONString(downloadInfo));
             }
-            final String baseMusicName = music.getMusicName().trim();
-            //如果歌手超过7个则只取前7个
-            final String baseMusicArtistName = music.getMusicArtists().stream().map(String::trim).limit(7).collect(Collectors.joining("&"));
-//            final String baseMusicArtistName = music.getMusicArtists().stream().map(String::trim).collect(Collectors.joining("&"));
-            final String baseMusicAlbumName = music.getMusicAlbum().trim();
 
-            final String baseAlbumID = music.getAlbumId();
-            final List<String> baseArtistsID = music.getArtistsIds();
-            final boolean isAudioBook = DbBooleanConvert.findByValue(downloadInfo.getAudioBook());
+
+            String baseMusicName_temp = music.getMusicName().trim();
+            String baseMusicArtistName_temp = music.getMusicArtists().stream().map(String::trim).limit(7).collect(Collectors.joining("&"));
+            String baseMusicAlbumName_temp = music.getMusicAlbum().trim();
+
+            try {
+                String open_symbol_remove = SqConfigCache.getSqConfigValue(SetConfigEnum.SYSTEM_START_FILE_AND_FOLDER_SPECIAL_SYMBOL_REMOVE);
+                if (Boolean.valueOf(open_symbol_remove)){
+                    String open_symbol_remove_symbol = SqConfigCache.getSqConfigValue(SetConfigEnum.SYSTEM_START_FILE_AND_FOLDER_SPECIAL_SYMBOL_REMOVE_SYMBOL);
+                    //移除特殊字符
+                    if (StringUtils.isNotBlank(open_symbol_remove_symbol)) {
+                        char[] chars = open_symbol_remove_symbol.toCharArray();
+                        for (char c : chars) {
+                            if (c != ' ') {
+                                // 转义特殊字符以避免正则表达式问题
+                                String escapedSymbol = Pattern.quote(String.valueOf(c));
+                                baseMusicName_temp = baseMusicName_temp.replaceAll(escapedSymbol, "");
+                                baseMusicArtistName_temp = baseMusicArtistName_temp.replaceAll(escapedSymbol, "");
+                                baseMusicAlbumName_temp = baseMusicAlbumName_temp.replaceAll(escapedSymbol, "");
+                            }
+                        }
+                    }
+                }
+            } catch (Exception e) {
+               log.error("歌曲信息移除特殊字符失败",e);
+            }
+            final String baseMusicName = baseMusicName_temp;;
+            //如果歌手超过7个则只取前7个
+            final String baseMusicArtistName = baseMusicArtistName_temp;
+//            final String baseMusicArtistName = music.getMusicArtists().stream().map(String::trim).collect(Collectors.joining("&"));
+            final String baseMusicAlbumName = baseMusicAlbumName_temp;
+
+            String baseAlbumID = music.getAlbumId();
+            List<String> baseArtistsID = music.getArtistsIds();
+            boolean isAudioBook = DbBooleanConvert.findByValue(downloadInfo.getAudioBook());
 
             String musicPath = SqConfigCache.getSqConfigValue(SetConfigEnum.SYSTEM_DOWNLOAD_PATH);
-
             //数据库下载路径
             File file = new File(musicPath);
-
 
             HashMap<String, Object> pathTemplate = new HashMap<>();
             String music_path_template = SqConfigCache.getSqConfigValue(SetConfigEnum.SYSTEM_DOWNLOAD_FILE_TEMPLATE);

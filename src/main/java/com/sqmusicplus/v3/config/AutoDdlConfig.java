@@ -25,6 +25,7 @@ public class AutoDdlConfig   extends SimpleDdl {
                 "db/sqlInit.sql"
                 ,"db/sq_config.sql"
                 ,"db/3.0.17update.sql"
+                ,"db/3.0.21update.sql"
 
         );
     }

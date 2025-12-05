@@ -59,6 +59,14 @@ public enum SetConfigEnum {
      */
     SYSTEM_SHOW_PLAY_URL("system.show.play.url","是否显示播放连接（下载链接）","system"),
 
+    /**
+     * 开始文件夹和文件的特殊符号移除（百度网盘上传）
+     */
+    SYSTEM_START_FILE_AND_FOLDER_SPECIAL_SYMBOL_REMOVE("system.start.file.and.folder.special.symbol.remove","开始文件夹和文件的特殊符号移除（百度网盘上传）","system"),
+    /**
+     * 需要移除的特护符号
+     */
+    SYSTEM_START_FILE_AND_FOLDER_SPECIAL_SYMBOL_REMOVE_SYMBOL("system.start.file.and.folder.special.symbol.remove.symbol","需要移除的特护符号","system"),
 
     /**
      * 下载文件模板
