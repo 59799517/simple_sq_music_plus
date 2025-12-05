@@ -85,7 +85,7 @@ public class UrlMusicPlayListParser {
             //专辑
                 String[] split = url.split("/");
                 String id = split[split.length - 1];
-                List<Music> albumSongByAlbumsId = nKwSearchHander.getAlbumSongByAlbumsId(id);
+                List<Music> albumSongByAlbumsId = nKwSearchHander.queryAlbumById(id).getMusics();
                 if (downlaodParserUrl.getIsAudioBook()){
                     for (Music smusic : albumSongByAlbumsId) {
                         smusic.setMusicArtists(ListUtil.of(downlaodParserUrl.getArtist()));

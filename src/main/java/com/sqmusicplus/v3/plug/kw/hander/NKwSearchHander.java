@@ -216,6 +216,9 @@ public class NKwSearchHander extends SearchHanderAbstract {
         String s = pic;
         String songName = songinfo.getName();
         String duration = "0";
+        //获取年份
+
+
         try {
             duration = songinfo.getDuration()+"";
             BigDecimal bigDecimal = new BigDecimal(duration);
@@ -327,25 +330,25 @@ public class NKwSearchHander extends SearchHanderAbstract {
         List<Music> collect = musiclist.stream().map(abslistDTO -> {
             String album = albumInfoResult.getName();
             String aartist = abslistDTO.getAartist();
+            String allartistid = abslistDTO.getAllartistid();
             String url = (config.getSongCoverUrl() + abslistDTO.getWebAlbumpicShort()).replaceAll("/120", "/500");
 
             String duration = abslistDTO.getDuration();
             String nMinfo = abslistDTO.getNMinfo();
             List<PlugBrType> plugBrTypes = NMinfoToPlugBrType(nMinfo);
-//
-//            NMinfoToPlugBrType
-
             return  new Music()
-                    .setId(abslistDTO.getId())
+            .setId(abslistDTO.getId())
                     .setMusicImage(url)
                     .setMusicAlbum(album)
                     .setMusicArtists(ListUtil.of(aartist.split("&")))
+                    .setArtistsIds(ListUtil.of(allartistid.split("&")))
                     .setMusicName(abslistDTO.getName())
                     .setMusicDuration(Long.parseLong(duration))
                     .setAlbumId(albumId)
-                    .setBits(plugBrTypes)
                     .setDataInfo(JSONObject.parseObject(JSONObject.toJSONString(abslistDTO)))
-                    .setArtistsIds(ListUtil.of(abslistDTO.getArtistid()));
+                    .setPlugName(getPlugName())
+                    .setBits(plugBrTypes);
+
 
         }).collect(Collectors.toList());
         String alubimage = null;
@@ -455,30 +458,7 @@ public class NKwSearchHander extends SearchHanderAbstract {
 
     @Override
     public List<Music> getAlbumSongByAlbumsId(String albumsId) {
-
-        //下载池对象
-        String searchUrl = config.getAlbumInfoUrl().replaceAll("#\\{albumid}", albumsId);
-        AlbumInfoResult albumInfoResult = DownloadUtils.get(searchUrl, AlbumInfoResult.class);
-        List<AlbumInfoResult.MusiclistDTO> musiclist = albumInfoResult.getMusiclist();
-        ArrayList<Music> music = new ArrayList<>();
-        musiclist.forEach(e -> {
-            String duration = e.getDuration();
-            String nMinfo = e.getNMinfo();
-            List<PlugBrType> plugBrTypes = NMinfoToPlugBrType(nMinfo);
-            music.add(
-                    new Music()
-                     .setAlbumId(albumInfoResult.getAlbumid())
-                    .setMusicAlbum(albumInfoResult.getName())
-                    .setMusicName(e.getName())
-                    .setId(e.getId())
-                    .setBits(plugBrTypes)
-                    .setMusicDuration(Long.parseLong(duration))
-                    .setArtistsIds(ListUtil.of(e.getArtistid()))
-                    .setMusicArtists(ListUtil.of(e.getArtist()))
-                    .setMusicImage((getConfig().getSearheads() + e.getWebAlbumpicShort()).replaceAll("/120", "/500"))
-                            .setDataInfo(JSONObject.parseObject(JSONObject.toJSONString(e))));
-        });
-        return music;
+        return queryAlbumById(albumsId).getMusics();
     }
 
     @Override
