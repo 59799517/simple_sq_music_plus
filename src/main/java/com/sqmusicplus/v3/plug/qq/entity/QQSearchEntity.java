@@ -585,6 +585,36 @@ public class QQSearchEntity {
 
     }
 
+    /**
+     * 获取微信code获取cookie
+     * @param code
+     * @return
+     */
+    public static String getQQWechatLoginParam(String code){
+        String msg = """
+                 {
+                                                 "comm": {
+                                                     "tmeLoginType": "1",
+                                                      "tmeAppID": "qqmusic",
+                                                      "g_tk": 5381,
+                                                      "platform": "yqq",
+                                                      "ct": 24,
+                                                      "cv": 0
+                                                 },
+                                                 "req": {
+                                                     "module": "music.login.LoginServer",
+                                                     "method": "Login",
+                                                     "param": {
+                                                         "strAppid": "wx48db31d50e334801",
+                                                         "code": "%s"
+                
+                                                     }
+                                                 }
+                                             }
+          """;
+
+        return String.format(msg,code);
+    }
 
 //    /**
 //     * 获取全部关注歌手信息

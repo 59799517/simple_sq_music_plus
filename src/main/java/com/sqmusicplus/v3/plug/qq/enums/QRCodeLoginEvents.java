@@ -52,13 +52,25 @@ public enum QRCodeLoginEvents {
      * @param value 传入的整数值
      * @return 对应的 QRCodeLoginEvents 枚举成员
      */
-    public static QRCodeLoginEvents getByValue(Integer value) {
+    public static QRCodeLoginEvents getByKey(Integer value) {
         if (value == null){
             return QRCodeLoginEvents.OTHER;
         }
         QRCodeLoginEvents[] values = QRCodeLoginEvents.values();
         for (QRCodeLoginEvents member : values) {
             if (member.getKey().intValue()==value) {
+                return member;
+            }
+        }
+        return QRCodeLoginEvents.OTHER;
+    }
+    public static QRCodeLoginEvents getByValue(Integer value) {
+        if (value == null){
+            return QRCodeLoginEvents.OTHER;
+        }
+        QRCodeLoginEvents[] values = QRCodeLoginEvents.values();
+        for (QRCodeLoginEvents member : values) {
+            if (member.getValue().intValue()==value) {
                 return member;
             }
         }

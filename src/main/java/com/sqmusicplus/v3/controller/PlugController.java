@@ -125,7 +125,7 @@ public class PlugController {
     }
 
     /**
-     * qqVIP登录相关
+     * qqVIP登录相关（QQ二维码）
      * @return
      */
     @SaCheckLogin
@@ -135,6 +135,19 @@ public class PlugController {
             String image ="data:"+qqLoginQr.getMimeType()+";base64,"+ Base64Utils.encodeToString(qqLoginQr.getData());
             return AjaxResult.success("成功", image);
     }
+
+    /**
+     * 微信登录二维码
+     * @return
+     */
+    @SaCheckLogin
+    @GetMapping("/qqvip/getWechatQrImage")
+    public AjaxResult  getWechatQrImage(){
+        QQMusicQr qqLoginQr = qqHander.getWechatLoginQr();
+        String image ="data:"+qqLoginQr.getMimeType()+";base64,"+ Base64Utils.encodeToString(qqLoginQr.getData());
+        return AjaxResult.success("成功", image);
+    }
+
     /**
      * QQ二维码检测
      */

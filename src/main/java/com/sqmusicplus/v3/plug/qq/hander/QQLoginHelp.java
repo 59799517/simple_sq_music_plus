@@ -1,10 +1,20 @@
 package com.sqmusicplus.v3.plug.qq.hander;
 
+import com.alibaba.fastjson.JSONObject;
+import com.sqmusicplus.v3.plug.qq.entity.QQMusicCookie;
+import com.sqmusicplus.v3.plug.qq.entity.QQMusicCookieInfo;
 import com.sqmusicplus.v3.plug.qq.entity.QQMusicQr;
 import com.sqmusicplus.v3.plug.qq.entity.QQMusicQrEventResult;
 import com.sqmusicplus.v3.plug.qq.enums.LoginType;
 import com.sqmusicplus.v3.plug.qq.enums.QRCodeLoginEvents;
+import com.sqmusicplus.v3.utils.OkHttpUtils;
 import okhttp3.*;
+import org.apache.hc.client5.http.classic.methods.HttpGet;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.core5.http.io.entity.EntityUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Base64Utils;
 
@@ -58,35 +68,16 @@ public class QQLoginHelp {
             })
             .build();
 
+    /**
+     *
+     *  QQ扫码专区
+     *
+     */
 
-
-
-//测试方法
-//    void testKgSongUrl() throws IOException, ScriptException, InterruptedException {
-////        OkHttpUtils.clearCookies();
-////
-//        QQMusicQr qqLoginQr = getQQLoginQr();
-//        String qqMusicQrBase64 = getQQMusicQrBase64(qqLoginQr);
-//        System.out.println(qqMusicQrBase64);
-//        QQMusicQrEventResult qqMusicQrEventResult = checkQQQr(qqLoginQr);
-//        while (qqMusicQrEventResult.getQrCodeLoginEvents() != QRCodeLoginEvents.DONE) {
-//            qqMusicQrEventResult = checkQQQr(qqLoginQr);
-//        }
-//        //huoqucode
-//        QQMusicQrEventResult authorizeByQQMusicQrEventResult = getAuthorizeByQQMusicQrEventResult(qqMusicQrEventResult);
-//        if (authorizeByQQMusicQrEventResult.getQrCodeLoginEvents() == QRCodeLoginEvents.SUCCESS) {
-//            System.out.println("登录成功");
-//        } else if (authorizeByQQMusicQrEventResult.getQrCodeLoginEvents() == QRCodeLoginEvents.REFUSE) {
-//            System.out.println("登录失败");
-//        } else if (authorizeByQQMusicQrEventResult.getQrCodeLoginEvents()== QRCodeLoginEvents.TIMEOUT) {
-//            System.out.println("登录超时");
-//        }
-//        System.out.println("完成");
-//
-//
-//    }
-
-
+    /**
+     * 获取QQ音乐QQ扫码的二维码
+     * @return
+     */
     public static QQMusicQr getQQLoginQr() {
         double random = new Random().nextDouble();
         // 构建请求 URL
@@ -137,7 +128,11 @@ public class QQLoginHelp {
     }
 
 
-
+    /**
+     * 检测生成的QQ扫描二维码是否已被扫描查扫描结果
+     * @param qqMusicQr
+     * @return
+     */
     public static QQMusicQrEventResult checkQQQr(QQMusicQr qqMusicQr) {
         String qrsig = qqMusicQr.getIdentifier();
         if (qrsig == null || qrsig.isEmpty()) {
@@ -188,7 +183,8 @@ public class QQLoginHelp {
             String redirectUrl = data[2].replace("\"", "");
 
             return new QQMusicQrEventResult()
-                    .setQrCodeLoginEvents(QRCodeLoginEvents.getByValue(code))
+                    .setQqMusicQr(qqMusicQr)
+                    .setQrCodeLoginEvents(QRCodeLoginEvents.getByKey(code))
                     .setUrl(redirectUrl)
                     .setSigx(extractValue(responseBody, "&ptsigx=(.+?)&s_url"))
                     .setUin(extractValue(responseBody, "&uin=(.+?)&service"));
@@ -199,9 +195,11 @@ public class QQLoginHelp {
     }
 
 
-
-
-
+    /**
+     * 获取授权的code
+     * @param eventResult
+     * @return
+     */
     public static QQMusicQrEventResult getAuthorizeByQQMusicQrEventResult(QQMusicQrEventResult eventResult) {
         try {
             HttpUrl url = new HttpUrl.Builder()
@@ -306,6 +304,145 @@ public class QQLoginHelp {
     }
 
 
+/**
+ * 微信专区
+ */
+    /**
+     * 获取（生成）微信扫码的二维码
+     * @return
+     */
+    public static  QQMusicQr  getWechatLoginQr(){
+    HttpUrl uuidUrl = new HttpUrl.Builder()
+            .scheme("https")
+            .host("open.weixin.qq.com")
+            .addPathSegment("connect")
+            .addPathSegment("qrconnect")
+            .addQueryParameter("appid", "wx48db31d50e334801")
+            .addQueryParameter("redirect_uri", "https://y.qq.com/portal/wx_redirect.html?login_type=2&surl=https://y.qq.com/")
+            .addQueryParameter("response_type", "code")
+            .addQueryParameter("scope", "snsapi_login")
+            .addQueryParameter("state", "STATE")
+            .addQueryParameter("href", "https://y.qq.com/mediastyle/music_v17/src/css/popup_wechat.css#wechat_redirect")
+            .build();
+
+    OkHttpUtils request  = OkHttpUtils.builder().url(uuidUrl.toString());
+    Response uuidResponse = request.get().syncReturnResponse();
+    if (!uuidResponse.isSuccessful()) {
+    }
+    String responseBody = null;
+    try {
+        responseBody = uuidResponse.body().string();
+    } catch (IOException e) {
+        e.printStackTrace();
+    }
+    Pattern uuidPattern = Pattern.compile("uuid=(.+?)\"");
+    Matcher uuidMatcher = uuidPattern.matcher(responseBody);
+    if (!uuidMatcher.find()) {
+    }
+    String uuid = uuidMatcher.group(1);
+    HttpUrl qrCodeUrl = new HttpUrl.Builder()
+            .scheme("https")
+            .host("open.weixin.qq.com")
+            .addPathSegment("connect")
+            .addPathSegment("qrcode")
+            .addPathSegment(uuid)
+            .build();
+    OkHttpUtils qrCodeRequest = OkHttpUtils.builder().url(qrCodeUrl.toString()).addHeader("Referer", "https://open.weixin.qq.com/connect/qrconnect");
+    Response qrCodeResponse = qrCodeRequest.get().syncReturnResponse();
+    if (!qrCodeResponse.isSuccessful()) {
+    }
+    byte[] qrData = null;
+    try {
+        qrData = qrCodeResponse.body().bytes();
+    } catch (IOException e) {
+        e.printStackTrace();
+    }
+    return new QQMusicQr(qrData, LoginType.WECHAT, "image/jpeg", uuid,0);
+}
+
+    /**
+     * 检测微信扫码状态
+     * @param qqMusicQr
+     * @throws Exception
+     */
+    public static QQMusicQrEventResult checkWechatQR(QQMusicQr qqMusicQr) throws Exception {
+        CloseableHttpClient httpClient = HttpClients.createDefault();
+
+        QQMusicQrEventResult qqMusicQrEventResult = new QQMusicQrEventResult();
+        qqMusicQrEventResult.setQqMusicQr(qqMusicQr);
+        Integer retryCount = qqMusicQr.getRetryCount();
+        //超过100次就停止监听1
+        if (retryCount > 100) {
+            qqMusicQrEventResult.setQrCodeLoginEvents(QRCodeLoginEvents.STOP);
+            return qqMusicQrEventResult;
+        }
+        String qrsig = qqMusicQr.getIdentifier();
+
+        if (qrsig == null || qrsig.isEmpty()) {
+            qqMusicQrEventResult.setQrCodeLoginEvents(QRCodeLoginEvents.STOP);
+            return qqMusicQrEventResult;
+        }
+
+        String uuid = qqMusicQr.getIdentifier();
+        int unixTimeStamp = (int) (System.currentTimeMillis() / 1000);
+        String url = "https://lp.open.weixin.qq.com/connect/l/qrconnect?uuid=" + uuid + "&_=" + unixTimeStamp;
+        HttpGet request = new HttpGet(url);request.setHeader("Referer", "https://open.weixin.qq.com/");
+
+
+        try (CloseableHttpResponse response = httpClient.execute(request)) {
+            String responseText = EntityUtils.toString(response.getEntity());
+            Pattern pattern = Pattern.compile("window\\.wx_errcode=(\\d+);window\\.wx_code='([^']*)'");
+            Matcher matcher = pattern.matcher(responseText);
+
+            if (!matcher.find()) {
+                throw new Exception("获取二维码状态失败");
+            }
+
+            String wxErrcode = matcher.group(1);
+            if (!wxErrcode.matches("\\d+")) {
+                qqMusicQrEventResult.setQrCodeLoginEvents(QRCodeLoginEvents.NOTFOUND);
+                return qqMusicQrEventResult;
+            }
+
+            QRCodeLoginEvents event = QRCodeLoginEvents.getByValue(Integer.parseInt(wxErrcode));
+            qqMusicQrEventResult.setQrCodeLoginEvents(event);
+            if (event == QRCodeLoginEvents.DONE) {
+                String wxCode = matcher.group(2);
+                if (wxCode == null || wxCode.isEmpty()) {
+                    throw new Exception("获取code失败");
+                }
+                qqMusicQrEventResult.setCode(wxCode);
+//                authorizeWXQR(wxCode);
+            }
+            return qqMusicQrEventResult;
+        }
+    }
+
+    /**
+     * 根据微信code获取cookie
+     * 使用  QQSearchEntity的getQQWechatLoginParam生产请求参数
+     */
+
+    public static QQMusicCookieInfo authorizeWechatQR(String qqWechatLoginParam) throws Exception {
+        HttpPost request = new HttpPost("https://u.y.qq.com/cgi-bin/musicu.fcg");
+        request.setHeader("Content-Type", "application/json");
+        Response referer = OkHttpUtils.builder()
+                .url("https://u.y.qq.com/cgi-bin/musicu.fcg")
+                .addHeader("Content-Type", "application/x-www-form-urlencoded")
+                .addHeader("Referer", "https://y.qq.com/")
+                .addHeader("User-Agent", "QQ%E9%9F%B3%E4%B9%90/73222 CFNetwork/1406.0.3 Darwin/22.4.0")
+                .post(true, qqWechatLoginParam)
+                .syncReturnResponse();
+        String data = referer.body().string();
+        QQMusicCookie qqMusicCookie = JSONObject.parseObject(data, QQMusicCookie.class);
+        if (qqMusicCookie.getCode()==0){
+            QQMusicCookie.ReqDTO req = qqMusicCookie.getReq();
+            if (req.getCode()==0){
+                return req.getData();
+            }
+        }
+        return null;
+    }
 
 
 
@@ -347,8 +484,6 @@ public class QQLoginHelp {
                 }
         };
     }
-
-
 
 
 

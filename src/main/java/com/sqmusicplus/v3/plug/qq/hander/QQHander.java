@@ -24,15 +24,20 @@ import com.sqmusicplus.v3.plug.qq.util.QQMusicUtil;
 import com.sqmusicplus.v3.utils.OkHttpUtils;
 import com.sqmusicplus.v3.utils.StringUtils;
 import lombok.extern.slf4j.Slf4j;
+import okhttp3.HttpUrl;
+import okhttp3.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @Classname QQHander
@@ -442,6 +447,22 @@ public class QQHander extends SearchHanderAbstract {
 
 
     /**
+     * 获取微信登录二维码
+     * @return
+     */
+    public QQMusicQr  getWechatLoginQr(){
+        QQMusicQr wechatLoginQr = QQLoginHelp.getWechatLoginQr();
+        SimplePropertyPreFilter filter = new SimplePropertyPreFilter();
+        filter.getExcludes().add("LoginType");
+        String jsonString = JSONObject.toJSONString(wechatLoginQr, filter);
+        SqConfigCache.updateConfigToDb(SetConfigEnum.PLUG_QQVIP_QRCODE,jsonString);
+        //异步监听
+        syncCheckQrCodeStatus();
+        return wechatLoginQr;
+
+    }
+
+    /**
      * 获取 qq登录二维码
      * @param
      * @return 二维码信息
@@ -456,21 +477,33 @@ public class QQHander extends SearchHanderAbstract {
         syncCheckQrCodeStatus();
         return qqLoginQr;
     }
-    /**
-     * 获取二维码状态
-     */
-    public QQMusicQrEventResult checkQQQr(QQMusicQr qqMusicQr) {
-        return QQLoginHelp.checkQQQr(qqMusicQr);
-    }
 
+    /**
+     * 检查二维码扫码状态
+     * @return
+     */
     public QQMusicQrEventResult checkQQQr() {
         String sqConfigValue = SqConfigCache.getSqConfigValue(SetConfigEnum.PLUG_QQVIP_QRCODE);
         QQMusicQr qqMusicQr = JSONObject.parseObject(sqConfigValue, QQMusicQr.class);
         qqMusicQr.setQrType(LoginType.getByType(qqMusicQr.getQrTypeStr()));
-        QQMusicQrEventResult qqMusicQrEventResult = QQLoginHelp.checkQQQr(qqMusicQr);
-        if (qqMusicQrEventResult.getQrCodeLoginEvents() == QRCodeLoginEvents.DONE){
-            return qqMusicQrEventResult;
+        LoginType qrType = qqMusicQr.getQrType();
+        if (qrType.getType().equals(LoginType.QQ.getType())){
+            QQMusicQrEventResult qqMusicQrEventResult = QQLoginHelp.checkQQQr(qqMusicQr);
+            if (qqMusicQrEventResult.getQrCodeLoginEvents() == QRCodeLoginEvents.DONE){
+                return qqMusicQrEventResult;
+            }
+        }else{
+            try {
+                QQMusicQrEventResult qqMusicQrEventResult = QQLoginHelp.checkWechatQR(qqMusicQr);
+                if (qqMusicQrEventResult.getQrCodeLoginEvents() == QRCodeLoginEvents.DONE){
+                    return qqMusicQrEventResult;
+                }
+            } catch (Exception e) {
+                return null;
+            }
         }
+
+
         return null;
 
     }
@@ -479,7 +512,18 @@ public class QQHander extends SearchHanderAbstract {
      * 获取授权code
      */
     public QQMusicQrEventResult getAuthorizeByQQMusicQrEventResult(QQMusicQrEventResult eventResult) {
-        return QQLoginHelp.getAuthorizeByQQMusicQrEventResult(eventResult);
+        QQMusicQr qqMusicQr = eventResult.getQqMusicQr();
+        LoginType qrType = qqMusicQr.getQrType();
+        if (qrType.getType().equals(LoginType.QQ.getType())){
+            return QQLoginHelp.getAuthorizeByQQMusicQrEventResult(eventResult);
+        }else if (qrType.getType().equals(LoginType.WECHAT.getType())){
+            eventResult.setQrCodeLoginEvents(QRCodeLoginEvents.CODE_SUCCESS);
+            return eventResult;
+        }
+        eventResult.setQrCodeLoginEvents(QRCodeLoginEvents.NOTFOUND);
+        return eventResult;
+
+
     }
     /**
      * 根据code获得cookie
@@ -500,6 +544,25 @@ public class QQHander extends SearchHanderAbstract {
         }
         return cookieByCode;
     }
+    public QQMusicCookieInfo getWechatCookieByCode(String code) {
+        String qqWechatLoginParam = qqSearchEntity.getQQWechatLoginParam(code);
+        try {
+            QQMusicCookieInfo cookieByCode = QQLoginHelp.authorizeWechatQR(qqWechatLoginParam);
+            if (cookieByCode != null){
+                saveCookie(cookieByCode);
+            }
+            return cookieByCode;
+        } catch (Exception e) {
+            log.error("微信扫码code获取出现异常");
+            e.printStackTrace();
+            return null;
+        }
+
+    }
+
+
+
+
     /**
      * cookies保存数据库
      */
@@ -543,7 +606,12 @@ public class QQHander extends SearchHanderAbstract {
                             //开始获取授权code
                             QQMusicQrEventResult authorizeByQQMusicQrEventResult = getAuthorizeByQQMusicQrEventResult(result);
                             if (authorizeByQQMusicQrEventResult.getQrCodeLoginEvents() == QRCodeLoginEvents.CODE_SUCCESS){
-                                getCookieByCode(authorizeByQQMusicQrEventResult.getCode());
+                                QQMusicQr qqMusicQr = authorizeByQQMusicQrEventResult.getQqMusicQr();
+                                if (qqMusicQr.getQrType().getType().equals(LoginType.QQ.getType())){
+                                    getCookieByCode(authorizeByQQMusicQrEventResult.getCode());
+                                }else{
+                                    getWechatCookieByCode(authorizeByQQMusicQrEventResult.getCode());
+                                }
                             }
                             break; // 任务成功完成，终止循环
                         }else{
@@ -566,7 +634,7 @@ public class QQHander extends SearchHanderAbstract {
         }).start();
     }
     /**
-     * 获取登录状态四否有效
+     * 获取登录状态是否有效
      */
     public Boolean getLoginStatus() {
         String sqConfig = SqConfigCache.getSqConfigValue(SetConfigEnum.PLUG_QQVIP_COOKIE);
@@ -720,7 +788,6 @@ public class QQHander extends SearchHanderAbstract {
     //用户关注的歌手
     public GetFollowSingerList likeArtists(int page) {
         String sqConfig = SqConfigCache.getSqConfigValue(SetConfigEnum.PLUG_QQVIP_COOKIE);
-
         if (sqConfig!=null&&StringUtils.isNotBlank(sqConfig)){
             QQMusicCookieInfo qqMusicCookieInfo = JSONObject.parseObject(sqConfig, QQMusicCookieInfo.class);
             if (qqMusicCookieInfo != null){
