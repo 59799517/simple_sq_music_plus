@@ -60,6 +60,7 @@ jobs:
           git add docker-compose.yml
           git commit -m "Update docker-compose files with version $APP_VERSION and web version $WEB_VERSION" || echo "No changes to commit"
       - name: Push changes
+        continue-on-error: true  # 即使失败也继续执行后续步骤
         uses: ad-m/github-push-action@master
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
