@@ -1,6 +1,7 @@
 package com.sqmusicplus.v3.base.enums;
 
 
+import java.util.List;
 
 public enum PlugBrType {
 
@@ -48,7 +49,20 @@ public enum PlugBrType {
     KG_Flac_2000("flac", "flac", 2000,"kg","kgHander","kg_flac_2000"),
     KG_Flac_3000("high", "flac", 3000,"kg","kgHander","kg_flac_3000"),
     KG_Flac_4000("viper_atmos", "flac", 4000,"kg","kgHander","kg_flac_4000"),
-    KG_Flac_5000("viper_tape", "flac", 5000,"kg","kgHander","kg_flac_5000");
+    KG_Flac_5000("viper_tape", "flac", 5000,"kg","kgHander","kg_flac_5000"),
+
+
+    APPLE_MP3_320("320","mp3",320,"apple","appleHander","apple_mp3_320"),
+    APPLE_AAC_256("3000","aac",256,"apple","appleHander","apple_aac_256"),
+    APPLE_OGG_257("256","ogg",257,"apple","appleHander","apple_ogg_257"),
+    APPLE_M4A_258("257","m4a",258,"apple","appleHander","apple_m4a_258"),
+    APPLE_WAV_1500("1500","wav",1500,"apple","appleHander","apple_wav_1500"),
+    APPLE_FLAC_2000("2000","flac",2000,"apple","appleHander","apple_flac_2000"),
+    APPLE_SOURCE_9999("2000","m4a",9999,"apple","appleHander","apple_source_9999");
+
+
+
+
 
 
 
@@ -111,6 +125,11 @@ public enum PlugBrType {
             }
         }
         return null;
+    }
+
+
+    public static List<PlugBrType> getAppleAllType(){
+        return List.of(APPLE_MP3_320,APPLE_AAC_256,APPLE_OGG_257,APPLE_M4A_258,APPLE_WAV_1500,APPLE_FLAC_2000,APPLE_SOURCE_9999);
     }
 
 
