@@ -62,6 +62,10 @@ public class NeteaseHander extends SearchHanderAbstract {
                             .get()
                             .sync();
                     jsonObject = JSONObject.parseObject(data);
+                    if(jsonObject==null){
+                        log.error("netease使用{}匿名登录失败",s);
+                        continue;
+                    }
                 } catch (Exception e) {
                     log.error("netease使用{}匿名登录失败",s);
                     continue;
