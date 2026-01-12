@@ -110,7 +110,7 @@ public class MusicUtils {
             tag.setField(FieldKey.ALBUM, album.trim());
             tag.setField(FieldKey.ARTIST, artist.trim());
             tag.setField(FieldKey.COMMENT, comment.trim());
-            tag.setField(FieldKey.ALBUM_ARTIST, album.trim());
+            tag.setField(FieldKey.ALBUM_ARTIST, artist.trim());
             if (StringUtils.isNotEmpty(lyrics)) {
                 try {
                     tag.setField(FieldKey.LYRICS, lyrics);
