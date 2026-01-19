@@ -70,6 +70,11 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
             String baseMusicName_temp = music.getMusicName().trim();
             String baseMusicArtistName_temp = music.getMusicArtists().stream().map(String::trim).limit(7).collect(Collectors.joining("&"));
             String baseMusicAlbumName_temp = music.getMusicAlbum().trim();
+            String baseMusicMainArtistName_temp =  "群星";
+            if (StringUtils.isNotBlank( music.getMusicArtists().get(0).trim())){
+                baseMusicMainArtistName_temp =  music.getMusicArtists().get(0).trim();
+            }
+
 
             try {
                 String open_symbol_remove = SqConfigCache.getSqConfigValue(SetConfigEnum.SYSTEM_START_FILE_AND_FOLDER_SPECIAL_SYMBOL_REMOVE);
@@ -97,6 +102,7 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
             final String baseMusicArtistName = baseMusicArtistName_temp;
 //            final String baseMusicArtistName = music.getMusicArtists().stream().map(String::trim).collect(Collectors.joining("&"));
             final String baseMusicAlbumName = baseMusicAlbumName_temp;
+            final String baseMusicMainArtistName = baseMusicMainArtistName_temp;
 
             String baseAlbumID = music.getAlbumId();
             List<String> baseArtistsID = music.getArtistsIds();
@@ -115,6 +121,7 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
             String artistsId = baseArtistsID.stream().map(String::trim).limit(7).collect(Collectors.joining("&"));
             pathTemplate.put("musicName", baseMusicName);
             pathTemplate.put("artists", baseMusicArtistName);
+            pathTemplate.put("artist", baseMusicMainArtistName); //新增主要歌手
             pathTemplate.put("album", baseMusicAlbumName);
             pathTemplate.put("albumId", baseAlbumID);
             pathTemplate.put("artistsId", artistsId);
@@ -126,7 +133,7 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
             }
 
             //拼接当前各社区路径  歌手/专辑
-            String basepath = baseMusicArtistName + File.separator + baseMusicAlbumName + File.separator;
+            String basepath = baseMusicMainArtistName + File.separator + baseMusicAlbumName + File.separator;
             //获取当前文件后缀
             String brType = downloadInfo.getDownloadBrType();
             PlugBrType byId = PlugBrType.findById(brType);
@@ -375,7 +382,7 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
         //修改文件
         try {
             if (DbBooleanConvert.findByValue(rewriteMp3tag)) {
-                MusicUtils.setMediaFileInfo(onSuccess, music.getMusicName(), music.getMusicAlbum(), String.join(";", music.getMusicArtists()), "SqMusic", music.getMusicLyric(), albumfile);
+                MusicUtils.setMediaFileInfo(onSuccess, music.getMusicName(), music.getMusicAlbum(), String.join(";", music.getMusicArtists()), "SqMusic", music.getMusicLyric(), albumfile,music.getMusicArtists().get(0));
                 log.debug("标签写入成功{}", music.getMusicName());
             }
 

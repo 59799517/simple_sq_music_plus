@@ -57,8 +57,11 @@ public class MusicUtils {
         }
     }
 
-    public static  synchronized MultimediaInfo setMediaFileInfo(File file, String title, String album, String artist, String comment, String lyrics, File image) throws TagException, CannotReadException, InvalidAudioFrameException, ReadOnlyFileException, IOException, CannotWriteException {
+    public static  synchronized MultimediaInfo setMediaFileInfo(File file, String title, String album, String artists, String comment, String lyrics, File image,String mainArtist) throws TagException, CannotReadException, InvalidAudioFrameException, ReadOnlyFileException, IOException, CannotWriteException {
         try {
+            if (StringUtils.isBlank(mainArtist)){
+                mainArtist="群星";
+            }
             AudioFile af =null;
             String s = FileTypeUtils.checkType(file);
             if (s.contains("flac")){
@@ -108,9 +111,9 @@ public class MusicUtils {
             }
             tag.setField(FieldKey.TITLE, title.trim());
             tag.setField(FieldKey.ALBUM, album.trim());
-            tag.setField(FieldKey.ARTIST, artist.trim());
+            tag.setField(FieldKey.ARTIST, artists.trim());
             tag.setField(FieldKey.COMMENT, comment.trim());
-            tag.setField(FieldKey.ALBUM_ARTIST, artist.trim());
+            tag.setField(FieldKey.ALBUM_ARTIST, mainArtist.trim());
             if (StringUtils.isNotEmpty(lyrics)) {
                 try {
                     tag.setField(FieldKey.LYRICS, lyrics);
