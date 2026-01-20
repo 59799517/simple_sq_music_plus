@@ -176,7 +176,7 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
                 //歌手图片地址
                 String downloadurl = artists.getMusicArtistsPhoto();
                 //歌手图片保存路径
-                String downliadpath = musicPath + File.separator + baseMusicArtistName;
+                String downliadpath = musicPath + File.separator + baseMusicMainArtistName;
                 //人物图片
                 File Artistsfile = FileUtils.findFile(downliadpath + File.separator, "cover");
 
@@ -228,7 +228,7 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
                 if (StringUtils.isEmpty(albumImg)) {
                     downloadalubimage = false;
                 }
-                String imagePath = musicPath + File.separator + baseMusicArtistName + File.separator + baseMusicAlbumName;
+                String imagePath = musicPath + File.separator + baseMusicMainArtistName + File.separator + baseMusicAlbumName;
                 if (StringUtils.isEmpty(baseMusicAlbumName) && baseMusicAlbumName.equals("other")) {
                     String suffix = FileTypeUtil.getType(Artistsfile);
                     FileUtil.copy(Artistsfile, new File(imagePath + File.separator + "cover." + suffix), true);
@@ -364,7 +364,7 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
      * @param downloadInfo
      */
     private void extracted(Music music, File onSuccess, File albumfile, DownloadInfo downloadInfo) {
-        //是否需要吸入标签
+        //是否需要标签
         Integer rewriteMp3tag = downloadInfo.getRewriteMp3tag();
 
 
