@@ -1,5 +1,7 @@
 package com.sqmusicplus.v3.utils;
 
+import java.io.UnsupportedEncodingException;
+
 public final class KuwoDES {
 
     /* renamed from: a  reason: collision with root package name */
@@ -105,7 +107,7 @@ public final class KuwoDES {
         return p;
     }
 
-    public static synchronized byte[] a(byte[] bArr, int i2, byte[] bArr2, int i3) {
+    private static synchronized byte[] a(byte[] bArr, int i2, byte[] bArr2, int i3) {
         byte[] bArr3;
 //        synchronized (d.class) {
             long j2 = 0;
@@ -158,7 +160,7 @@ public final class KuwoDES {
         return bArr3;
     }
 
-    public static synchronized byte[] encrypt2(byte[] bArr, int i2, byte[] bArr2, int i3) {
+    private static synchronized byte[] encrypt2(byte[] bArr, int i2, byte[] bArr2, int i3) {
         byte[] bArr3;
         synchronized (KuwoDES.class) {
             long j2 = 0;
@@ -211,7 +213,18 @@ public final class KuwoDES {
         return bArr3;
     }
 
-    public static synchronized byte[] a(byte[] bArr, byte[] bArr2) {
+    public static synchronized String encrypt(String url) {
+        byte[] bytes = null;
+        try {
+            bytes = encrypt2(url.getBytes("UTF-8"), url.length(), SECRET_KEY, SECRET_KEY_LENG);
+        } catch (UnsupportedEncodingException e) {
+            return "";
+        }
+        char[] encode = Base64Coder.encode(bytes);
+        return new String(encode);
+    }
+
+    private static synchronized byte[] a(byte[] bArr, byte[] bArr2) {
         long j2;
         byte[] bArr3;
         synchronized (KuwoDES.class) {
@@ -268,7 +281,7 @@ public final class KuwoDES {
         return bArr3;
     }
 
-    public static synchronized byte[] b(byte[] bArr, byte[] bArr2) {
+    private static synchronized byte[] b(byte[] bArr, byte[] bArr2) {
         byte[] bArr3;
         synchronized (KuwoDES.class) {
             int length = bArr.length;

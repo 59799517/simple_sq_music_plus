@@ -45,7 +45,7 @@ services:
     networks:
       - sq-app-network
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "mysql", "-u", "root", "-psqmusicv3password"]
       interval: 10s
       timeout: 5s
       retries: 5

@@ -13,6 +13,7 @@ import com.sqmusicplus.v3.plug.netease.hander.NeteaseHander;
 import com.sqmusicplus.v3.plug.qq.entity.DissInfo;
 import com.sqmusicplus.v3.plug.qqvip.QQvipHander;
 import com.sqmusicplus.v3.utils.DownloadUtils;
+import com.sqmusicplus.v3.utils.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -57,9 +58,7 @@ public class UrlMusicPlayListParser {
     public List<Music> parser(DownlaodParserUrl downlaodParserUrl) throws IOException {
         String url = downlaodParserUrl.getUrl();
         //找出url所属的平台
-        //找出是不是酷我歌单
-        if (url.contains("c6.y.qq.com")) {
-            //是QQ的
+        if (url.contains("y.qq.com")) {
             //获取url的302来判断是那种类型
             OkHttpClient okHttpClient = DownloadUtils.getOkHttpClient(false);
             Request authRequest = new Request.Builder()
@@ -69,15 +68,11 @@ public class UrlMusicPlayListParser {
                     .build();
             try (Response authResponse = okHttpClient.newCall(authRequest).execute()){
                 String location = authResponse.header("Location");
-                if (location == null) {
-                    log.error("QQ音乐识别分享类型失败");
+                if (location != null) {
+                    url = location;
                 };
                 return  QqMusic(url,downlaodParserUrl);
             }
-        }
-        else if(url.contains("i.y.qq.com")){
-            //qq网页分享的
-            return  QqMusic(url,downlaodParserUrl);
         }
         else if (url.contains("www.kuwo.cn")) {
             //酷我的
@@ -205,11 +200,9 @@ public class UrlMusicPlayListParser {
         return null;
     }
 
-
-
     public List<Music>  QqMusic(String  url,DownlaodParserUrl downlaodParserUrl ) throws MalformedURLException {
-        if (url.contains("album.html")) {
-            //专辑
+        if (url.contains("/m/share/details/album.html")) {
+            //PC客户端分享专辑
 //                获取 albumId  https://i.y.qq.com/n2/m/share/details/album.html?ADTAG=pc_v17&albumId=3826322&channelId=10036163&openinqqmusic=1
             Map<String, String> params = getUrlParams(url);
             String albumId = params.get("albumId");
@@ -222,8 +215,8 @@ public class UrlMusicPlayListParser {
             }
             return albumSongByAlbumsId;
         }
-        else if (url.contains("taoge.html")) {
-            //歌单
+        else if (url.contains("/m/share/details/taoge.html")) {
+            ////PC客户端分享歌单
             Map<String, String> params = getUrlParams(url);
             String playListId = params.get("id");
             DissInfo dissInfo = qqvipHander.songListInfo(playListId, "1418", 1);
@@ -263,7 +256,7 @@ public class UrlMusicPlayListParser {
             }
             return null;
         }
-        else if (url.contains("playlist.html")) {
+        else if (url.contains("/pages/playsong/index.html")) {
             //单曲
             Map<String, String> params = getUrlParams(url);
             String songid = params.get("songid");
@@ -278,10 +271,90 @@ public class UrlMusicPlayListParser {
                 }
             }
             return musicList;
+
+        }else if (url.contains("/n/ryqq_v2/playlist/")){
+            //网页直接复制的歌单url
+            String[] parts = url.split("/");
+            String playListId = parts[parts.length - 1];
+            if (StringUtils.isBlank(playListId)){
+                throw new RuntimeException("请输入正确的歌单链接,或者未解析到歌单id");
+            }
+
+            DissInfo dissInfo = qqvipHander.songListInfo(playListId, "1418", 1);
+
+            Long code = dissInfo.getCode();
+            if (code != null && code == 0L) {
+                DissInfo.DataDTO data = dissInfo.getData();
+                Long totalSongNum = data.getTotalSongNum();
+                Long songlistSize = data.getSonglistSize();
+                List<DissInfo.DataDTO.SonglistDTO> songlist = data.getSonglist();
+                //看总数是否能获取全部的  songlistSize 是每页长度
+                if (totalSongNum.longValue() > songlistSize.longValue()) {
+                    //计算还需要的页数
+                    Long pageNum = totalSongNum.longValue() / songlistSize.longValue();
+                    //计算是否有余数
+                    if (totalSongNum.longValue() % songlistSize.longValue() > 0) {
+                        pageNum++;
+                    }
+                    for (int i = 2; i <= pageNum; i++) {
+                        DissInfo dissInfo1 = qqvipHander.songListInfo(playListId, "1418", Long.parseLong(i + ""));
+                        DissInfo.DataDTO data1 = dissInfo1.getData();
+                        List<DissInfo.DataDTO.SonglistDTO> songlist1 = data1.getSonglist();
+                        songlist.addAll(songlist1);
+                    }
+                }
+                ArrayList<Music> musicList = new ArrayList<>();
+                songlist.forEach((item) -> {
+                    String songmid = item.getMid();
+                    Music music = qqvipHander.querySongById(songmid);
+                    if (downlaodParserUrl.getIsAudioBook()){
+                        music.setMusicArtists(ListUtil.of(downlaodParserUrl.getArtist()));
+                        music.setMusicAlbum(downlaodParserUrl.getArtist());
+                    }
+                    musicList.add(music);
+                });
+                return musicList;
+            }
+            return null;
+
+        } else if (url.contains("/n/ryqq_v2/albumDetail/")) {
+            //网页直接复制的歌单链接
+            String[] parts = url.split("/");
+            String albumId = parts[parts.length - 1];
+            if (StringUtils.isBlank(albumId)){
+                throw new RuntimeException("请输入正确的专辑链接,或者未解析到专辑id");
+            }
+            List<Music> albumSongByAlbumsId = qqvipHander.getAlbumSongByAlbumsId(albumId);
+            if (downlaodParserUrl.getIsAudioBook()){
+                for (Music smusic : albumSongByAlbumsId) {
+                    smusic.setMusicArtists(ListUtil.of(downlaodParserUrl.getArtist()));
+                    smusic.setMusicAlbum(downlaodParserUrl.getArtist());
+                }
+            }
+            return albumSongByAlbumsId;
+        } else if (url.contains("/n/ryqq_v2/songDetail/")){
+            //网页直接复制的单曲链接
+            String[] parts = url.split("/");
+            String songid = parts[parts.length - 1];
+            //单曲
+            ArrayList<Music> musicList = new ArrayList<>();
+            Music music = qqvipHander.querySongById(songid);
+            musicList.add(music);
+            if (downlaodParserUrl.getIsAudioBook()){
+                for (Music smusic : musicList) {
+                    smusic.setMusicArtists(ListUtil.of(downlaodParserUrl.getArtist()));
+                    smusic.setMusicAlbum(downlaodParserUrl.getArtist());
+                }
+            }
+            return musicList;
+        }
+
+        else if (url.contains("/n/ryqq_v2/singer")){
+            throw new RuntimeException("qq不支持歌手下载");
         }
         else{
-            log.error("未知的分享类型qq仅支持 歌单、专辑、单曲");
-            throw new RuntimeException("未知的分享类型qq仅支持 歌单、专辑、单曲");
+            log.error("qq歌单解析失败，是否登录！");
+            throw new RuntimeException("qq歌单解析失败，是否登录，未登录获取不到歌曲信息");
         }
     }
 

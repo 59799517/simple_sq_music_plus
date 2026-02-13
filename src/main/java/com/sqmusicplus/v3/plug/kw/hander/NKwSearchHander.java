@@ -271,7 +271,7 @@ public class NKwSearchHander extends SearchHanderAbstract {
             String album = albumInfoResult.getName();
             String aartist = abslistDTO.getArtist();
             String allartistid = abslistDTO.getAllartistid();
-            String url = (config.getSongCoverUrl() + abslistDTO.getWebAlbumpicShort()).replaceAll("/120", "/500");
+            String url = (config.getSongCoverUrl() + abslistDTO.getWebAlbumpicShort()).replaceAll("/240", "/500");
             String duration = abslistDTO.getDuration();
             String nMinfo = abslistDTO.getNMinfo();
             List<PlugBrType> plugBrTypes = NMinfoToPlugBrType(nMinfo);

@@ -343,7 +343,7 @@ public class QQSearchEntity {
     }
 
     /**
-     * 单曲详情参数
+     * 单曲详情参数（mid）
      * @param mid
      * @return
      */
@@ -361,6 +361,27 @@ public class QQSearchEntity {
                       }
                 """;
         String format = String.format(msg, mid);
+        return format;
+    }
+    /**
+     * 单曲详情参数（id）
+     * @param id
+     * @return
+     */
+    public  String musicInfoIdRequestParam(String id) {
+        String msg = """
+                {
+                        "songinfo": {
+                          "method": "get_song_detail_yqq",
+                          "module": "music.pf_song_detail_svr",
+                          "param": {
+                                "song_type": "0",
+                            "song_id": %s
+                          }
+                        }
+                      }
+                """;
+        String format = String.format(msg, id);
         return format;
     }
 
@@ -811,6 +832,7 @@ public class QQSearchEntity {
                 .setAlbumId(albumid)
                 .setArtistsIds(singerIds)
                 .setBits(longs)
+                .setPlugName(getPlugName())
                 .setMusicDuration(track_info.getInteger("interval") * 1000L);
         return  music;
     }

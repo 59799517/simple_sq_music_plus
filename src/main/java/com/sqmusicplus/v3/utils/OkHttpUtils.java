@@ -13,6 +13,7 @@ import java.net.URLEncoder;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
 import java.util.*;
+import java.util.concurrent.Executor;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
@@ -117,6 +118,14 @@ public class OkHttpUtils {
      */
     public static OkHttpUtils builder(boolean followRedirects) {
         return new OkHttpUtils(followRedirects);
+    }
+
+    public static Call newCall(Request request) {
+        if (okHttpClient == null){
+            okHttpClient = new OkHttpClient();
+        }
+        return okHttpClient.newCall(request);
+
     }
 
     /**
@@ -546,5 +555,14 @@ public class OkHttpUtils {
     //清空所有缓存
     public static void clearCookies() {
         cookieStore.clear();
+    }
+
+
+    public static OkHttpClient getOkHttpClient() {
+        return okHttpClient;
+    }
+
+    public static void setOkHttpClient(OkHttpClient okHttpClient) {
+        OkHttpUtils.okHttpClient = okHttpClient;
     }
 }

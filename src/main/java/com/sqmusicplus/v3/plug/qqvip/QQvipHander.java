@@ -79,7 +79,9 @@ public class QQvipHander extends SearchHanderAbstract {
 
     @Override
     public Music querySongById(String SongId) {
-        return qqHander.querySongById(SongId);
+        Music music = qqHander.querySongById(SongId);
+        music.setPlugName(getPlugName());
+        return music;
     }
 
     @Override

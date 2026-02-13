@@ -182,7 +182,14 @@ public class QQHander extends SearchHanderAbstract {
             SongId = SongId.split(",")[0];
         }
         String searchUrl = config.getSearchUrl();
-        String s = getqqSearchEntity().musicInfoRequestParam(SongId);
+        //判断S是否是纯数字
+        String s ="";
+        if (SongId.matches("[0-9]+")) {
+          s=  getqqSearchEntity().musicInfoIdRequestParam(SongId);
+        }else{
+
+           s = getqqSearchEntity().musicInfoRequestParam(SongId);
+        }
 
         String data = OkHttpUtils.builder()
                 .url(searchUrl)
