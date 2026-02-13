@@ -290,7 +290,7 @@ public class NKwSearchHander extends SearchHanderAbstract {
         }).collect(Collectors.toList());
         String alubimage = null;
         try {
-            alubimage = albumInfoResult.getImg().replaceAll("/120", "/500");
+            alubimage = albumInfoResult.getImg().replaceAll("/240", "/500");
         } catch (Exception e) {
         }
         //分页找全部专辑
