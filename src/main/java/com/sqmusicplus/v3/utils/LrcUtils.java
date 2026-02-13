@@ -3,7 +3,14 @@ package com.sqmusicplus.v3.utils;
 
 import cn.hutool.core.util.ReUtil;
 import com.sqmusicplus.v3.plug.kw.entity.MusicInfoResult;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 
@@ -254,6 +261,212 @@ public class LrcUtils {
         if (len == 0 || StringUtils.isNotBlank(array[0])) return array;
         return Arrays.copyOfRange(array, 1, len);
     }
+
+    /**
+     * ttml歌词转化
+     * @param ttmlContent ttl歌词
+     * @param album 专辑名称
+     * @param artist 艺术家名称
+     * @param songName 歌曲名称
+     * @return lrc歌词
+     */
+
+    public static String convertTtmlToLrc(String ttmlContent, String album, String artist, String songName){
+        StringBuffer stringBuffer = new StringBuffer();
+        stringBuffer.append("[ti:"+songName+"]\n" +
+                "[ar:"+artist+"]\n" +
+                "[al:"+album+"]\n" +
+                "[by: SqMusic-apple]\n" +
+                "[offset:0]\n");
+        String s = convertTtmlToLrc(ttmlContent);
+        stringBuffer.append(s);
+        return stringBuffer.toString();
+    }
+    
+    /**
+     * 将TTML格式歌词转换为LRC格式歌词 (兼容TTML和TTML2格式)
+     * @param ttmlContent TTML格式歌词内容
+     * @return LRC格式歌词内容
+     */
+    public static String convertTtmlToLrc(String ttmlContent) {
+        // 首先尝试使用原来的DOM解析方式处理标准TTML格式
+        try {
+            StringBuilder lrcContent = new StringBuilder();
+            
+            // 解析TTML内容
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder builder = factory.newDocumentBuilder();
+            Document document = builder.parse(new ByteArrayInputStream(ttmlContent.getBytes(StandardCharsets.UTF_8)));
+
+            // 获取所有p标签（歌词行）
+            NodeList pNodes = document.getElementsByTagName("p");
+
+            for (int i = 0; i < pNodes.getLength(); i++) {
+                Element pElement = (Element) pNodes.item(i);
+
+                // 获取开始时间
+                String beginTime = pElement.getAttribute("begin");
+                // 获取结束时间（可选）
+                String endTime = pElement.getAttribute("end");
+                // 获取歌词文本
+                String text = pElement.getTextContent();
+
+                // 将TTML时间格式转换为LRC时间格式
+                String lrcTime = convertTtmlTimeToLrcTime(beginTime);
+
+                // 添加到LRC内容中
+                lrcContent.append("[").append(lrcTime).append("]").append(text).append("\n");
+            }
+            
+            // 只有当解析到内容时才返回，否则尝试另一种方式
+            if (lrcContent.length() > 0) {
+                return lrcContent.toString();
+            }
+        } catch (Exception e) {
+            // 继续尝试其他解析方式
+        }
+        
+        // 如果DOM解析失败或没有解析到内容，尝试提取<body>标签内容并重新解析
+        try {
+            // 查找<body>标签
+            int bodyStart = ttmlContent.indexOf("<body");
+            if (bodyStart != -1) {
+                // 找到<body>标签的结束位置
+                int bodyEnd = ttmlContent.lastIndexOf("</body>");
+                if (bodyEnd != -1) {
+                    // 提取<body>部分的内容
+                    String bodyContent = ttmlContent.substring(bodyStart, bodyEnd + 7); // +7 是 "</body>" 的长度
+                    
+                    // 创建一个包含提取内容的完整TTML文档
+                    String extractedTtml = "<tt xmlns=\"http://www.w3.org/ns/ttml\">" + 
+                                          bodyContent + 
+                                          "</tt>";
+                    
+                    // 使用已有的方法解析提取出的<body>内容
+                    DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+                    DocumentBuilder builder = factory.newDocumentBuilder();
+                    Document document = builder.parse(new ByteArrayInputStream(extractedTtml.getBytes(StandardCharsets.UTF_8)));
+                    
+                    // 获取所有p标签（歌词行）
+                    NodeList pNodes = document.getElementsByTagName("p");
+                    StringBuilder lrcContent = new StringBuilder();
+
+                    for (int i = 0; i < pNodes.getLength(); i++) {
+                        Element pElement = (Element) pNodes.item(i);
+
+                        // 获取开始时间
+                        String beginTime = pElement.getAttribute("begin");
+                        // 获取结束时间（可选）
+                        String endTime = pElement.getAttribute("end");
+                        // 获取歌词文本
+                        String text = pElement.getTextContent();
+
+                        // 将TTML时间格式转换为LRC时间格式
+                        String lrcTime = convertTtmlTimeToLrcTime(beginTime);
+
+                        // 添加到LRC内容中
+                        lrcContent.append("[").append(lrcTime).append("]").append(text).append("\n");
+                    }
+                    
+                    if (lrcContent.length() > 0) {
+                        return lrcContent.toString();
+                    }
+                }
+            }
+        } catch (Exception e) {
+            // 继续尝试其他解析方式
+        }
+        
+        // 如果所有方式都失败，返回原始内容
+        return ttmlContent;
+    }
+
+    /**
+     * 将TTML时间格式转换为double数值（秒）
+     * @param ttmlTime TTML时间字符串
+     * @return 时间（秒）
+     */
+    private static double convertTtmlTimeToDouble(String ttmlTime) {
+        try {
+            // 处理格式: 00:01:01.123 (小时:分钟:秒.毫秒)
+            if (ttmlTime.contains(":")) {
+                String[] parts = ttmlTime.split("[:.]");
+                if (parts.length >= 3) {
+                    int hours = Integer.parseInt(parts[0]);
+                    int minutes = Integer.parseInt(parts[1]);
+                    int seconds = Integer.parseInt(parts[2]);
+                    int milliseconds = 0;
+
+                    // 如果有毫秒部分
+                    if (parts.length >= 4) {
+                        milliseconds = Integer.parseInt(parts[3]);
+                    }
+
+                    // 转换为总秒数
+                    return hours * 3600 + minutes * 60 + seconds + milliseconds / 1000.0;
+                }
+            }
+            // 处理格式: 61.123s 或 61.123
+            else {
+                String timeStr = ttmlTime.replace("s", ""); // 移除可能的's'后缀
+                return Double.parseDouble(timeStr);
+            }
+        } catch (Exception e) {
+            return 0.0;
+        }
+        return 0.0;
+    }
+
+    /**
+     * 将TTML时间格式转换为LRC时间格式
+     * TTML格式: 00:01:01.123 或 61.123s
+     * LRC格式: 01:01.12
+     * @param ttmlTime TTML时间字符串
+     * @return LRC时间字符串
+     */
+    private static String convertTtmlTimeToLrcTime(String ttmlTime) {
+        try {
+            // 处理格式: 00:01:01.123 (小时:分钟:秒.毫秒)
+            if (ttmlTime.contains(":")) {
+                String[] parts = ttmlTime.split("[:.]");
+                if (parts.length >= 3) {
+                    int hours = Integer.parseInt(parts[0]);
+                    int minutes = Integer.parseInt(parts[1]);
+                    int seconds = Integer.parseInt(parts[2]);
+                    int milliseconds = 0;
+
+                    // 如果有毫秒部分
+                    if (parts.length >= 4) {
+                        milliseconds = Integer.parseInt(parts[3]);
+                    }
+
+                    // 转换为总秒数
+                    int totalSeconds = hours * 3600 + minutes * 60 + seconds;
+                    // 只保留前两位毫秒数
+                    int centiseconds = milliseconds / 10;
+
+                    return String.format("%02d:%02d.%02d",
+                            totalSeconds / 60, totalSeconds % 60, centiseconds);
+                }
+            }
+            // 处理格式: 61.123s 或 61.123
+            else {
+                String timeStr = ttmlTime.replace("s", ""); // 移除可能的's'后缀
+                double totalSeconds = Double.parseDouble(timeStr);
+
+                int minutes = (int) (totalSeconds / 60);
+                int seconds = (int) (totalSeconds % 60);
+                int centiseconds = (int) ((totalSeconds * 100) % 100);
+
+                return String.format("%02d:%02d.%02d", minutes, seconds, centiseconds);
+            }
+        } catch (Exception e) {
+            // 如果转换失败，返回默认时间
+            return "00:00.00";
+        }
+        return "00:00.00";
+    }
+
 
 
 }

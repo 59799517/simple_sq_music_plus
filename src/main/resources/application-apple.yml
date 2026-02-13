@@ -1,0 +1,5 @@
+apple:
+  #  搜索接口
+  BaseUrl : https://api.music.apple.com
+
+
