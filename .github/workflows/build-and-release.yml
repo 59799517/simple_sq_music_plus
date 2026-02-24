@@ -128,14 +128,12 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        platform: [linux/amd64, linux/arm64, linux/arm/v7]
+        platform: [linux/amd64, linux/arm64]
         include:
           - platform: linux/amd64
             tag_suffix: amd64
           - platform: linux/arm64
             tag_suffix: arm64
-          - platform: linux/arm/v7
-            tag_suffix: armv7
     
     steps:
       - name: Checkout code
@@ -242,8 +240,7 @@ jobs:
           # 创建多架构manifest
           docker manifest create registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:${{ env.APP_VERSION }} \
             registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:${{ env.APP_VERSION }}-amd64 \
-            registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:${{ env.APP_VERSION }}-arm64 \
-            registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:${{ env.APP_VERSION }}-armv7
+            registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:${{ env.APP_VERSION }}-arm64
           
           # 注解各架构信息
           docker manifest annotate registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:${{ env.APP_VERSION }} \
@@ -254,9 +251,7 @@ jobs:
             registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:${{ env.APP_VERSION }}-arm64 \
             --arch arm64 --os linux
           
-          docker manifest annotate registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:${{ env.APP_VERSION }} \
-            registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:${{ env.APP_VERSION }}-armv7 \
-            --arch arm --os linux --variant v7
+
           
           # 推送manifest
           docker manifest push registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:${{ env.APP_VERSION }}
@@ -264,8 +259,7 @@ jobs:
           # 为latest标签创建manifest
           docker manifest create registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:latest \
             registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:latest-amd64 \
-            registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:latest-arm64 \
-            registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:latest-armv7
+            registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:latest-arm64
           
           docker manifest push registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:latest
       
@@ -274,8 +268,7 @@ jobs:
           # 创建多架构manifest
           docker manifest create ghcr.io/${{ github.actor }}/simple_sq_music_plus:${{ env.APP_VERSION }} \
             ghcr.io/${{ github.actor }}/simple_sq_music_plus:${{ env.APP_VERSION }}-amd64 \
-            ghcr.io/${{ github.actor }}/simple_sq_music_plus:${{ env.APP_VERSION }}-arm64 \
-            ghcr.io/${{ github.actor }}/simple_sq_music_plus:${{ env.APP_VERSION }}-armv7
+            ghcr.io/${{ github.actor }}/simple_sq_music_plus:${{ env.APP_VERSION }}-arm64
           
           # 注解各架构信息
           docker manifest annotate ghcr.io/${{ github.actor }}/simple_sq_music_plus:${{ env.APP_VERSION }} \
@@ -286,9 +279,7 @@ jobs:
             ghcr.io/${{ github.actor }}/simple_sq_music_plus:${{ env.APP_VERSION }}-arm64 \
             --arch arm64 --os linux
           
-          docker manifest annotate ghcr.io/${{ github.actor }}/simple_sq_music_plus:${{ env.APP_VERSION }} \
-            ghcr.io/${{ github.actor }}/simple_sq_music_plus:${{ env.APP_VERSION }}-armv7 \
-            --arch arm --os linux --variant v7
+
           
           # 推送manifest
           docker manifest push ghcr.io/${{ github.actor }}/simple_sq_music_plus:${{ env.APP_VERSION }}
@@ -296,8 +287,7 @@ jobs:
           # 为latest标签创建manifest
           docker manifest create ghcr.io/${{ github.actor }}/simple_sq_music_plus:latest \
             ghcr.io/${{ github.actor }}/simple_sq_music_plus:latest-amd64 \
-            ghcr.io/${{ github.actor }}/simple_sq_music_plus:latest-arm64 \
-            ghcr.io/${{ github.actor }}/simple_sq_music_plus:latest-armv7
+            ghcr.io/${{ github.actor }}/simple_sq_music_plus:latest-arm64
           
           docker manifest push ghcr.io/${{ github.actor }}/simple_sq_music_plus:latest
 
@@ -346,18 +336,18 @@ jobs:
             - `registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:${{ steps.app_version.outputs.version }}` (Multi-arch manifest)
             - `registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:${{ steps.app_version.outputs.version }}-amd64`
             - `registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:${{ steps.app_version.outputs.version }}-arm64`
-            - `registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:${{ steps.app_version.outputs.version }}-armv7`
+
             
             **GitHub Packages:**
             - `ghcr.io/${{ github.actor }}/simple_sq_music_plus:${{ steps.app_version.outputs.version }}` (Multi-arch manifest)
             - `ghcr.io/${{ github.actor }}/simple_sq_music_plus:${{ steps.app_version.outputs.version }}-amd64`
             - `ghcr.io/${{ github.actor }}/simple_sq_music_plus:${{ steps.app_version.outputs.version }}-arm64`
-            - `ghcr.io/${{ github.actor }}/simple_sq_music_plus:${{ steps.app_version.outputs.version }}-armv7`
+
             
             ### Supported Architectures:
             - **AMD64**: Intel/AMD x86-64 processors
             - **ARM64**: Raspberry Pi 4, AWS Graviton, Apple Silicon
-            - **ARM/v7**: Raspberry Pi 2/3, older ARM devices
+
 
       - name: Upload Release Asset
         uses: actions/upload-release-asset@v1
