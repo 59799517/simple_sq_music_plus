@@ -252,12 +252,21 @@ jobs:
           docker manifest rm registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:latest 2>/dev/null || true
           
           # 等待镜像同步完成
-          sleep 10
+          sleep 15
           
-          # 验证基础镜像是否存在
+          # 验证基础镜像是否存在（使用inspect代替pull避免架构不匹配）
           echo "Checking if base images exist..."
-          docker pull registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:${{ env.APP_VERSION }}-amd64
-          docker pull registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:${{ env.APP_VERSION }}-arm64
+          docker manifest inspect registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:${{ env.APP_VERSION }}-amd64 >/dev/null 2>&1 || {
+            echo "ERROR: AMD64 image not found!" >&2
+            exit 1
+          }
+          
+          docker manifest inspect registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:${{ env.APP_VERSION }}-arm64 >/dev/null 2>&1 || {
+            echo "ERROR: ARM64 image not found!" >&2
+            exit 1
+          }
+          
+          echo "Both base images verified successfully"
           
           # 创建多架构manifest
           echo "Creating manifest for version ${{ env.APP_VERSION }}"
@@ -294,12 +303,21 @@ jobs:
           docker manifest rm ghcr.io/${{ github.actor }}/simple_sq_music_plus:latest 2>/dev/null || true
           
           # 等待镜像同步完成
-          sleep 10
+          sleep 15
           
-          # 验证基础镜像是否存在
+          # 验证基础镜像是否存在（使用inspect代替pull避免架构不匹配）
           echo "Checking if base images exist..."
-          docker pull ghcr.io/${{ github.actor }}/simple_sq_music_plus:${{ env.APP_VERSION }}-amd64
-          docker pull ghcr.io/${{ github.actor }}/simple_sq_music_plus:${{ env.APP_VERSION }}-arm64
+          docker manifest inspect ghcr.io/${{ github.actor }}/simple_sq_music_plus:${{ env.APP_VERSION }}-amd64 >/dev/null 2>&1 || {
+            echo "ERROR: AMD64 image not found!" >&2
+            exit 1
+          }
+          
+          docker manifest inspect ghcr.io/${{ github.actor }}/simple_sq_music_plus:${{ env.APP_VERSION }}-arm64 >/dev/null 2>&1 || {
+            echo "ERROR: ARM64 image not found!" >&2
+            exit 1
+          }
+          
+          echo "Both base images verified successfully"
           
           # 创建多架构manifest
           echo "Creating manifest for version ${{ env.APP_VERSION }}"
