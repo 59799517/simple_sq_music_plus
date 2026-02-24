@@ -9,7 +9,7 @@ COPY src /build/src/
 RUN mvn clean package
 
 # 使用支持多架构的OpenJDK镜像
-FROM openjdk:17-jre-slim
+FROM amazoncorretto:17-alpine3.23-full
 
 # 设置工作目录
 WORKDIR /app
