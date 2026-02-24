@@ -139,6 +139,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
       
+      - name: Download Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: java-artifact
+      
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
       
@@ -211,6 +216,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
       
+      - name: Download Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: java-artifact
+      
       - name: Read Application Version
         id: app_version
         run: |
@@ -251,8 +261,6 @@ jobs:
             registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:${{ env.APP_VERSION }}-arm64 \
             --arch arm64 --os linux
           
-
-          
           # 推送manifest
           docker manifest push registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:${{ env.APP_VERSION }}
           
@@ -278,8 +286,6 @@ jobs:
           docker manifest annotate ghcr.io/${{ github.actor }}/simple_sq_music_plus:${{ env.APP_VERSION }} \
             ghcr.io/${{ github.actor }}/simple_sq_music_plus:${{ env.APP_VERSION }}-arm64 \
             --arch arm64 --os linux
-          
-
           
           # 推送manifest
           docker manifest push ghcr.io/${{ github.actor }}/simple_sq_music_plus:${{ env.APP_VERSION }}
@@ -336,18 +342,15 @@ jobs:
             - `registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:${{ steps.app_version.outputs.version }}` (Multi-arch manifest)
             - `registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:${{ steps.app_version.outputs.version }}-amd64`
             - `registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:${{ steps.app_version.outputs.version }}-arm64`
-
             
             **GitHub Packages:**
             - `ghcr.io/${{ github.actor }}/simple_sq_music_plus:${{ steps.app_version.outputs.version }}` (Multi-arch manifest)
             - `ghcr.io/${{ github.actor }}/simple_sq_music_plus:${{ steps.app_version.outputs.version }}-amd64`
             - `ghcr.io/${{ github.actor }}/simple_sq_music_plus:${{ steps.app_version.outputs.version }}-arm64`
-
             
             ### Supported Architectures:
             - **AMD64**: Intel/AMD x86-64 processors
             - **ARM64**: Raspberry Pi 4, AWS Graviton, Apple Silicon
-
 
       - name: Upload Release Asset
         uses: actions/upload-release-asset@v1
