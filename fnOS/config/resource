@@ -1,0 +1,38 @@
+{
+    "docker-project":
+    {
+        "projects":
+        [
+            {
+                "name": "SimpleSqMusicPlus",
+                "path": "docker"
+            }
+        ]
+    },
+    "data-share":
+    {
+        "shares":
+        [
+            {
+                "name": "SimpleSqMusicPlus",
+                "permission":
+                {
+                    "rw":
+                    [
+                        "docker-SimpleSqMusicPlus"
+                    ]
+                }
+            },
+            {
+                "name": "SimpleSqMusicPlus/data",
+                "permission":
+                {
+                    "rw":
+                    [
+                        "docker-SimpleSqMusicPlus"
+                    ]
+                }
+            }
+        ]
+    }
+}

@@ -1,4 +1,4 @@
-name: Java CI with Maven and Release
+name: Java CI with Maven and Multi-Arch Release
 
 on:
   push:
@@ -17,17 +17,20 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+      
       - name: Set up JDK 17
         uses: actions/setup-java@v3
         with:
           java-version: '17'
           distribution: 'temurin'
           cache: 'maven'
-          cache-dependency-path: 'pom.xml' # optional
+          cache-dependency-path: 'pom.xml'
+      
       - name: Install yq
         run: |
           wget https://github.com/mikefarah/yq/releases/download/v4.16.2/yq_linux_amd64 -O /usr/local/bin/yq
           chmod +x /usr/local/bin/yq
+      
       - name: Read Application Version
         id: app_version
         run: |
@@ -41,6 +44,7 @@ jobs:
           echo "WEB_VERSION: $WEBVERSION"
           echo "$VERSION" > version.txt
           echo "$WEBVERSION" > webversion.txt
+      
       - name: Generate docker-compose files from templates
         run: |
           # 从模板生成 docker-compose.yml
@@ -53,23 +57,61 @@ jobs:
           # 显示生成的文件内容以供验证
           echo "=== docker-compose.yml ==="
           cat docker-compose.yml
+      
+      # 新增步骤：处理 fnOS/app/docker/docker-compose.yaml
+      - name: Copy or Replace docker-compose.yml to fnOS directory
+        run: |
+          # 定义目标路径
+          TARGET_PATH="fnOS/app/docker/docker-compose.yaml"
+
+          # 检查目标文件是否存在
+          if [ -f "$TARGET_PATH" ]; then
+            # 文件存在，直接替换
+            echo "File exists, replacing..."
+            cp docker-compose.yml "$TARGET_PATH"
+          else
+            # 文件不存在，先创建目录（如果需要），再复制
+            echo "File does not exist, creating and copying..."
+            mkdir -p "$(dirname "$TARGET_PATH")"
+            cp docker-compose.yml "$TARGET_PATH"
+          fi
+
+          # 显示最终文件内容以供验证
+          echo "=== $TARGET_PATH ==="
+          cat "$TARGET_PATH"
+      
+      - name: Generate new manifest file
+        run: |
+          # 进入 fnOS 目录
+          cd fnOS
+
+          # 从模板生成新的 manifest 文件
+          sed "s/{VERSION}/$APP_VERSION/g; s/{WEB_VERSION}/$WEB_VERSION/g" manifest.template > manifest
+          # 显示生成后的内容以供验证
+          echo "=== Generated manifest ==="
+          cat manifest
+      
       - name: Commit updated docker-compose files
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add docker-compose.yml
           git commit -m "Update docker-compose files with version $APP_VERSION and web version $WEB_VERSION" || echo "No changes to commit"
+      
       - name: Push changes
         continue-on-error: true  # 即使失败也继续执行后续步骤
         uses: ad-m/github-push-action@master
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           branch: ${{ github.ref }}
+      
       - name: List Environment Variables
         run: env
+      
       - name: Build with Maven
         run: |
           mvn -B package --file pom.xml
+      
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
@@ -79,38 +121,200 @@ jobs:
             version.txt
             webversion.txt
             docker-compose.yml
-      - name: Build the Docker image
-        run: |
-          docker version
-          # 登录阿里云镜像仓库
-          docker login --username=$DOCKER_USERNAME --password=$DOCKER_PASSWORD registry.cn-hangzhou.aliyuncs.com
-          # 使用Dockerfile构建镜像
-          docker build . --file Dockerfile.main --tag registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:v$APP_VERSION
-          # 推送镜像到镜像仓库
-          docker push registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:v$APP_VERSION
-      -  name: Push to GitHub Packages
-         run: |
-           docker version
-            # 登录 GitHub Packages
-           docker login ghcr.io --username=${{ github.actor }} --password=${{ secrets.GITHUB_TOKEN }}
-           
-           # 构建 Docker 镜像
-           docker build . --file Dockerfile.main --tag ghcr.io/${{ github.actor }}/simple_sq_music_plus:v$APP_VERSION
-           
-           # 推送镜像到 GitHub Packages
-           docker push ghcr.io/${{ github.actor }}/simple_sq_music_plus:v$APP_VERSION
 
-  release:
+  build-multi-arch-images:
+    name: Build and Push Multi-Arch Docker Images
     needs: build
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        platform: [linux/amd64, linux/arm64, linux/arm/v7]
+        include:
+          - platform: linux/amd64
+            tag_suffix: amd64
+          - platform: linux/arm64
+            tag_suffix: arm64
+          - platform: linux/arm/v7
+            tag_suffix: armv7
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Read Application Version
+        id: app_version
+        run: |
+          VERSION=$(cat version.txt 2>/dev/null || echo "unknown")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "APP_VERSION=$VERSION" >> $GITHUB_ENV
+      
+      - name: Login to Aliyun Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: registry.cn-hangzhou.aliyuncs.com
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      
+      - name: Login to GitHub Packages
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Build and Push Multi-Arch Docker Image to Aliyun
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile
+          platforms: ${{ matrix.platform }}
+          push: true
+          tags: |
+            registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:${{ env.APP_VERSION }}-${{ matrix.tag_suffix }}
+            registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:latest-${{ matrix.tag_suffix }}
+          build-args: |
+            JAR_FILE=target/simple_sq_music_plus.jar
+          labels: |
+            org.opencontainers.image.title=Simple Music Server
+            org.opencontainers.image.description=Music streaming server with multi-arch support
+            org.opencontainers.image.version=${{ env.APP_VERSION }}
+            org.opencontainers.image.architecture=${{ matrix.platform }}
+      
+      - name: Build and Push Multi-Arch Docker Image to GitHub Packages
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile
+          platforms: ${{ matrix.platform }}
+          push: true
+          tags: |
+            ghcr.io/${{ github.actor }}/simple_sq_music_plus:${{ env.APP_VERSION }}-${{ matrix.tag_suffix }}
+            ghcr.io/${{ github.actor }}/simple_sq_music_plus:latest-${{ matrix.tag_suffix }}
+          build-args: |
+            JAR_FILE=target/simple_sq_music_plus.jar
+          labels: |
+            org.opencontainers.image.title=Simple Music Server
+            org.opencontainers.image.description=Music streaming server with multi-arch support
+            org.opencontainers.image.version=${{ env.APP_VERSION }}
+            org.opencontainers.image.architecture=${{ matrix.platform }}
+
+  create-manifest-list:
+    name: Create Manifest Lists
+    needs: build-multi-arch-images
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Read Application Version
+        id: app_version
+        run: |
+          VERSION=$(cat version.txt 2>/dev/null || echo "unknown")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "APP_VERSION=$VERSION" >> $GITHUB_ENV
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Login to Aliyun Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: registry.cn-hangzhou.aliyuncs.com
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      
+      - name: Login to GitHub Packages
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Create and Push Manifest List for Aliyun
+        run: |
+          # 创建多架构manifest
+          docker manifest create registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:${{ env.APP_VERSION }} \
+            registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:${{ env.APP_VERSION }}-amd64 \
+            registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:${{ env.APP_VERSION }}-arm64 \
+            registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:${{ env.APP_VERSION }}-armv7
+          
+          # 注解各架构信息
+          docker manifest annotate registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:${{ env.APP_VERSION }} \
+            registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:${{ env.APP_VERSION }}-amd64 \
+            --arch amd64 --os linux
+          
+          docker manifest annotate registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:${{ env.APP_VERSION }} \
+            registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:${{ env.APP_VERSION }}-arm64 \
+            --arch arm64 --os linux
+          
+          docker manifest annotate registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:${{ env.APP_VERSION }} \
+            registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:${{ env.APP_VERSION }}-armv7 \
+            --arch arm --os linux --variant v7
+          
+          # 推送manifest
+          docker manifest push registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:${{ env.APP_VERSION }}
+          
+          # 为latest标签创建manifest
+          docker manifest create registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:latest \
+            registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:latest-amd64 \
+            registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:latest-arm64 \
+            registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:latest-armv7
+          
+          docker manifest push registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:latest
+      
+      - name: Create and Push Manifest List for GitHub Packages
+        run: |
+          # 创建多架构manifest
+          docker manifest create ghcr.io/${{ github.actor }}/simple_sq_music_plus:${{ env.APP_VERSION }} \
+            ghcr.io/${{ github.actor }}/simple_sq_music_plus:${{ env.APP_VERSION }}-amd64 \
+            ghcr.io/${{ github.actor }}/simple_sq_music_plus:${{ env.APP_VERSION }}-arm64 \
+            ghcr.io/${{ github.actor }}/simple_sq_music_plus:${{ env.APP_VERSION }}-armv7
+          
+          # 注解各架构信息
+          docker manifest annotate ghcr.io/${{ github.actor }}/simple_sq_music_plus:${{ env.APP_VERSION }} \
+            ghcr.io/${{ github.actor }}/simple_sq_music_plus:${{ env.APP_VERSION }}-amd64 \
+            --arch amd64 --os linux
+          
+          docker manifest annotate ghcr.io/${{ github.actor }}/simple_sq_music_plus:${{ env.APP_VERSION }} \
+            ghcr.io/${{ github.actor }}/simple_sq_music_plus:${{ env.APP_VERSION }}-arm64 \
+            --arch arm64 --os linux
+          
+          docker manifest annotate ghcr.io/${{ github.actor }}/simple_sq_music_plus:${{ env.APP_VERSION }} \
+            ghcr.io/${{ github.actor }}/simple_sq_music_plus:${{ env.APP_VERSION }}-armv7 \
+            --arch arm --os linux --variant v7
+          
+          # 推送manifest
+          docker manifest push ghcr.io/${{ github.actor }}/simple_sq_music_plus:${{ env.APP_VERSION }}
+          
+          # 为latest标签创建manifest
+          docker manifest create ghcr.io/${{ github.actor }}/simple_sq_music_plus:latest \
+            ghcr.io/${{ github.actor }}/simple_sq_music_plus:latest-amd64 \
+            ghcr.io/${{ github.actor }}/simple_sq_music_plus:latest-arm64 \
+            ghcr.io/${{ github.actor }}/simple_sq_music_plus:latest-armv7
+          
+          docker manifest push ghcr.io/${{ github.actor }}/simple_sq_music_plus:latest
+
+  release:
+    needs: [build, create-manifest-list]
+    runs-on: ubuntu-latest
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/3.0' }}
+    
     steps:
       - name: Download Artifact
         uses: actions/download-artifact@v4
         with:
           name: java-artifact
+      
       - name: Display structure of downloaded files
         run: ls -R
+      
       - name: Read Version from Artifact
         id: app_version
         run: |
@@ -120,6 +324,7 @@ jobs:
           echo "webversion=$WEBVERSION" >> $GITHUB_OUTPUT
           echo "APP_VERSION: $VERSION"
           echo "WEB_VERSION: $WEBVERSION"
+      
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
@@ -127,9 +332,32 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ steps.app_version.outputs.version }}
-          release_name: Release ${{ steps.app_version.outputs.version }}
+          release_name: Release ${{ steps.app_version.outputs.version }} (Multi-Arch)
           draft: false
           prerelease: false
+          body: |
+            ## Release ${{ steps.app_version.outputs.version }} - Multi-Architecture Support
+            
+            This release includes Docker images for multiple architectures:
+            
+            ### Docker Images Available:
+            
+            **阿里云镜像仓库:**
+            - `registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:${{ steps.app_version.outputs.version }}` (Multi-arch manifest)
+            - `registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:${{ steps.app_version.outputs.version }}-amd64`
+            - `registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:${{ steps.app_version.outputs.version }}-arm64`
+            - `registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:${{ steps.app_version.outputs.version }}-armv7`
+            
+            **GitHub Packages:**
+            - `ghcr.io/${{ github.actor }}/simple_sq_music_plus:${{ steps.app_version.outputs.version }}` (Multi-arch manifest)
+            - `ghcr.io/${{ github.actor }}/simple_sq_music_plus:${{ steps.app_version.outputs.version }}-amd64`
+            - `ghcr.io/${{ github.actor }}/simple_sq_music_plus:${{ steps.app_version.outputs.version }}-arm64`
+            - `ghcr.io/${{ github.actor }}/simple_sq_music_plus:${{ steps.app_version.outputs.version }}-armv7`
+            
+            ### Supported Architectures:
+            - **AMD64**: Intel/AMD x86-64 processors
+            - **ARM64**: Raspberry Pi 4, AWS Graviton, Apple Silicon
+            - **ARM/v7**: Raspberry Pi 2/3, older ARM devices
 
       - name: Upload Release Asset
         uses: actions/upload-release-asset@v1

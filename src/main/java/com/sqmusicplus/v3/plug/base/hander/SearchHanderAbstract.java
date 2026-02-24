@@ -132,7 +132,7 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
                 fileName = SpelTemplateUtils.formatTemplateWithDollar("${musicName} - ${artists}", pathTemplate);
             }
 
-            //拼接当前各社区路径  歌手/专辑
+            //拼接当前路径  歌手/专辑
             String basepath = baseMusicMainArtistName + File.separator + baseMusicAlbumName + File.separator;
             //获取当前文件后缀
             String brType = downloadInfo.getDownloadBrType();

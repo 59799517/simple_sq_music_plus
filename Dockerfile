@@ -8,22 +8,36 @@ COPY src /build/src/
 
 RUN mvn clean package
 
-From mcr.microsoft.com/openjdk/jdk:17-ubuntu
+# 改用支持多架构的运行时镜像
+FROM --platform=$TARGETPLATFORM eclipse-temurin:17-jre-alpine
 
-# 设置默认的环境变量
-#ENV DB_IP="localhost"
-#ENV DB_PORT="3306"
-#ENV DB_NAME="sqmusicv3"
-#ENV DB_USERNAME="root"
-#ENV DB_PASSWORD="root"
-
+# 设置工作目录
 WORKDIR /app
 
-# 使用通配符复制JAR文件，避免硬编码文件名
+# 从构建阶段复制JAR文件
 COPY --from=builder /build/target/*.jar /app/app.jar
 
+# 显示架构信息（便于调试）
+RUN echo "Running on architecture: $(uname -m)"
+
+# 根据架构设置不同的内存参数
+RUN ARCH=$(uname -m) && \
+    if [ "$ARCH" = "aarch64" ]; then \
+        echo "Setting ARM64 memory parameters" && \
+        export JAVA_OPTS="-Xms64m -Xmx256m"; \
+    elif [ "$ARCH" = "armv7l" ]; then \
+        echo "Setting ARM32 memory parameters" && \
+        export JAVA_OPTS="-Xms32m -Xmx128m"; \
+    else \
+        echo "Setting default memory parameters" && \
+        export JAVA_OPTS="-Xms128m -Xmx512m"; \
+    fi
+
+# 暴露端口
 EXPOSE 8099
 
+# 挂载音乐目录
 VOLUME ["/music"]
 
-CMD ["java", "-jar", "app.jar"]
+# 启动应用
+CMD ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]

@@ -1,0 +1,13 @@
+{
+    ".url": {
+        "SimpleSqMusicPlus.Application": {
+            "title": "SimpleSqMusicPlus",
+            "icon": "images/icon_{0}.png",
+            "type": "url",
+            "protocol": "",
+            "port": "8096",
+            "url": "/",
+            "allUsers": false
+        }
+    }
+}

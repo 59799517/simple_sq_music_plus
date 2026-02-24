@@ -19,8 +19,8 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * @Classname OkHttpUtils
- * @Description TODO
- * @Version 1.0.0
+ * @Description 支持默认流量监控的HTTP工具类
+ * @Version 1.1.0 (默认启用流量监控)
  * @Date 2023/8/25 9:56
  * @Created by Administrator
  */
@@ -33,10 +33,38 @@ public class OkHttpUtils {
     private String url;
     private Request.Builder request;
     private static HashMap<String, List<Cookie>> cookieStore = new HashMap<>();
-
+    
+    // 默认启用流量监控的拦截器
+    private static final Interceptor trafficInterceptor = new Interceptor() {
+        @Override
+        public Response intercept(Chain chain) throws IOException {
+            Request request = chain.request();
+            
+            // 记录请求体大小（上传流量）
+            long requestBodySize = 0;
+            if (request.body() != null) {
+                requestBodySize = request.body().contentLength();
+                if (requestBodySize > 0) {
+                    SystemUtils.recordAppUpload(requestBodySize);
+                }
+            }
+            
+            // 执行请求
+            Response response = chain.proceed(request);
+            
+            // 记录响应体大小（下载流量）
+            long responseBodySize = response.body().contentLength();
+            if (responseBodySize > 0) {
+                SystemUtils.recordAppDownload(responseBodySize);
+            }
+            
+            return response;
+        }
+    };
 
     /**
      * 初始化okHttpClient，并且允许https访问
+     * 默认启用流量监控拦截器
      */
     private OkHttpUtils(boolean followRedirects) {
         if (okHttpClient == null) {
@@ -45,9 +73,9 @@ public class OkHttpUtils {
                     File cacheDirectory = new File(System.getProperty("java.io.tmpdir"), "OkHttpCache");
                     Cache cache = new Cache(cacheDirectory, 10 * 1024 * 1024); // 10MB 缓存
 
-
-
                     TrustManager[] trustManagers = buildTrustManagers();
+                    
+                    // 默认添加流量监控拦截器
                     okHttpClient = new OkHttpClient.Builder()
                             .connectTimeout(15, TimeUnit.SECONDS)
                             .writeTimeout(20, TimeUnit.SECONDS)
@@ -59,7 +87,6 @@ public class OkHttpUtils {
                             .followSslRedirects(followRedirects)
                             .cache(cache)
                             .cookieJar(new CookieJar() {
-
                                 @Override
                                 public void saveFromResponse(HttpUrl url, List<Cookie> cookies) {
                                     cookieStore.put(url.host(), cookies);
@@ -70,21 +97,10 @@ public class OkHttpUtils {
                                     return cookieStore.getOrDefault(url.host(), new ArrayList<>());
                                 }
                             })
-//                            .addInterceptor(chain -> {
-//                                Request request = chain.request();
-//                                Response response = chain.proceed(request);
-//                                System.out.println("Request URL: " + request.url());
-//                                System.out.println("Response Code: " + response.code());
-//                                System.out.println("Response URL: " + response.request().url());
-//                                if (response.isRedirect()) {
-//                                    System.out.println("Redirected to: " + response.header("Location"));
-//                                }
-//                                return response;
-//                            })
-
+                            .addInterceptor(trafficInterceptor) // 默认启用流量监控
                             .build();
+                    
                     addHeader("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.132 Safari/537.36");
-//                    System.out.println("OkHttpClient created with followRedirects: " + followRedirects); // 调试信息
                 }
             }
         }
@@ -476,8 +492,8 @@ public class OkHttpUtils {
 //        // get请求，方法顺序按照这种方式，切记选择post/get一定要放在倒数第二，同步或者异步倒数第一，才会正确执行
 //        OkHttpUtils.builder().url("请求地址，http/https都可以")
 //                // 有参数的话添加参数，可多个
-//                .addParam("参数名", "参数值")
-//                .addParam("参数名", "参数值")
+//                .addParam("参数名", "参数값")
+//                .addParam("参数名", "参数값")
 //                // 也可以添加多个
 //                .addHeader("Content-Type", "application/json; charset=utf-8")
 //                .get()
@@ -488,8 +504,8 @@ public class OkHttpUtils {
 //        // post请求，分为两种，一种是普通表单提交，一种是json提交
 //        OkHttpUtils.builder().url("请求地址，http/https都可以")
 //                // 有参数的话添加参数，可多个
-//                .addParam("参数名", "参数值")
-//                .addParam("参数名", "参数值")
+//                .addParam("参数名", "参数값")
+//                .addParam("参数名", "参数값")
 //                // 也可以添加多个
 //                .addHeader("Content-Type", "application/json; charset=utf-8")
 //                // 如果是true的话，会类似于postman中post提交方式的raw，用json的方式提交，不是表单
@@ -564,5 +580,33 @@ public class OkHttpUtils {
 
     public static void setOkHttpClient(OkHttpClient okHttpClient) {
         OkHttpUtils.okHttpClient = okHttpClient;
+    }
+    
+    /**
+     * 获取应用程序流量统计
+     * @deprecated 由于SystemUtils现在只缓存最近数据，建议使用getApplicationSpeed()获取实时速度
+     */
+    @Deprecated
+    public static Map<String, Long> getApplicationTraffic() {
+        // 返回空的统计结果，因为不再维护累计数据
+        Map<String, Long> result = new HashMap<>();
+        result.put("upload", 0L);
+        result.put("download", 0L);
+        return result;
+    }
+    
+    /**
+     * 获取应用程序实时网络速度报告实体
+     * @return NetworkSpeedReport 对象包含详细的网络速度信息
+     */
+    public static NetworkSpeedReport getNetworkSpeedReport() {
+        return SystemUtils.getNetworkSpeedReport();
+    }
+    
+    /**
+     * 获取格式化的速度报告
+     */
+    public static String getFormattedSpeedReport() {
+        return SystemUtils.getFormattedSpeedReport();
     }
 }
