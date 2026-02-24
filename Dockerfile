@@ -1,4 +1,4 @@
-FROM maven:3.9.4-eclipse-temurin-17-alpine AS builder
+FROM maven:3.9.4-amazoncorretto-17 AS builder
 MAINTAINER SQ
 
 WORKDIR /build/
