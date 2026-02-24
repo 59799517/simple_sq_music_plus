@@ -188,6 +188,10 @@ jobs:
             org.opencontainers.image.description=Music streaming server with multi-arch support
             org.opencontainers.image.version=${{ env.APP_VERSION }}
             org.opencontainers.image.architecture=${{ matrix.platform }}
+          # 确保生成单一架构镜像并强制覆盖
+          provenance: false
+          # 强制覆盖已存在的标签
+          no-cache: true
       
       - name: Build and Push Multi-Arch Docker Image to GitHub Packages
         uses: docker/build-push-action@v5
@@ -206,6 +210,10 @@ jobs:
             org.opencontainers.image.description=Music streaming server with multi-arch support
             org.opencontainers.image.version=${{ env.APP_VERSION }}
             org.opencontainers.image.architecture=${{ matrix.platform }}
+          # 确保生成单一架构镜像并强制覆盖
+          provenance: false
+          # 强制覆盖已存在的标签
+          no-cache: true
 
   create-manifest-list:
     name: Create Manifest Lists
@@ -247,32 +255,33 @@ jobs:
       
       - name: Create and Push Manifest List for Aliyun
         run: |
-          # 清理可能存在的旧manifest
+          # 强制删除可能存在的旧manifest（忽略错误）
+          echo "Cleaning up existing manifests..."
           docker manifest rm registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:${{ env.APP_VERSION }} 2>/dev/null || true
           docker manifest rm registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:latest 2>/dev/null || true
           
-          # 等待镜像同步完成
-          sleep 15
+          # 等待更长时间确保镜像完全同步
+          echo "Waiting for image synchronization..."
+          sleep 30
           
-          # 验证基础镜像是否存在（使用inspect代替pull避免架构不匹配）
+          # 验证基础镜像是否存在
           echo "Checking if base images exist..."
-          docker manifest inspect registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:${{ env.APP_VERSION }}-amd64 >/dev/null 2>&1 || {
-            echo "ERROR: AMD64 image not found!" >&2
-            exit 1
-          }
+          docker pull registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:${{ env.APP_VERSION }}-amd64
+          docker pull registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:${{ env.APP_VERSION }}-arm64
           
-          docker manifest inspect registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:${{ env.APP_VERSION }}-arm64 >/dev/null 2>&1 || {
-            echo "ERROR: ARM64 image not found!" >&2
-            exit 1
-          }
+          # 检查拉取的镜像是不是manifest list
+          echo "Verifying image types..."
+          AMD64_TYPE=$(docker manifest inspect registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:${{ env.APP_VERSION }}-amd64 | jq -r '.mediaType' 2>/dev/null || echo "unknown")
+          ARM64_TYPE=$(docker manifest inspect registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:${{ env.APP_VERSION }}-arm64 | jq -r '.mediaType' 2>/dev/null || echo "unknown")
           
-          echo "Both base images verified successfully"
+          echo "AMD64 image type: $AMD64_TYPE"
+          echo "ARM64 image type: $ARM64_TYPE"
           
-          # 创建多架构manifest
-          echo "Creating manifest for version ${{ env.APP_VERSION }}"
+          # 创建多架构manifest（使用--amend确保覆盖）
+          echo "Creating manifest for version ${{ env.APP_VERSION }} with overwrite mode"
           docker manifest create registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:${{ env.APP_VERSION }} \
             registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:${{ env.APP_VERSION }}-amd64 \
-            registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:${{ env.APP_VERSION }}-arm64
+            registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:${{ env.APP_VERSION }}-arm64 --amend
           
           # 注解各架构信息
           docker manifest annotate registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:${{ env.APP_VERSION }} \
@@ -283,47 +292,48 @@ jobs:
             registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:${{ env.APP_VERSION }}-arm64 \
             --arch arm64 --os linux
           
-          # 推送manifest
-          echo "Pushing manifest for version ${{ env.APP_VERSION }}"
+          # 强制推送manifest（覆盖模式）
+          echo "Force pushing manifest for version ${{ env.APP_VERSION }}"
           docker manifest push registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:${{ env.APP_VERSION }} --purge
           
-          # 为latest标签创建manifest
-          echo "Creating manifest for latest tag"
+          # 为latest标签创建manifest（使用--amend确保覆盖）
+          echo "Creating manifest for latest tag with overwrite mode"
           docker manifest create registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:latest \
             registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:latest-amd64 \
-            registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:latest-arm64
+            registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:latest-arm64 --amend
           
-          echo "Pushing manifest for latest tag"
+          echo "Force pushing manifest for latest tag"
           docker manifest push registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:latest --purge
       
       - name: Create and Push Manifest List for GitHub Packages
         run: |
-          # 清理可能存在的旧manifest
+          # 强制删除可能存在的旧manifest（忽略错误）
+          echo "Cleaning up existing manifests..."
           docker manifest rm ghcr.io/${{ github.actor }}/simple_sq_music_plus:${{ env.APP_VERSION }} 2>/dev/null || true
           docker manifest rm ghcr.io/${{ github.actor }}/simple_sq_music_plus:latest 2>/dev/null || true
           
-          # 等待镜像同步完成
-          sleep 15
+          # 等待更长时间确保镜像完全同步
+          echo "Waiting for image synchronization..."
+          sleep 30
           
-          # 验证基础镜像是否存在（使用inspect代替pull避免架构不匹配）
+          # 验证基础镜像是否存在
           echo "Checking if base images exist..."
-          docker manifest inspect ghcr.io/${{ github.actor }}/simple_sq_music_plus:${{ env.APP_VERSION }}-amd64 >/dev/null 2>&1 || {
-            echo "ERROR: AMD64 image not found!" >&2
-            exit 1
-          }
+          docker pull ghcr.io/${{ github.actor }}/simple_sq_music_plus:${{ env.APP_VERSION }}-amd64
+          docker pull ghcr.io/${{ github.actor }}/simple_sq_music_plus:${{ env.APP_VERSION }}-arm64
           
-          docker manifest inspect ghcr.io/${{ github.actor }}/simple_sq_music_plus:${{ env.APP_VERSION }}-arm64 >/dev/null 2>&1 || {
-            echo "ERROR: ARM64 image not found!" >&2
-            exit 1
-          }
+          # 检查拉取的镜像是不是manifest list
+          echo "Verifying image types..."
+          AMD64_TYPE=$(docker manifest inspect ghcr.io/${{ github.actor }}/simple_sq_music_plus:${{ env.APP_VERSION }}-amd64 | jq -r '.mediaType' 2>/dev/null || echo "unknown")
+          ARM64_TYPE=$(docker manifest inspect ghcr.io/${{ github.actor }}/simple_sq_music_plus:${{ env.APP_VERSION }}-arm64 | jq -r '.mediaType' 2>/dev/null || echo "unknown")
           
-          echo "Both base images verified successfully"
+          echo "AMD64 image type: $AMD64_TYPE"
+          echo "ARM64 image type: $ARM64_TYPE"
           
-          # 创建多架构manifest
-          echo "Creating manifest for version ${{ env.APP_VERSION }}"
+          # 创建多架构manifest（使用--amend确保覆盖）
+          echo "Creating manifest for version ${{ env.APP_VERSION }} with overwrite mode"
           docker manifest create ghcr.io/${{ github.actor }}/simple_sq_music_plus:${{ env.APP_VERSION }} \
             ghcr.io/${{ github.actor }}/simple_sq_music_plus:${{ env.APP_VERSION }}-amd64 \
-            ghcr.io/${{ github.actor }}/simple_sq_music_plus:${{ env.APP_VERSION }}-arm64
+            ghcr.io/${{ github.actor }}/simple_sq_music_plus:${{ env.APP_VERSION }}-arm64 --amend
           
           # 注解各架构信息
           docker manifest annotate ghcr.io/${{ github.actor }}/simple_sq_music_plus:${{ env.APP_VERSION }} \
@@ -334,17 +344,17 @@ jobs:
             ghcr.io/${{ github.actor }}/simple_sq_music_plus:${{ env.APP_VERSION }}-arm64 \
             --arch arm64 --os linux
           
-          # 推送manifest
-          echo "Pushing manifest for version ${{ env.APP_VERSION }}"
+          # 强制推送manifest（覆盖模式）
+          echo "Force pushing manifest for version ${{ env.APP_VERSION }}"
           docker manifest push ghcr.io/${{ github.actor }}/simple_sq_music_plus:${{ env.APP_VERSION }} --purge
           
-          # 为latest标签创建manifest
-          echo "Creating manifest for latest tag"
+          # 为latest标签创建manifest（使用--amend确保覆盖）
+          echo "Creating manifest for latest tag with overwrite mode"
           docker manifest create ghcr.io/${{ github.actor }}/simple_sq_music_plus:latest \
             ghcr.io/${{ github.actor }}/simple_sq_music_plus:latest-amd64 \
-            ghcr.io/${{ github.actor }}/simple_sq_music_plus:latest-arm64
+            ghcr.io/${{ github.actor }}/simple_sq_music_plus:latest-arm64 --amend
           
-          echo "Pushing manifest for latest tag"
+          echo "Force pushing manifest for latest tag"
           docker manifest push ghcr.io/${{ github.actor }}/simple_sq_music_plus:latest --purge
 
   release:
