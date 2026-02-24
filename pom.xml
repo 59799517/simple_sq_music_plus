@@ -273,14 +273,6 @@
         </dependency>
 
 
-        <!-- Source: https://mvnrepository.com/artifact/com.github.hiwepy/sigar-native -->
-        <dependency>
-            <groupId>com.github.hiwepy</groupId>
-            <artifactId>sigar-native</artifactId>
-            <version>1.0.3.RELEASE</version>
-            <scope>compile</scope>
-        </dependency>
-
 
 
 <!--        &lt;!&ndash; 执行js脚本 &ndash;&gt;-->
