@@ -8,8 +8,8 @@ COPY src /build/src/
 
 RUN mvn clean package
 
-# 改用支持多架构的运行时镜像
-FROM --platform=$TARGETPLATFORM eclipse-temurin:17-jre-alpine
+# 使用支持多架构的OpenJDK镜像
+FROM openjdk:17-jre-slim
 
 # 设置工作目录
 WORKDIR /app
