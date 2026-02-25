@@ -54,9 +54,18 @@ jobs:
           sed -i "s/v\[version\]/v$APP_VERSION/g" docker-compose.yml
           sed -i "s/v\[webversion\]/v$WEB_VERSION/g" docker-compose.yml
           
+          # 从模板生成 docker-compose-arm.yml
+          cp docker-compose-arm-template.yml docker-compose-arm.yml
+          
+          # 替换 docker-compose-arm.yml 中的版本号
+          sed -i "s/v\[version\]/v$APP_VERSION/g" docker-compose-arm.yml
+          sed -i "s/v\[webversion\]/v$WEB_VERSION/g" docker-compose-arm.yml
+          
           # 显示生成的文件内容以供验证
           echo "=== docker-compose.yml ==="
           cat docker-compose.yml
+          echo "\n=== docker-compose-arm.yml ==="
+          cat docker-compose-arm.yml
       
       # 新增步骤：处理 fnOS/app/docker/docker-compose.yaml
       - name: Copy or Replace docker-compose.yml to fnOS directory
@@ -80,6 +89,28 @@ jobs:
           echo "=== $TARGET_PATH ==="
           cat "$TARGET_PATH"
       
+      # 新增步骤：处理 fnOS/app/docker/docker-compose-arm.yaml
+      - name: Copy or Replace docker-compose-arm.yml to fnOS directory
+        run: |
+          # 定义目标路径
+          TARGET_PATH_ARM="fnOS/app/docker/docker-compose-arm.yaml"
+
+          # 检查目标文件是否存在
+          if [ -f "$TARGET_PATH_ARM" ]; then
+            # 文件存在，直接替换
+            echo "File exists, replacing..."
+            cp docker-compose-arm.yml "$TARGET_PATH_ARM"
+          else
+            # 文件不存在，先创建目录（如果需要），再复制
+            echo "File does not exist, creating and copying..."
+            mkdir -p "$(dirname "$TARGET_PATH_ARM")"
+            cp docker-compose-arm.yml "$TARGET_PATH_ARM"
+          fi
+
+          # 显示最终文件内容以供验证
+          echo "=== $TARGET_PATH_ARM ==="
+          cat "$TARGET_PATH_ARM"
+      
       - name: Generate new manifest file
         run: |
           # 进入 fnOS 目录
@@ -96,6 +127,7 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add docker-compose.yml
+          git add docker-compose-arm.yml
           git commit -m "Update docker-compose files with version $APP_VERSION and web version $WEB_VERSION" || echo "No changes to commit"
       
       - name: Push changes
@@ -121,6 +153,7 @@ jobs:
             version.txt
             webversion.txt
             docker-compose.yml
+            docker-compose-arm.yml
 
   build-multi-arch-images:
     name: Build and Push Multi-Arch Docker Images
