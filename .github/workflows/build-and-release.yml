@@ -179,14 +179,14 @@ jobs:
           platforms: ${{ matrix.platform }}
           push: true
           tags: |
-            registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:${{ env.APP_VERSION }}-${{ matrix.tag_suffix }}
+            registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:v${{ env.APP_VERSION }}-${{ matrix.tag_suffix }}
             registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:latest-${{ matrix.tag_suffix }}
           build-args: |
             JAR_FILE=target/simple_sq_music_plus.jar
           labels: |
             org.opencontainers.image.title=Simple Music Server
             org.opencontainers.image.description=Music streaming server with multi-arch support
-            org.opencontainers.image.version=${{ env.APP_VERSION }}
+            org.opencontainers.image.version=v${{ env.APP_VERSION }}
             org.opencontainers.image.architecture=${{ matrix.platform }}
           # 确保生成单一架构镜像并强制覆盖
           provenance: false
@@ -201,14 +201,14 @@ jobs:
           platforms: ${{ matrix.platform }}
           push: true
           tags: |
-            ghcr.io/${{ github.actor }}/simple_sq_music_plus:${{ env.APP_VERSION }}-${{ matrix.tag_suffix }}
+            ghcr.io/${{ github.actor }}/simple_sq_music_plus:v${{ env.APP_VERSION }}-${{ matrix.tag_suffix }}
             ghcr.io/${{ github.actor }}/simple_sq_music_plus:latest-${{ matrix.tag_suffix }}
           build-args: |
             JAR_FILE=target/simple_sq_music_plus.jar
           labels: |
             org.opencontainers.image.title=Simple Music Server
             org.opencontainers.image.description=Music streaming server with multi-arch support
-            org.opencontainers.image.version=${{ env.APP_VERSION }}
+            org.opencontainers.image.version=v${{ env.APP_VERSION }}
             org.opencontainers.image.architecture=${{ matrix.platform }}
           # 确保生成单一架构镜像并强制覆盖
           provenance: false
@@ -257,7 +257,7 @@ jobs:
         run: |
           # 强制删除可能存在的旧manifest（忽略错误）
           echo "Cleaning up existing manifests..."
-          docker manifest rm registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:${{ env.APP_VERSION }} 2>/dev/null || true
+          docker manifest rm registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:v${{ env.APP_VERSION }} 2>/dev/null || true
           docker manifest rm registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:latest 2>/dev/null || true
           
           # 等待更长时间确保镜像完全同步
@@ -266,35 +266,35 @@ jobs:
           
           # 验证基础镜像是否存在
           echo "Checking if base images exist..."
-          docker pull registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:${{ env.APP_VERSION }}-amd64
-          docker pull registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:${{ env.APP_VERSION }}-arm64
+          docker pull registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:v${{ env.APP_VERSION }}-amd64
+          docker pull registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:v${{ env.APP_VERSION }}-arm64
           
           # 检查拉取的镜像是不是manifest list
           echo "Verifying image types..."
-          AMD64_TYPE=$(docker manifest inspect registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:${{ env.APP_VERSION }}-amd64 | jq -r '.mediaType' 2>/dev/null || echo "unknown")
-          ARM64_TYPE=$(docker manifest inspect registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:${{ env.APP_VERSION }}-arm64 | jq -r '.mediaType' 2>/dev/null || echo "unknown")
+          AMD64_TYPE=$(docker manifest inspect registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:v${{ env.APP_VERSION }}-amd64 | jq -r '.mediaType' 2>/dev/null || echo "unknown")
+          ARM64_TYPE=$(docker manifest inspect registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:v${{ env.APP_VERSION }}-arm64 | jq -r '.mediaType' 2>/dev/null || echo "unknown")
           
           echo "AMD64 image type: $AMD64_TYPE"
           echo "ARM64 image type: $ARM64_TYPE"
           
           # 创建多架构manifest（使用--amend确保覆盖）
-          echo "Creating manifest for version ${{ env.APP_VERSION }} with overwrite mode"
-          docker manifest create registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:${{ env.APP_VERSION }} \
-            registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:${{ env.APP_VERSION }}-amd64 \
-            registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:${{ env.APP_VERSION }}-arm64 --amend
+          echo "Creating manifest for version v${{ env.APP_VERSION }} with overwrite mode"
+          docker manifest create registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:v${{ env.APP_VERSION }} \
+            registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:v${{ env.APP_VERSION }}-amd64 \
+            registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:v${{ env.APP_VERSION }}-arm64 --amend
           
           # 注解各架构信息
-          docker manifest annotate registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:${{ env.APP_VERSION }} \
-            registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:${{ env.APP_VERSION }}-amd64 \
+          docker manifest annotate registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:v${{ env.APP_VERSION }} \
+            registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:v${{ env.APP_VERSION }}-amd64 \
             --arch amd64 --os linux
           
-          docker manifest annotate registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:${{ env.APP_VERSION }} \
-            registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:${{ env.APP_VERSION }}-arm64 \
+          docker manifest annotate registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:v${{ env.APP_VERSION }} \
+            registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:v${{ env.APP_VERSION }}-arm64 \
             --arch arm64 --os linux
           
           # 强制推送manifest（覆盖模式）
-          echo "Force pushing manifest for version ${{ env.APP_VERSION }}"
-          docker manifest push registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:${{ env.APP_VERSION }} --purge
+          echo "Force pushing manifest for version v${{ env.APP_VERSION }}"
+          docker manifest push registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:v${{ env.APP_VERSION }} --purge
           
           # 为latest标签创建manifest（使用--amend确保覆盖）
           echo "Creating manifest for latest tag with overwrite mode"
@@ -309,7 +309,7 @@ jobs:
         run: |
           # 强制删除可能存在的旧manifest（忽略错误）
           echo "Cleaning up existing manifests..."
-          docker manifest rm ghcr.io/${{ github.actor }}/simple_sq_music_plus:${{ env.APP_VERSION }} 2>/dev/null || true
+          docker manifest rm ghcr.io/${{ github.actor }}/simple_sq_music_plus:v${{ env.APP_VERSION }} 2>/dev/null || true
           docker manifest rm ghcr.io/${{ github.actor }}/simple_sq_music_plus:latest 2>/dev/null || true
           
           # 等待更长时间确保镜像完全同步
@@ -318,35 +318,35 @@ jobs:
           
           # 验证基础镜像是否存在
           echo "Checking if base images exist..."
-          docker pull ghcr.io/${{ github.actor }}/simple_sq_music_plus:${{ env.APP_VERSION }}-amd64
-          docker pull ghcr.io/${{ github.actor }}/simple_sq_music_plus:${{ env.APP_VERSION }}-arm64
+          docker pull ghcr.io/${{ github.actor }}/simple_sq_music_plus:v${{ env.APP_VERSION }}-amd64
+          docker pull ghcr.io/${{ github.actor }}/simple_sq_music_plus:v${{ env.APP_VERSION }}-arm64
           
           # 检查拉取的镜像是不是manifest list
           echo "Verifying image types..."
-          AMD64_TYPE=$(docker manifest inspect ghcr.io/${{ github.actor }}/simple_sq_music_plus:${{ env.APP_VERSION }}-amd64 | jq -r '.mediaType' 2>/dev/null || echo "unknown")
-          ARM64_TYPE=$(docker manifest inspect ghcr.io/${{ github.actor }}/simple_sq_music_plus:${{ env.APP_VERSION }}-arm64 | jq -r '.mediaType' 2>/dev/null || echo "unknown")
+          AMD64_TYPE=$(docker manifest inspect ghcr.io/${{ github.actor }}/simple_sq_music_plus:v${{ env.APP_VERSION }}-amd64 | jq -r '.mediaType' 2>/dev/null || echo "unknown")
+          ARM64_TYPE=$(docker manifest inspect ghcr.io/${{ github.actor }}/simple_sq_music_plus:v${{ env.APP_VERSION }}-arm64 | jq -r '.mediaType' 2>/dev/null || echo "unknown")
           
           echo "AMD64 image type: $AMD64_TYPE"
           echo "ARM64 image type: $ARM64_TYPE"
           
           # 创建多架构manifest（使用--amend确保覆盖）
-          echo "Creating manifest for version ${{ env.APP_VERSION }} with overwrite mode"
-          docker manifest create ghcr.io/${{ github.actor }}/simple_sq_music_plus:${{ env.APP_VERSION }} \
-            ghcr.io/${{ github.actor }}/simple_sq_music_plus:${{ env.APP_VERSION }}-amd64 \
-            ghcr.io/${{ github.actor }}/simple_sq_music_plus:${{ env.APP_VERSION }}-arm64 --amend
+          echo "Creating manifest for version v${{ env.APP_VERSION }} with overwrite mode"
+          docker manifest create ghcr.io/${{ github.actor }}/simple_sq_music_plus:v${{ env.APP_VERSION }} \
+            ghcr.io/${{ github.actor }}/simple_sq_music_plus:v${{ env.APP_VERSION }}-amd64 \
+            ghcr.io/${{ github.actor }}/simple_sq_music_plus:v${{ env.APP_VERSION }}-arm64 --amend
           
           # 注解各架构信息
-          docker manifest annotate ghcr.io/${{ github.actor }}/simple_sq_music_plus:${{ env.APP_VERSION }} \
-            ghcr.io/${{ github.actor }}/simple_sq_music_plus:${{ env.APP_VERSION }}-amd64 \
+          docker manifest annotate ghcr.io/${{ github.actor }}/simple_sq_music_plus:v${{ env.APP_VERSION }} \
+            ghcr.io/${{ github.actor }}/simple_sq_music_plus:v${{ env.APP_VERSION }}-amd64 \
             --arch amd64 --os linux
           
-          docker manifest annotate ghcr.io/${{ github.actor }}/simple_sq_music_plus:${{ env.APP_VERSION }} \
-            ghcr.io/${{ github.actor }}/simple_sq_music_plus:${{ env.APP_VERSION }}-arm64 \
+          docker manifest annotate ghcr.io/${{ github.actor }}/simple_sq_music_plus:v${{ env.APP_VERSION }} \
+            ghcr.io/${{ github.actor }}/simple_sq_music_plus:v${{ env.APP_VERSION }}-arm64 \
             --arch arm64 --os linux
           
           # 强制推送manifest（覆盖模式）
-          echo "Force pushing manifest for version ${{ env.APP_VERSION }}"
-          docker manifest push ghcr.io/${{ github.actor }}/simple_sq_music_plus:${{ env.APP_VERSION }} --purge
+          echo "Force pushing manifest for version v${{ env.APP_VERSION }}"
+          docker manifest push ghcr.io/${{ github.actor }}/simple_sq_music_plus:v${{ env.APP_VERSION }} --purge
           
           # 为latest标签创建manifest（使用--amend确保覆盖）
           echo "Creating manifest for latest tag with overwrite mode"
