@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   sqmusic_main:
-    image: registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:v3.0.31
+    image: registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:v3.0.31-arm64
     container_name: sqmusic_main
     environment:
       - DB_IP=mysql
@@ -22,7 +22,7 @@ services:
     restart: always
 
   sqmusic_web:
-    image: registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus_web:v3.0.15
+    image: registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus_web:v3.0.15-arm64
     container_name: sqmusic_web
     ports:
       - "8096:80"
@@ -33,7 +33,7 @@ services:
     restart: always
 
   mysql:
-    image: mysql:5.7
+    image: pistar/mysql-arm:hf-5.7.25
     container_name: sqmusic_mysql
     environment:
       MYSQL_ROOT_PASSWORD: sqmusicv3password
