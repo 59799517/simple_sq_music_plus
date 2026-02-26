@@ -298,8 +298,11 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
         if (brType==null){
             brType = MusicUtils.getMaxBr(bits);
         }
-        String bitsStr = bits.stream().map(plugBrType -> plugBrType.getBit().toString()).collect(Collectors.joining(","));
-        String plugBrTypes = bits.stream().map(plugBrType -> plugBrType.getId()).collect(Collectors.joining(","));
+        if (brType == null) {
+            throw new RuntimeException("No available bit rate for song: " + music.getMusicName());
+        }
+        String bitsStr = (bits != null && !bits.isEmpty()) ? bits.stream().map(plugBrType -> plugBrType.getBit().toString()).collect(Collectors.joining(",")) : "";
+        String plugBrTypes = (bits != null && !bits.isEmpty()) ? bits.stream().map(plugBrType -> plugBrType.getId()).collect(Collectors.joining(",")) : "";
 
         return new DownloadInfo()
                 .setDownloadGid(music.getId())
@@ -327,8 +330,11 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
         if (brType==null){
             brType = MusicUtils.getMaxBr(bits);
         }
-        String bitsStr = bits.stream().map(plugBrType -> plugBrType.getBit().toString()).collect(Collectors.joining(","));
-        String plugBrTypes = bits.stream().map(plugBrType -> plugBrType.getId()).collect(Collectors.joining(","));
+        if (brType == null) {
+            throw new RuntimeException("No available bit rate for song: " + music.getName());
+        }
+        String bitsStr = (bits != null && !bits.isEmpty()) ? bits.stream().map(plugBrType -> plugBrType.getBit().toString()).collect(Collectors.joining(",")) : "";
+        String plugBrTypes = (bits != null && !bits.isEmpty()) ? bits.stream().map(plugBrType -> plugBrType.getId()).collect(Collectors.joining(",")) : "";
         String jsonString ="";
         try {
             jsonString = music.getDataInfo().toJSONString();

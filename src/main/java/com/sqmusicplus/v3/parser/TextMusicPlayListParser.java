@@ -49,11 +49,12 @@ public class TextMusicPlayListParser {
     public List<ParserEntity> parser(String msg) throws IOException {
         String[] split = msg.split("\n");
         return Arrays.stream(split).map(m -> {
-            String[] sa = m.split("-");
+            // Split by first '-' only, to handle song names or artist names containing '-'
+            String[] sa = m.split("-", 2);
             try {
-                return new ParserEntity().setSongName(sa[0]).setArtistsName(sa[1]);
+                return new ParserEntity().setSongName(sa[0].trim()).setArtistsName(sa[1].trim());
             } catch (ArrayIndexOutOfBoundsException e) {
-                return  new ParserEntity().setSongName(m).setArtistsName("");
+                return  new ParserEntity().setSongName(m.trim()).setArtistsName("");
             }
         }).collect(Collectors.toList());
 
@@ -120,7 +121,7 @@ public class TextMusicPlayListParser {
                 if (record.getName().trim().equals(parserEntity.getSongName().trim())){
                     //匹配成功歌曲名称
                     if (StringUtils.isNotBlank(parserEntity.getArtistsName())){
-                        if (record.getArtistName().contains(parserEntity.getArtistsName().trim())){
+                        if (matchArtist(record.getArtistName(), parserEntity.getArtistsName().trim())){
                             parserEntity.setIsDetection(true);
                             parserEntity.setPlugSearchMusicResult(record);
                             parserEntity.setPlugName(plugSearchMusicResultPlugSearchResult.getPlugName());
@@ -139,6 +140,37 @@ public class TextMusicPlayListParser {
 
 
         }
+    }
+
+    /**
+     * Match artist name: support List<String> artistName from search result
+     * against user input which may contain multiple artists separated by / or ,
+     * Match succeeds if any artist in the search result matches any artist in user input
+     */
+    private static boolean matchArtist(List<String> recordArtists, String inputArtists) {
+        if (recordArtists == null || recordArtists.isEmpty()) {
+            return false;
+        }
+        // Split user input by common separators: / , 、
+        String[] inputParts = inputArtists.split("[/,、]");
+        for (String inputPart : inputParts) {
+            String trimmedInput = inputPart.trim();
+            if (StringUtils.isBlank(trimmedInput)) {
+                continue;
+            }
+            for (String recordArtist : recordArtists) {
+                if (recordArtist.trim().equalsIgnoreCase(trimmedInput)) {
+                    return true;
+                }
+            }
+        }
+        // Also try matching the whole input string against any artist (fallback)
+        for (String recordArtist : recordArtists) {
+            if (recordArtist.trim().equalsIgnoreCase(inputArtists)) {
+                return true;
+            }
+        }
+        return false;
     }
 
 }

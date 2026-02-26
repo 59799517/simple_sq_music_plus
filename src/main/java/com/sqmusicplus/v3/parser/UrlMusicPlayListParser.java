@@ -57,6 +57,11 @@ public class UrlMusicPlayListParser {
 
     public List<Music> parser(DownlaodParserUrl downlaodParserUrl) throws IOException {
         String url = downlaodParserUrl.getUrl();
+        // Pre-process: convert hash route format (e.g. music.163.com/#/playlist?id=xxx) to standard path format
+        if (url.contains("#/")) {
+            url = url.replace("#/", "");
+            log.info("URL hash route detected, converted to: {}", url);
+        }
         //找出url所属的平台
         if (url.contains("y.qq.com")) {
             //获取url的302来判断是那种类型
@@ -367,7 +372,17 @@ public class UrlMusicPlayListParser {
             throw new RuntimeException(e);
         }
         String query = uri.getQuery();
+        // Fallback: if query is null, try to extract params from fragment (e.g. #/playlist?id=xxx)
+        if (query == null) {
+            String fragment = uri.getFragment();
+            if (fragment != null && fragment.contains("?")) {
+                query = fragment.substring(fragment.indexOf("?") + 1);
+            }
+        }
         Map<String, String> params = new HashMap<>();
+        if (query == null || query.isEmpty()) {
+            return params;
+        }
         for (String param : query.split("&")) {
             String[] pair = param.split("=");
             params.put(pair[0], pair.length > 1 ? pair[1] : null);

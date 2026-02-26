@@ -173,6 +173,9 @@ public class MusicUtils {
      * @return
      */
     public static PlugBrType getMaxBr(List<PlugBrType> brTypes) {
+        if (brTypes == null || brTypes.isEmpty()) {
+            return null;
+        }
         return brTypes.stream().max(Comparator.comparing(PlugBrType::getBit)).get();
     }
 

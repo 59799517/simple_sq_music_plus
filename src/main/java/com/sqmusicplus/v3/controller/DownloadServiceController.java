@@ -134,27 +134,47 @@ public class DownloadServiceController {
     @SaCheckLogin
     @PostMapping("/downloadParserUrl")
     public AjaxResult downloadParserUrl(@RequestBody DownlaodParserUrl downlaodParserUrl) {
-        try {
-            List<Music> parser = urlMusicPlayListParser.parser(downlaodParserUrl);
-            if (parser == null){
-                return AjaxResult.error("解析失败 仅支持qq 酷我 酷狗概念 网易云");
-            }
-            ArrayList<DownloadInfo> downloadInfos = new ArrayList<>();
-            for (Music music : parser) {
-                SearchHanderAbstract plugHander = MusicUtils.getPlugHander(music.getPlugName(), searchHanderAbstractList);
-                DownloadInfo downloadInfo = plugHander.musicToDownloadInfo(music, null, false);
-                downloadInfos.add(downloadInfo);
-            }
-            Boolean add = downloadInfoService.add(downloadInfos);
-            if (add){
-                return AjaxResult.success("下载成功",downloadInfos);
-            }
-
-        } catch (Exception e) {
-            log.error("解析失败",e);
+        // Validate URL format first (quick check before going async)
+        String url = downlaodParserUrl.getUrl();
+        if (StringUtils.isBlank(url)) {
+            return AjaxResult.error("请输入要解析的URL");
+        }
+        if (!url.contains("y.qq.com") && !url.contains("www.kuwo.cn")
+                && !url.contains("music.163.com") && !url.contains("kugou.com")) {
             return AjaxResult.error("解析失败 仅支持qq 酷我 酷狗概念 网易云");
         }
-        return AjaxResult.error("下载失败");
+        // Run parsing and downloading asynchronously to avoid nginx proxy timeout
+        Thread thread = new Thread(() -> {
+            try {
+                List<Music> parser = urlMusicPlayListParser.parser(downlaodParserUrl);
+                if (parser == null || parser.isEmpty()) {
+                    log.warn("URL parser: no songs parsed from URL: {}", url);
+                    return;
+                }
+                ArrayList<DownloadInfo> downloadInfos = new ArrayList<>();
+                for (Music music : parser) {
+                    try {
+                        SearchHanderAbstract plugHander = MusicUtils.getPlugHander(music.getPlugName(), searchHanderAbstractList);
+                        DownloadInfo downloadInfo = plugHander.musicToDownloadInfo(music, null, false);
+                        downloadInfos.add(downloadInfo);
+                    } catch (Exception e) {
+                        log.error("URL parser: failed to create download info for song: {}, error: {}", music.getMusicName(), e.getMessage());
+                    }
+                }
+                if (!downloadInfos.isEmpty()) {
+                    Boolean add = downloadInfoService.add(downloadInfos);
+                    if (add) {
+                        log.info("URL parser: successfully added {} download tasks from URL: {}", downloadInfos.size(), url);
+                    }
+                } else {
+                    log.warn("URL parser: no download tasks created from URL: {}", url);
+                }
+            } catch (Exception e) {
+                log.error("URL parser: failed to parse URL: {}", url, e);
+            }
+        });
+        thread.start();
+        return AjaxResult.success("解析成功，稍后在下载处查看");
     }
 
 
@@ -199,14 +219,32 @@ public class DownloadServiceController {
                 if (parserEntities != null) {
                     ArrayList<DownloadInfo> downloadInfos = new ArrayList<>();
                     for (ParserEntity parserEntity : parserEntities) {
+                        // Skip entries that were not matched to any song
+                        if (parserEntity.getIsDetection() == null || !parserEntity.getIsDetection()) {
+                            log.warn("Text parser: song not matched, skipping: {} - {}", parserEntity.getSongName(), parserEntity.getArtistsName());
+                            continue;
+                        }
                         PlugSearchMusicResult plugSearchMusicResult = parserEntity.getPlugSearchMusicResult();
-                        SearchHanderAbstract plugHander = MusicUtils.getPlugHander(plugSearchMusicResult.getPlugName(), searchHanderAbstractList);
-                        DownloadInfo downloadInfo = plugHander.musicToDownloadInfo(plugSearchMusicResult, null, false);
-                        downloadInfos.add(downloadInfo);
+                        if (plugSearchMusicResult == null) {
+                            log.warn("Text parser: plugSearchMusicResult is null, skipping: {}", parserEntity.getSongName());
+                            continue;
+                        }
+                        try {
+                            SearchHanderAbstract plugHander = MusicUtils.getPlugHander(plugSearchMusicResult.getPlugName(), searchHanderAbstractList);
+                            DownloadInfo downloadInfo = plugHander.musicToDownloadInfo(plugSearchMusicResult, null, false);
+                            downloadInfos.add(downloadInfo);
+                        } catch (Exception e) {
+                            log.error("Text parser: failed to create download info for song: {}, error: {}", parserEntity.getSongName(), e.getMessage());
+                        }
                     }
-                    Boolean add = downloadInfoService.add(downloadInfos);
-                    if (add) {
-                        return;
+                    if (!downloadInfos.isEmpty()) {
+                        Boolean add = downloadInfoService.add(downloadInfos);
+                        if (add) {
+                            log.info("Text parser: successfully added {} download tasks", downloadInfos.size());
+                            return;
+                        }
+                    } else {
+                        log.warn("Text parser: no songs matched, nothing to download");
                     }
                 }
 //                return ;
