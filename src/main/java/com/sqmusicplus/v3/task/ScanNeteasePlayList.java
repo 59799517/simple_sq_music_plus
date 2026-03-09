@@ -1,8 +1,12 @@
 package com.sqmusicplus.v3.task;
 
+import cn.hutool.crypto.digest.DigestUtil;
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.sqmusicplus.v3.base.entity.DownloadInfo;
+import com.sqmusicplus.v3.base.entity.SqSync;
 import com.sqmusicplus.v3.base.enums.DbBooleanConvert;
+import com.sqmusicplus.v3.base.enums.PlugBrType;
 import com.sqmusicplus.v3.base.enums.SetConfigEnum;
 import com.sqmusicplus.v3.base.service.DownloadInfoService;
 import com.sqmusicplus.v3.base.service.SqSyncService;
@@ -22,6 +26,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @Classname ScanNeteasePlayList
@@ -42,6 +47,9 @@ public class ScanNeteasePlayList {
 
     @Autowired
     private DownloadInfoService downloadInfoService;
+
+    @Autowired
+    private SqSyncService syncService;
 
 
     @Scheduled(cron = "10 */10 * * * ? ")
@@ -101,10 +109,27 @@ public class ScanNeteasePlayList {
                 } catch (Exception e) {
                     log.error("监听网易云歌单信息失败: targetId=" + targetId, e);
                 }
+
+
+                ArrayList<SqSync> sqSyncs = new ArrayList<>();
+
                 ArrayList<Music> playList = neteaseHander.getPlayList(targetId);
                 if (playList != null){
+                    //获取已经下载的歌曲
+                    LambdaQueryWrapper<SqSync> sqQqmusicMyLike = new LambdaQueryWrapper<SqSync>().eq(SqSync::getPlugName, neteaseHander.getPlugName())
+                            .eq(SqSync::getPlayListId, targetId);
+                    
+                    List<SqSync> dbSqSync = syncService.list(sqQqmusicMyLike);
+                    Set<String> downloadedMusicIds = dbSqSync.stream()
+                            .map(SqSync::getMusicId)
+                            .collect(Collectors.toSet());
+                                        
                     ArrayList<DownloadInfo> downloadInfos = new ArrayList<>();
                     for (Music music : playList) {
+                        // 跳过已经下载过的歌曲，只处理未下载的新歌曲
+                        if (downloadedMusicIds.contains(music.getId())){
+                            continue;
+                        }
                         if (excludeAlbumNames.contains(music.getMusicAlbum())) {
                             continue;
                         }
@@ -115,8 +140,20 @@ public class ScanNeteasePlayList {
                         }
                         DownloadInfo downloadInfo = neteaseHander.musicToDownloadInfo(music, null, false);
                         downloadInfos.add(downloadInfo);
+                        SqSync sqSync = new SqSync();
+                        sqSync.setMusicId(music.getId());
+                        sqSync.setPlugName( neteaseHander.getPlugName());
+                        sqSync.setMusicInfo(JSON.toJSONString(music));
+                        sqSync.setPlayListName(sqMonitor.getTargetName());
+                        sqSync.setPlayListId(targetId);
+                        sqSync.setDownloadId(downloadInfo.getId());
+                        String playListSha1 = DigestUtil.sha1Hex(sqMonitor.getTargetName());
+                        sqSync.setPlayListSha1(playListSha1);
+                        sqSyncs.add(sqSync);
                     }
                     downloadInfoService.add(downloadInfos);
+                    syncService.saveBatch(sqSyncs);
+
                 }
             }
         }
