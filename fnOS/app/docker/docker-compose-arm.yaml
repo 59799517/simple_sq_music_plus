@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   sqmusic_main:
-    image: registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:latest
+    image: registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:latest-arm64
     container_name: sqmusic_main
     environment:
       - DB_IP=mysql
@@ -11,7 +11,7 @@ services:
       - DB_USERNAME=root
       - DB_PASSWORD=sqmusicv3password
     volumes:
-      - ./music:/music
+      - ./data:/music
     depends_on:
       mysql:
         condition: service_healthy
@@ -22,10 +22,10 @@ services:
     restart: always
 
   sqmusic_web:
-    image: registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus_web:latest
+    image: registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus_web:latest-arm64
     container_name: sqmusic_web
     ports:
-      - "8096:80"
+      - "8099:80"
     networks:
       - sq-app-network
     depends_on:
@@ -33,7 +33,7 @@ services:
     restart: always
 
   mysql:
-    image: mysql:5.7
+    image: pistar/mysql-arm:hf-5.7.25
     container_name: sqmusic_mysql
     environment:
       MYSQL_ROOT_PASSWORD: sqmusicv3password
@@ -54,3 +54,7 @@ services:
 networks:
   sq-app-network:
     driver: bridge
+
+
+
+
