@@ -1,5 +1,7 @@
 package com.sqmusicplus.v3.utils;
 
+import cn.hutool.core.io.FileUtil;
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.sqmusicplus.v3.download.vo.DownloadProgress;
 import lombok.extern.slf4j.Slf4j;
@@ -135,7 +137,33 @@ public class DownloadUtils {
                 try {
                     is = response.body().byteStream();
                     long total = response.body().contentLength();
-                    fos = new FileOutputStream(file);
+                    try {
+                        fos = new FileOutputStream(file);
+                    } catch (FileNotFoundException e) {
+                        // 如果失败，尝试过滤路径中的特殊字符后重试
+                        String originalPath = file.getAbsolutePath();
+                        String filteredPath = filterPathCharacters(originalPath);
+                        
+                        // 如果过滤后的路径不同，则使用新路径重试
+                        if (!originalPath.equals(filteredPath)) {
+                            System.err.println("原路径包含特殊字符，已过滤：" + originalPath + " -> " + filteredPath);
+                            File filteredFile = new File(filteredPath);
+                            filteredFile.getParentFile().mkdirs();
+                            try {
+                                fos = new FileOutputStream(filteredFile);
+                                // 更新 file 引用，以便后续操作使用过滤后的文件
+                                file = filteredFile;
+                            } catch (FileNotFoundException e2) {
+                                // 再次失败，通知回调
+                                onFailure.accept(e2);
+                                return;
+                            }
+                        } else {
+                            // 路径已经过滤过或无法过滤，直接失败
+                            onFailure.accept(e);
+                            return;
+                        }
+                    }
                     long sum = 0;
                     while ((len = is.read(buf)) != -1) {
                         fos.write(buf, 0, len);
@@ -261,34 +289,68 @@ public class DownloadUtils {
     public static  OkHttpClient getOkHttpClient() {
        return getOkHttpClient(true);
     }
+    
+    /**
+     * 重置 OkHttpClient（用于重新创建带拦截器的客户端）
+     */
+    public static void resetOkHttpClient() {
+        okHttpClient = null;
+    }
+    
     public static  OkHttpClient getOkHttpClient(boolean followRedirects ) {
-        if(okHttpClient==null){
-            SSLContext sslCtx = null;
-            try {
-                sslCtx = SSLContext.getInstance("TLS");
-                sslCtx.init(null, new TrustManager[] { myTrustManager }, new SecureRandom());
-            } catch (NoSuchAlgorithmException e) {
-                throw new RuntimeException(e);
-            } catch (KeyManagementException e) {
-                throw new RuntimeException(e);
-            }
-//            builder.sslSocketFactory(mySSLSocketFactory, myTrustManager);
-//            builder.hostnameVerifier(myHostnameVerifier);
-            SSLSocketFactory mySSLSocketFactory = sslCtx.getSocketFactory();
-            okHttpClient = new OkHttpClient.Builder()
-                    .connectTimeout(15, TimeUnit.SECONDS)
-                    .writeTimeout(20, TimeUnit.SECONDS)
-                    .readTimeout(20, TimeUnit.SECONDS)
-                    .hostnameVerifier((hostName, session) -> true)
-                    .protocols(Arrays.asList(Protocol.HTTP_2, Protocol.HTTP_1_1))
-                    .retryOnConnectionFailure(true)
-                    .followRedirects(followRedirects)
-                    .followSslRedirects(followRedirects)
-                    .sslSocketFactory(mySSLSocketFactory, myTrustManager)
-                    .hostnameVerifier(myHostnameVerifier)
-                    .build();
-
+        // 每次都创建新的带拦截器的客户端（确保流量监控生效）
+        // 注意：这会略微增加资源消耗，但能保证流量统计准确
+        SSLContext sslCtx = null;
+        try {
+            sslCtx = SSLContext.getInstance("TLS");
+            sslCtx.init(null, new TrustManager[] { myTrustManager }, new SecureRandom());
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        } catch (KeyManagementException e) {
+            throw new RuntimeException(e);
         }
+        SSLSocketFactory mySSLSocketFactory = sslCtx.getSocketFactory();
+        
+        // 新增：添加流量监控拦截器
+        Interceptor trafficInterceptor = chain -> {
+            Request request = chain.request();
+            
+            // 记录请求体大小（上传流量）
+            long requestBodySize = 0;
+            if (request.body() != null) {
+                requestBodySize = request.body().contentLength();
+                if (requestBodySize > 0) {
+//                    System.out.println("[DEBUG] 拦截器 - 上传：" + requestBodySize + " bytes");
+                    SystemUtils.recordAppUpload(requestBodySize);
+                }
+            }
+            
+            // 执行请求
+            Response response = chain.proceed(request);
+            
+            // 记录响应体大小（下载流量）
+            long responseBodySize = response.body().contentLength();
+            if (responseBodySize > 0) {
+                SystemUtils.recordAppDownload(responseBodySize);
+            }
+            
+            return response;
+        };
+        
+        okHttpClient = new OkHttpClient.Builder()
+                .connectTimeout(15, TimeUnit.SECONDS)
+                .writeTimeout(20, TimeUnit.SECONDS)
+                .readTimeout(20, TimeUnit.SECONDS)
+                .hostnameVerifier((hostName, session) -> true)
+                .protocols(Arrays.asList(Protocol.HTTP_2, Protocol.HTTP_1_1))
+                .retryOnConnectionFailure(true)
+                .followRedirects(followRedirects)
+                .followSslRedirects(followRedirects)
+                .sslSocketFactory(mySSLSocketFactory, myTrustManager)
+                .hostnameVerifier(myHostnameVerifier)
+                .addInterceptor(trafficInterceptor) // 添加流量监控拦截器
+                .build();
+
         return okHttpClient;
     }
     public  static <T> T get(String url,HashMap<String,String> params,Class<T> clazz){
@@ -469,6 +531,67 @@ public class DownloadUtils {
     public  static String getBodyStr(String url){
         OkHttpUtils builder = OkHttpUtils.builder().url(url);
         return getBodyStr(url,null);
+    }
+
+    /**
+     * 过滤错误信息，只保留括号、&、.、中文、英文和数字
+     * @param message 原始错误信息
+     * @return 过滤后的错误信息
+     */
+    private static String filterErrorMessage(String message) {
+        if (message == null) {
+            return "";
+        }
+        StringBuilder filtered = new StringBuilder();
+        for (char c : message.toCharArray()) {
+            // 保留括号、&、.
+            if (c == '(' || c == ')' || c == '[' || c == ']' || c == '{' || c == '}' || c == '&' || c == '.') {
+                filtered.append(c);
+            }
+            // 保留中文
+            else if (Character.UnicodeScript.of(c) == Character.UnicodeScript.HAN) {
+                filtered.append(c);
+            }
+            // 保留英文和数字
+            else if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9')) {
+                filtered.append(c);
+            }
+            // 其他字符全部过滤掉
+        }
+        return filtered.toString();
+    }
+
+    /**
+     * 过滤文件路径中的特殊字符，只保留括号、点号、下划线、连字符、&、.、中文、英文和数字
+     * 同时保留路径分隔符
+     * @param path 原始路径
+     * @return 过滤后的路径
+     */
+    private static String filterPathCharacters(String path) {
+        if (path == null || path.isEmpty()) {
+            return path;
+        }
+        StringBuilder filtered = new StringBuilder();
+        for (char c : path.toCharArray()) {
+            // 保留路径分隔符（Windows 和 Unix）
+            if (c == File.separatorChar || c == '/' || c == '\\') {
+                filtered.append(c);
+            }
+            // 保留括号、点号、下划线、连字符、&
+            else if (c == '(' || c == ')' || c == '.' || c == '_' || c == '-' || c == '&') {
+                filtered.append(c);
+            }
+            // 保留中文
+            else if (Character.UnicodeScript.of(c) == Character.UnicodeScript.HAN) {
+                filtered.append(c);
+            }
+            // 保留英文和数字
+            else if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9')) {
+                filtered.append(c);
+            }
+            // 其他字符全部过滤掉
+        }
+        return filtered.toString();
     }
 
 }

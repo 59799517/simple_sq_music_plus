@@ -1,0 +1,137 @@
+package com.sqmusicplus.v3.task;
+
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.sqmusicplus.v3.base.entity.DownloadInfo;
+import com.sqmusicplus.v3.base.enums.DbBooleanConvert;
+import com.sqmusicplus.v3.base.enums.SetConfigEnum;
+import com.sqmusicplus.v3.base.service.DownloadInfoService;
+import com.sqmusicplus.v3.base.service.SqSyncService;
+import com.sqmusicplus.v3.config.AjaxResult;
+import com.sqmusicplus.v3.config.SqConfigCache;
+import com.sqmusicplus.v3.monitor.entity.SqMonitor;
+import com.sqmusicplus.v3.monitor.enums.MonitorType;
+import com.sqmusicplus.v3.monitor.service.SqMonitorService;
+import com.sqmusicplus.v3.plug.entity.Music;
+import com.sqmusicplus.v3.plug.netease.entity.PlaylistTrackAllResult;
+import com.sqmusicplus.v3.plug.netease.hander.NeteaseHander;
+import com.sqmusicplus.v3.utils.StringUtils;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
+
+import java.util.*;
+
+/**
+ * @Classname ScanNeteasePlayList
+ * @Description 扫描网易云歌单
+ * @Version 1.0.0
+ * @Date 2026/3/2
+ * @Created by SQ
+ */
+@Slf4j
+@Component
+public class ScanNeteasePlayList {
+
+    @Autowired
+    private NeteaseHander neteaseHander;
+
+    @Autowired
+    private SqMonitorService monitorService;
+
+    @Autowired
+    private DownloadInfoService downloadInfoService;
+
+
+    @Scheduled(cron = "10 */10 * * * ? ")
+    public void excute() {
+        String netopen = SqConfigCache.getSqConfigValue(SetConfigEnum.PLUG_NETEASE_OPEN);
+        if (StringUtils.isNotBlank(netopen)) {
+            log.info("开始扫描网易云歌单");
+            //需要排除的歌单名称
+            queryAndDownloadPlayList();
+        }
+    }
+    //查询需要扫描的歌单
+
+    private void queryAndDownloadPlayList() {
+        ArrayList<String> excludeArtistNames = new ArrayList<>();
+        ArrayList<String> excludeAlbumNames = new ArrayList<>();
+        LambdaQueryWrapper<SqMonitor> sqMonitorLambdaQueryWrapper = new LambdaQueryWrapper<SqMonitor>()
+                .eq(SqMonitor::getPlugName, neteaseHander.getPlugName())
+                        .eq(SqMonitor::getEnabled, DbBooleanConvert.YES.getValue().intValue())
+                                .eq(SqMonitor::getType, MonitorType.PLAYLIST.getValue());
+        List<SqMonitor> list = monitorService.list(sqMonitorLambdaQueryWrapper);
+        if (!list.isEmpty()){
+            //忽略专辑
+            String excludeAlbum = SqConfigCache.getSqConfigValue(SetConfigEnum.SYSTEM_SYNC_ALBUM_EXCLUDE);
+            //忽略歌手
+            String excludeArtists = SqConfigCache.getSqConfigValue(SetConfigEnum.SYSTEM_SYNC_ARTISTS_EXCLUDE);
+            //不同步的歌手名称
+            if (StringUtils.isNotBlank(excludeArtists)) {
+                String[] split = excludeArtists.split("\\|");
+                if (split != null) {
+                    for (String s : split) {
+                        excludeArtistNames.add(s.trim());
+                    }
+                }
+            }
+//            不同步的专辑
+            if (StringUtils.isNotBlank(excludeAlbum)) {
+                String[] split = excludeAlbum.split("\\|");
+                if (split != null) {
+                    for (String s : split) {
+                        excludeAlbumNames.add(s.trim());
+                    }
+                }
+            }
+
+            for (SqMonitor sqMonitor : list) {
+                String targetId = sqMonitor.getTargetId();
+                try {
+                    PlaylistTrackAllResult playListInfo = neteaseHander.getPlayListInfo(targetId);
+                    Long trackCount = playListInfo.getPlaylist().getTrackCount();
+                    sqMonitor.setUpdateTime(new Date());
+                    sqMonitor.setTargetCount(trackCount);
+                    if (StringUtils.isNotBlank(playListInfo.getPlaylist().getCoverImgUrl())){
+                        sqMonitor.setTargetCover(playListInfo.getPlaylist().getCoverImgUrl());
+                    }
+                    monitorService.updateById(sqMonitor);
+                } catch (Exception e) {
+                    log.error("监听网易云歌单信息失败: targetId=" + targetId, e);
+                }
+                ArrayList<Music> playList = neteaseHander.getPlayList(targetId);
+                if (playList != null){
+                    ArrayList<DownloadInfo> downloadInfos = new ArrayList<>();
+                    for (Music music : playList) {
+                        if (excludeAlbumNames.contains(music.getMusicAlbum())) {
+                            continue;
+                        }
+                        List<String> musicArtists = music.getMusicArtists();
+                        boolean needExclude = checkNeedExclude(excludeArtistNames, musicArtists);
+                        if (needExclude) {
+                            continue;
+                        }
+                        DownloadInfo downloadInfo = neteaseHander.musicToDownloadInfo(music, null, false);
+                        downloadInfos.add(downloadInfo);
+                    }
+                    downloadInfoService.add(downloadInfos);
+                }
+            }
+        }
+    }
+    /**
+     * 判断当前歌手列表是否包含需要忽略的歌手，决定是否忽略当前歌曲
+     * @param excludeArtistNames 需要忽略的歌手列表
+     * @param musicArtists 当前歌曲的歌手列表
+     * @return 包含则返回true（需要忽略），否则返回false
+     */
+    public static boolean checkNeedExclude(List<String> excludeArtistNames, List<String> musicArtists) {
+        if (CollectionUtils.isEmpty(excludeArtistNames) || CollectionUtils.isEmpty(musicArtists)) {
+            return false;
+        }
+        Set<String> musicArtistsSet = new HashSet<>(musicArtists);
+        return excludeArtistNames.stream().anyMatch(musicArtistsSet::contains);
+    }
+}

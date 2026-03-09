@@ -192,7 +192,6 @@ public class DownloadServiceController {
         }
         Thread thread = new Thread(() -> {
             try {
-
                 List<ParserEntity> parser = textMusicPlayListParser.parser(param.getText());
                 List<ParserEntity> parserEntities = textMusicPlayListParser.parserParserEntity(parser);
 
@@ -204,18 +203,11 @@ public class DownloadServiceController {
                         DownloadInfo downloadInfo = plugHander.musicToDownloadInfo(plugSearchMusicResult, null, false);
                         downloadInfos.add(downloadInfo);
                     }
-                    Boolean add = downloadInfoService.add(downloadInfos);
-                    if (add) {
-                        return;
-                    }
+                   downloadInfoService.add(downloadInfos);
                 }
-//                return ;
-
             } catch (Exception e) {
                 log.error("解析失败", e);
-//                return ;
             }
-
         });
         thread.start();
         return AjaxResult.success("开始解析并下载，稍后在下载中查看！");

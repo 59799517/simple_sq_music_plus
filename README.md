@@ -1,7 +1,7 @@
 
 最新NAS坏了 等修好了再更新版本
 
-
+### 出现问题先升级到最新版本
 ### simple_sq_music_plus
 是下载音乐工具，可以当普通的音乐下载工具使用，支持，flac，ape，mp3等格式的下载（根据码率不同）， 下载的歌曲目录结构支持emby 与 subsonic（后续开放） 类的服务，下载文件支持文件标签识别，歌词下载。
 ```js
@@ -81,7 +81,7 @@ docker run -d \
   -e DB_PASSWORD=sqmusicv3password \
   -v ./music:/music \
   --network simple_sq_music_plus_sq-app-network \
-  registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:v3.0.8
+  registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:latest
 ```
 3. 启动前段服务
 ```dockerfile
@@ -94,9 +94,19 @@ docker run -d \
   --restart=always \
   -p 8996:80 \
   --network simple_sq_music_plus_sq-app-network \
-  registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus_web:v3.0.5
+  registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus_web:latest
 
 ```
+
+Todo：
+1. 页面增加播放页面播放删除
+2. 支持苹果音乐
+3. ~~增加网易云监听歌单~~
+4. ~~增加指定格式下载~~
+5. ~~增加当前下载速度展示~~
+6. 增加下载暂停功能
+7. ~~手机模式下专辑和歌手不展示问题~~
+
 #### 3.0后续升级脚本可以使用scrpit下的 check_update.sh脚本
 
 

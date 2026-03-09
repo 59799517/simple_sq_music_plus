@@ -27,7 +27,9 @@ import com.sqmusicplus.v3.plug.qq.entity.QQMusicCookieInfo;
 import com.sqmusicplus.v3.plug.qq.entity.QQMusicQr;
 import com.sqmusicplus.v3.plug.qq.hander.QQHander;
 import com.sqmusicplus.v3.plug.qqvip.QQvipHander;
+import com.sqmusicplus.v3.utils.NetworkSpeedReport;
 import com.sqmusicplus.v3.utils.StringUtils;
+import com.sqmusicplus.v3.utils.SystemUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
@@ -173,7 +175,12 @@ public class ConfigController {
         specialPlugConfigUpdate(data.getConfigKey(), data.getConfigValue());
         return AjaxResult.success();
     }
+    //获取当前网络使用情况
 
+    @GetMapping("/getCurrentNetwork")
+    public static AjaxResult getCurrentNetwork() {
+        return AjaxResult.success(SystemUtils.getNetworkSpeedReport());
+    }
     /**
      * 获取启动的查询件
      */
@@ -216,6 +223,19 @@ public class ConfigController {
                     throw new RuntimeException("请输入布尔值");
                 }
                 return true;
+            case "select":
+                if (!sqConfig.getConfigOptions().contains(configValue)) {
+                    throw new RuntimeException("请输入正确的选项");
+                }
+                String configOptions = sqConfig.getConfigOptions();
+                JSONArray objects = JSONArray.parseArray(configOptions);
+                for (Object object : objects) {
+                    JSONObject jsonObject = (JSONObject) object;
+                    if (jsonObject.getString("value").equals(configValue)) {
+                        return true;
+                    }
+                }
+                throw new RuntimeException("请输入正确的选项");
             default:
                 throw new RuntimeException("请输入正确的类型");
         }
@@ -430,4 +450,5 @@ public class ConfigController {
             log.info("批量保存中成功插入 {} 条记录", successCount);
         }
     }
+
 }

@@ -25,6 +25,8 @@ public class PlaylistTrackAllResult {
     private List<PrivilegesDTO> privileges;
     @JsonProperty("code")
     private Long code;
+    @JsonProperty("playlist")
+    private playlist playlist;
 
     @NoArgsConstructor
     @Data
@@ -318,5 +320,22 @@ public class PlaylistTrackAllResult {
             @JsonProperty("chargeType")
             private Long chargeType;
         }
+    }
+
+
+
+    @NoArgsConstructor
+    @Data
+    public static class playlist {
+        @JsonProperty("id")
+        private Long id;
+        @JsonProperty("name")
+        private String name;
+        @JsonProperty("coverImgUrl")
+        private String coverImgUrl;
+        @JsonProperty("trackCount")
+        private Long trackCount;
+        @JsonProperty("description")
+        private String description;
     }
 }

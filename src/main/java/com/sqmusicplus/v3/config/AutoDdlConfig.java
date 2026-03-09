@@ -26,7 +26,7 @@ public class AutoDdlConfig   extends SimpleDdl {
                 ,"db/sq_config.sql"
                 ,"db/3.0.17update.sql"
                 ,"db/3.0.21update.sql"
-
+                ,"db/3.0.32update.sql"
         );
     }
 

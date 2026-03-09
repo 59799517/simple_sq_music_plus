@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.net.MalformedURLException;
 import java.util.List;
 
 /**
@@ -100,6 +101,17 @@ public class ParserController {
             return AjaxResult.error("解析失败");
 
         } catch (Exception e) {
+            log.error("解析失败",e);
+            return AjaxResult.error("解析失败");
+        }
+    }
+    @SaCheckLogin
+    @PostMapping("/parserUrlInfo")
+    public AjaxResult parserUrlInfo(@RequestBody DownlaodParserUrl  downlaodParserUrl) {
+        String url = downlaodParserUrl.getUrl();
+        try {
+            return AjaxResult.success(urlMusicPlayListParser.parserUrlInfo(url));
+        } catch (MalformedURLException e) {
             log.error("解析失败",e);
             return AjaxResult.error("解析失败");
         }

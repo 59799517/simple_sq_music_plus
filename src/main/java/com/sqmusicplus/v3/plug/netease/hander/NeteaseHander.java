@@ -718,5 +718,18 @@ public class NeteaseHander extends SearchHanderAbstract {
     }
 
 
+    /**
+     * 获取歌单详情
+     */
+    public PlaylistTrackAllResult  getPlayListInfo(String playlistId) {
+        JSONObject parameter = new JSONObject();// 请求参数
+        parameter.put("id", playlistId);
+        JSONObject jsonObject1 = neteaseCloudMusicInfo.playlistDetail(parameter);
+        PlaylistTrackAllResult javaObject = jsonObject1.toJavaObject(PlaylistTrackAllResult.class);
+        return javaObject;
+    }
+
+
+
 
 }

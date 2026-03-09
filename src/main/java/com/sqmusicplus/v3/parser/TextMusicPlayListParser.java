@@ -51,9 +51,9 @@ public class TextMusicPlayListParser {
         return Arrays.stream(split).map(m -> {
             String[] sa = m.split("-");
             try {
-                return new ParserEntity().setSongName(sa[0]).setArtistsName(sa[1]);
+                return new ParserEntity().setSongName(sa[0].trim()).setArtistsName(sa[1].trim());
             } catch (ArrayIndexOutOfBoundsException e) {
-                return  new ParserEntity().setSongName(m).setArtistsName("");
+                return  new ParserEntity().setSongName(m.trim()).setArtistsName("");
             }
         }).collect(Collectors.toList());
 
@@ -61,7 +61,6 @@ public class TextMusicPlayListParser {
 
 
     public List<ParserEntity> parserParserEntity(List<ParserEntity> parserEntities) throws IOException {
-
         for (ParserEntity parserEntity : parserEntities) {
             //        酷我-网易-qqvip-酷狗-qq
             SqConfig sqConfig = SqConfigCache.getSqConfig(SetConfigEnum.PLUG_KW_OPEN);

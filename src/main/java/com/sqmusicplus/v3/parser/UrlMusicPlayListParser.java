@@ -7,8 +7,10 @@ import com.sqmusicplus.v3.plug.entity.Music;
 import com.sqmusicplus.v3.base.service.DownloadInfoService;
 import com.sqmusicplus.v3.download.vo.DownlaodParserUrl;
 
+import com.sqmusicplus.v3.plug.entity.ParserInfo;
 import com.sqmusicplus.v3.plug.kg.hander.KGHander;
 import com.sqmusicplus.v3.plug.kw.hander.NKwSearchHander;
+import com.sqmusicplus.v3.plug.netease.entity.PlaylistTrackAllResult;
 import com.sqmusicplus.v3.plug.netease.hander.NeteaseHander;
 import com.sqmusicplus.v3.plug.qq.entity.DissInfo;
 import com.sqmusicplus.v3.plug.qqvip.QQvipHander;
@@ -102,7 +104,6 @@ public class UrlMusicPlayListParser {
                 }
                 return musics;
             }
-
             else if(url.contains("yinyue")||url.contains("play_detail")){
                 String[] split = url.split("/");
                 String id = split[split.length - 1];
@@ -367,12 +368,54 @@ public class UrlMusicPlayListParser {
             throw new RuntimeException(e);
         }
         String query = uri.getQuery();
+        if (query == null || query.isEmpty()) {
+            String fragment = uri.getFragment();
+            if (fragment != null && !fragment.isEmpty()) {
+                int queryIndex = fragment.indexOf('?');
+                if (queryIndex != -1) {
+                    query = fragment.substring(queryIndex + 1);
+                }
+            }
+        }
+
+        log.debug("解析 URL: {}, 获取到的 query: {}", url, query);
         Map<String, String> params = new HashMap<>();
-        for (String param : query.split("&")) {
-            String[] pair = param.split("=");
-            params.put(pair[0], pair.length > 1 ? pair[1] : null);
+        if (query != null && !query.isEmpty()) {
+            for (String param : query.split("&")) {
+                String[] pair = param.split("=");
+                params.put(pair[0], pair.length > 1 ? pair[1] : null);
+            }
         }
         return params;
     }
 
+
+    public ParserInfo parserUrlInfo(String url) throws MalformedURLException {
+        //找出url所属的平台
+        if (url.contains("music.163.com")) {
+            if (url.contains("playlist")) {
+                Map<String, String> urlParams = getUrlParams(url);
+                String playlistId = urlParams.get("id");
+                PlaylistTrackAllResult playListInfo = neteaseHander.getPlayListInfo(playlistId);
+                PlaylistTrackAllResult.playlist playlist = playListInfo.getPlaylist();
+                ParserInfo parserInfo = new ParserInfo();
+                parserInfo.setName(playlist.getName());
+                parserInfo.setPlugNmae(neteaseHander.getPlugName());
+                parserInfo.setId(playlistId);
+                parserInfo.setUrl(url);
+                parserInfo.setType("playlist");
+                parserInfo.setCount(playlist.getTrackCount());
+                parserInfo.setDesc(playlist.getDescription());
+                parserInfo.setCover(playlist.getCoverImgUrl());
+                return parserInfo;
+            }
+        }
+        throw new RuntimeException("目前仅支持网易云歌单，需要其他的issues留言！");
+
+    }
+
+
+
 }
+
+

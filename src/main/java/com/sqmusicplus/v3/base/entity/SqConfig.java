@@ -25,6 +25,7 @@ public class SqConfig implements Serializable {
     public static final String COL_CONFIG_VALUE = "config_value";
     public static final String COL_CONFIG_KEY = "config_key";
     public static final String COL_CONFIG_TYPE = "config_type";
+    public static final String COL_CONFIG_OPTIONS = "config_options";
     public static final String COL_CONFIG_SHOW = "config_show";
     public static final String COL_CONFIG_REMARK = "config_remark";
     public static final String COL_CONFIG_NULL_CHECK = "config_null_check";
@@ -39,6 +40,8 @@ public class SqConfig implements Serializable {
     private String configKey;
     @TableField(value = "config_type")
     private String configType;
+    @TableField(value = "config_options")
+    private String configOptions;
     @TableField(value = "config_show")
     private Integer configShow;
     @TableField(value = "config_remark")

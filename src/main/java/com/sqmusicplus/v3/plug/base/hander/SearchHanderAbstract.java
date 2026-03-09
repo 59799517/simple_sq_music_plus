@@ -59,14 +59,10 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
     @Override
     public void dnonloadAndSaveToFile(DownloadInfo downloadInfo, SearchHander searchHander) {
         try {
-
-
             Music music = searchHander.querySongById(downloadInfo);
             if (music == null) {
                 throw new RuntimeException("下载失败歌曲信息不完整歌曲详情转化歌曲失败:" + JSONObject.toJSONString(downloadInfo));
             }
-
-
             String baseMusicName_temp = music.getMusicName().trim();
             String baseMusicArtistName_temp = music.getMusicArtists().stream().map(String::trim).limit(7).collect(Collectors.joining("&"));
             String baseMusicAlbumName_temp = music.getMusicAlbum().trim();
@@ -138,6 +134,14 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
             String brType = downloadInfo.getDownloadBrType();
             PlugBrType byId = PlugBrType.findById(brType);
             File type = new File(file, basepath + fileName + "." + byId.getType());
+            //过滤掉不下载的格式歌曲
+            String downloadFormat = SqConfigCache.getSqConfigValue(SetConfigEnum.SYSTEM_DOWNLOAD_FILE_AUDIO_FORMAT);
+            if (!downloadFormat.equals("auto")){
+                if (downloadFormat.equals(byId.getType())){
+                    log.info("歌曲{}---->因为设置忽略下载此格式音乐{}", baseMusicName, byId.getType());
+                    throw new RuntimeException("歌曲"+baseMusicName+"---->因为设置忽略下载此格式音乐("+byId.getType()+"):" + JSONObject.toJSONString(downloadInfo));
+                }
+            }
             log.debug("开始下载---->{}", baseMusicName);
             //创建任务
             String sqConfigValue = SqConfigCache.getSqConfigValue(SetConfigEnum.SYSTEM_FILE_EXIST_NOT_DOWNLOAD);

@@ -72,6 +72,10 @@ public enum SetConfigEnum {
      * 下载文件模板
      */
     SYSTEM_DOWNLOAD_FILE_TEMPLATE("system.download.file.template","下载文件名称模板","system"),
+    /**
+     * 下载音频格式
+     */
+    SYSTEM_DOWNLOAD_FILE_AUDIO_FORMAT("system.download.file.audio.format","下载文件音频格式","system"),
 
 
 //    ------------QQ插件配置-----------------
@@ -142,7 +146,6 @@ public enum SetConfigEnum {
      * 网易云扩展下载地址
      */
     PLUG_NETEASE_EXTEND_DOWNLOAD_URL("plug.netease.extend.download.url","网易云音乐扩展下载地址","plug"),
-
 
 //    ------------------酷狗概念音乐插件配置-----------------
     /**

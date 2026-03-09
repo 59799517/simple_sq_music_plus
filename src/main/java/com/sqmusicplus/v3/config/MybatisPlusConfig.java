@@ -20,7 +20,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @EnableCaching
 @EnableTransactionManagement(proxyTargetClass = true)
 @Configuration
-@MapperScan("com.sqmusicplus.v3.base.mapper")
+@MapperScan(value = {"com.sqmusicplus.v3.base.mapper","com.sqmusicplus.v3.monitor.mapper"})
 public class MybatisPlusConfig {
     @Bean
     public MybatisPlusInterceptor mybatisPlusInterceptor() {
