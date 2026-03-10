@@ -1,7 +1,7 @@
 package com.sqmusicplus.v3.task;
 
 import cn.hutool.crypto.digest.DigestUtil;
-import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson2.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.sqmusicplus.v3.base.entity.DownloadInfo;
 import com.sqmusicplus.v3.base.entity.SqSync;
@@ -52,7 +52,7 @@ public class ScanNeteasePlayList {
     private SqSyncService syncService;
 
 
-    @Scheduled(cron = "10 */10 * * * ? ")
+    @Scheduled(cron = "10 */1 * * * ? ")
     public void excute() {
         String netopen = SqConfigCache.getSqConfigValue(SetConfigEnum.PLUG_NETEASE_OPEN);
         if (StringUtils.isNotBlank(netopen)) {
@@ -69,7 +69,7 @@ public class ScanNeteasePlayList {
         LambdaQueryWrapper<SqMonitor> sqMonitorLambdaQueryWrapper = new LambdaQueryWrapper<SqMonitor>()
                 .eq(SqMonitor::getPlugName, neteaseHander.getPlugName())
                         .eq(SqMonitor::getEnabled, DbBooleanConvert.YES.getValue().intValue())
-                                .eq(SqMonitor::getType, MonitorType.PLAYLIST.getValue());
+                                .eq(SqMonitor::getType, MonitorType.PLAYLIST.getCode());
         List<SqMonitor> list = monitorService.list(sqMonitorLambdaQueryWrapper);
         if (!list.isEmpty()){
             //忽略专辑

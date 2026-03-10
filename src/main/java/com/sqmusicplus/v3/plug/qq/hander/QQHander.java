@@ -1,8 +1,9 @@
 package com.sqmusicplus.v3.plug.qq.hander;
 
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
-import com.alibaba.fastjson.serializer.SimplePropertyPreFilter;
+import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONArray;
+import com.alibaba.fastjson2.JSONObject;
+import com.alibaba.fastjson2.filter.SimplePropertyPreFilter;
 import com.sqmusicplus.v3.base.entity.DownloadInfo;
 import com.sqmusicplus.v3.plug.entity.Album;
 import com.sqmusicplus.v3.plug.entity.Artists;
@@ -461,7 +462,7 @@ public class QQHander extends SearchHanderAbstract {
         QQMusicQr wechatLoginQr = QQLoginHelp.getWechatLoginQr();
         SimplePropertyPreFilter filter = new SimplePropertyPreFilter();
         filter.getExcludes().add("LoginType");
-        String jsonString = JSONObject.toJSONString(wechatLoginQr, filter);
+        String jsonString = JSON.toJSONString(wechatLoginQr, filter);
         SqConfigCache.updateConfigToDb(SetConfigEnum.PLUG_QQVIP_QRCODE,jsonString);
         //异步监听
         syncCheckQrCodeStatus();
@@ -478,7 +479,7 @@ public class QQHander extends SearchHanderAbstract {
         QQMusicQr qqLoginQr = QQLoginHelp.getQQLoginQr();
         SimplePropertyPreFilter filter = new SimplePropertyPreFilter();
         filter.getExcludes().add("LoginType");
-        String jsonString = JSONObject.toJSONString(qqLoginQr, filter);
+        String jsonString = JSON.toJSONString(qqLoginQr, filter);
         SqConfigCache.updateConfigToDb(SetConfigEnum.PLUG_QQVIP_QRCODE,jsonString);
         //异步监听
         syncCheckQrCodeStatus();

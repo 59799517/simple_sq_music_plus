@@ -1,6 +1,6 @@
 package com.sqmusicplus.v3.plug.kg.entity;
 
-import com.alibaba.fastjson.annotation.JSONField;
+import com.alibaba.fastjson2.annotation.JSONField;
 
 /**
  * @Classname SignResult

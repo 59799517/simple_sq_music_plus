@@ -1,6 +1,6 @@
 package com.sqmusicplus.v3.download.vo;
 
-import com.alibaba.fastjson.annotation.JSONField;
+import com.alibaba.fastjson2.annotation.JSONField;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.sqmusicplus.v3.base.entity.DownloadInfo;
 import lombok.Getter;

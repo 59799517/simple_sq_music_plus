@@ -1,7 +1,7 @@
 package com.sqmusicplus.v3.utils;
 
 import cn.hutool.core.codec.Base64;
-import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson2.JSONObject;
 import org.apache.commons.lang3.RandomStringUtils;
 
 import javax.crypto.Cipher;

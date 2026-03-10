@@ -1,7 +1,7 @@
 package com.sqmusicplus.v3.task;
 
 import cn.hutool.crypto.digest.DigestUtil;
-import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson2.JSON;
 import com.sqmusicplus.v3.base.entity.DownloadInfo;
 import com.sqmusicplus.v3.base.entity.SqSync;
 import com.sqmusicplus.v3.plug.entity.Music;

@@ -1,9 +1,8 @@
 package com.sqmusicplus.v3.plug.qq.entity;
 
 import cn.hutool.core.codec.Base64;
-import cn.hutool.core.collection.ListUtil;
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson2.JSONArray;
+import com.alibaba.fastjson2.JSONObject;
 import com.sqmusicplus.v3.plug.entity.Album;
 import com.sqmusicplus.v3.plug.entity.Artists;
 import com.sqmusicplus.v3.plug.entity.Music;

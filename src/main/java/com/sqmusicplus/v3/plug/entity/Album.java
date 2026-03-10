@@ -1,7 +1,7 @@
 package com.sqmusicplus.v3.plug.entity;
 
 
-import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson2.JSONObject;
 import lombok.Data;
 import lombok.experimental.Accessors;
 

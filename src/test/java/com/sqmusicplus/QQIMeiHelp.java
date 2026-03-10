@@ -1,6 +1,6 @@
 package com.sqmusicplus;
 
-import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson2.JSONObject;
 import com.sqmusicplus.v3.teaboss.Pow.CharacterUtils;
 import com.sqmusicplus.v3.teaboss.Qimei.QQDevice;
 import org.apache.hc.core5.http.ContentType;

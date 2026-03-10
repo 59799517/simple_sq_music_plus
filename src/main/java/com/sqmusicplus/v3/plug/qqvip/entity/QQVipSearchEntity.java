@@ -1,7 +1,7 @@
 package com.sqmusicplus.v3.plug.qqvip.entity;
 
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson2.JSONArray;
+import com.alibaba.fastjson2.JSONObject;
 import com.sqmusicplus.v3.base.enums.PlugBrType;
 import com.sqmusicplus.v3.plug.entity.Music;
 import com.sqmusicplus.v3.plug.qq.config.QQConfig;

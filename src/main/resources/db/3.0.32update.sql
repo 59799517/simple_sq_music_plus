@@ -5,10 +5,10 @@ ALTER TABLE sq_config
     ADD COLUMN `config_options` TEXT NULL COMMENT '配置选项（自定义参数）' AFTER `config_type`;
 
 -- 增加下载文件音频格式设置
-INSERT INTO `sqmusicv3`.`sq_config` (`config_id`, `config_name`, `config_value`, `config_key`, `config_type`, `config_options`, `config_show`, `config_remark`, `config_null_check`, `config_disabled`) VALUES (42, '下载文件音频格式', 'auto', 'system.download.file.audio.format', 'select', '[{\"label\":\"自动\",\"value\":\"auto\"},{\"label\":\"只下载flac\",\"value\":\"flac\"},{\"label\":\"只下载mp3\",\"value\":\"mp3\"}]', 1, '自动则是默认下载最高音质，有选择的格式则下载指定的格式', 1, 0);
+INSERT INTO `sq_config` (`config_id`, `config_name`, `config_value`, `config_key`, `config_type`, `config_options`, `config_show`, `config_remark`, `config_null_check`, `config_disabled`) VALUES (42, '下载文件音频格式', 'auto', 'system.download.file.audio.format', 'select', '[{\"label\":\"自动\",\"value\":\"auto\"},{\"label\":\"只下载flac\",\"value\":\"flac\"},{\"label\":\"只下载mp3\",\"value\":\"mp3\"}]', 1, '自动则是默认下载最高音质，有选择的格式则下载指定的格式', 1, 0);
 -- 增加监听表
 CREATE TABLE `sq_monitor`  (
-                                     `id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'id',
+    `id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'id',
     `plug_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '插件名称',
     `type` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '监听类型',
     `enabled` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '是否开启1开启0关闭',

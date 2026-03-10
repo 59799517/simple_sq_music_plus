@@ -1,6 +1,6 @@
 package com.sqmusicplus;
 import cn.hutool.core.collection.ListUtil;
-import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson2.JSONObject;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;

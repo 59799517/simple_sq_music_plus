@@ -1,6 +1,6 @@
 package com.sqmusicplus.v3.plug.apple.hander;
 
-import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson2.JSONObject;
 import com.sqmusicplus.v3.plug.apple.config.AppleConfig;
 import com.sqmusicplus.v3.utils.OkHttpUtils;
 import lombok.extern.slf4j.Slf4j;

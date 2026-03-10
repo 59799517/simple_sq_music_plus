@@ -49,7 +49,7 @@ mybatis-plus:
   mapperLocations: classpath*:mapper/*Mapper.xml
   # 加载全局的配置文件
   configuration:
-    log-impl: org.apache.ibatis.logging.nologging.NoLoggingImpl
+    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
     cache-enabled: true
   global-config:
     db-config:
@@ -60,7 +60,7 @@ mybatis-plus:
 # 日志配置
 logging:
   level:
-    com.sqmusicplus: info
+    com.sqmusicplus: debug
     org.springframework: warn
     org.jaudiotagger: warn
 sa-token:
@@ -81,7 +81,7 @@ sa-token:
   is-print: false
   jwt-secret-key: xNQRcY7FgHM1dyJCoZKmcmksNT7aR0FlqvRCWJbmD
 
-version: 3.0.34
+version: 3.0.35
 webversion: 3.0.19
 
 

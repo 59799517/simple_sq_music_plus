@@ -1,6 +1,6 @@
 package com.sqmusicplus;
 
-import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson2.JSONObject;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;

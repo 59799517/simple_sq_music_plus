@@ -1,6 +1,7 @@
 package com.sqmusicplus.v3.utils;
 
-import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONObject;
 import okhttp3.*;
 
 import javax.net.ssl.SSLContext;
@@ -149,7 +150,6 @@ public class OkHttpUtils {
      *
      */
     public OkHttpUtils addCookie(String cookie) {
-
         addHeader("Cookie", cookie);
         return this;
     }
@@ -287,18 +287,18 @@ public class OkHttpUtils {
         if (isJsonPost) {
             requestBody = RequestBody.create(MediaType.parse("application/json; charset=utf-8"), bodyStr);
         } else {
-//            FormBody.Builder formBody = new FormBody.Builder();
-//            if (paramMap != null) {
-//                paramMap.forEach(formBody::add);
-//            }
+
             requestBody = RequestBody.create(MediaType.parse("application/x-www-form-urlencoded"), bodyStr);
 
-//            requestBody = formBody.build();
         }
         request = new Request.Builder().post(requestBody).url(url).cacheControl(new CacheControl.Builder()
                 .maxAge(10, TimeUnit.MINUTES) // 新增：缓存有效期10分钟
                 .build());
         return this;
+    }
+
+    public OkHttpUtils post(boolean isJsonPost, JSONObject bodyStr) {
+        return post(isJsonPost, bodyStr.toJSONString());
     }
     /**
      * 同步请求
@@ -476,6 +476,8 @@ public class OkHttpUtils {
                 }
         };
     }
+
+
 
     /**
      * 自定义一个接口回调

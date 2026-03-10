@@ -1,6 +1,6 @@
 package com.sqmusicplus.v3.plug.qq.hander;
 
-import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson2.JSONObject;
 import com.sqmusicplus.v3.plug.qq.entity.QQMusicCookie;
 import com.sqmusicplus.v3.plug.qq.entity.QQMusicCookieInfo;
 import com.sqmusicplus.v3.plug.qq.entity.QQMusicQr;

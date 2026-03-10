@@ -1,8 +1,6 @@
 package com.sqmusicplus.v3.utils;
 
-import cn.hutool.core.io.FileUtil;
-import cn.hutool.core.util.StrUtil;
-import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson2.JSONObject;
 import com.sqmusicplus.v3.download.vo.DownloadProgress;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.*;
@@ -364,7 +362,7 @@ public class DownloadUtils {
         return (T)JSONObject.parseObject(sync,clazz);
 
     }
-    public static JSONObject getToJsonObject(String url,HashMap<String,String> params){
+    public static JSONObject getToJsonObject(String url, HashMap<String,String> params){
         OkHttpUtils builder = OkHttpUtils.builder().url(url);
 
         if (params!=null){
@@ -391,6 +389,23 @@ public class DownloadUtils {
                 .sync();
                 return JSONObject.parseObject(sync);
 
+    }
+    public static JSONObject postToJsonObject(String url,JSONObject body){
+        OkHttpUtils builder = OkHttpUtils.builder().url(url);
+        String sync =builder
+                .post(true,body)
+                .sync();
+        return JSONObject.parseObject(sync);
+    }
+    public static JSONObject postCookieToJsonObject(String url,JSONObject body,String  cookie){
+        if (StringUtils.isBlank(cookie)){
+            return  postToJsonObject(url, body);
+        }
+        OkHttpUtils builder = OkHttpUtils.builder().url(url).addCookie(cookie);
+        String sync =builder
+                .post(true,body)
+                .sync();
+        return JSONObject.parseObject(sync);
     }
 
 

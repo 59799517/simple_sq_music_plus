@@ -1,10 +1,9 @@
 package com.sqmusicplus.v3.plug.netease.hander;
 
-import com.alibaba.fastjson.JSONObject;
-import com.sqmusicplus.v3.plug.netease.utils.SqYumboAnnotationUtils;
-import top.yumbo.util.music.annotation.MusicService;
-import top.yumbo.util.music.annotation.YumboAnnotationUtils;
-import top.yumbo.util.music.musicImpl.netease.NeteaseCloudMusicInfo;
+import com.alibaba.fastjson2.JSONObject;
+import com.sqmusicplus.v3.utils.DownloadUtils;
+
+
 
 /**
  * @Classname SQNeteaseCloudMusicInfo
@@ -14,30 +13,98 @@ import top.yumbo.util.music.musicImpl.netease.NeteaseCloudMusicInfo;
  * @Created by SQ
  */
 
-public class SQNeteaseCloudMusicInfo extends NeteaseCloudMusicInfo {
+public class SQNeteaseCloudMusicInfo {
+    private String baseUrl="";
+    private String cookie="";
 
 
-    @MusicService(
-            url = "song/music/detail"
-    )
+    public void init(String baseUrl){
+        this.baseUrl = baseUrl;
+    }
+
+    public void init(String baseUrl,String cookie){
+        this.baseUrl = baseUrl;
+        this.cookie = cookie;
+    }
+
+
     public JSONObject songMusicDetail(JSONObject parameter) {
-        this.setCurrentRunningMethod("songMusicDetail");
-        this.setParameter(parameter);
-        return this.getResult();
+        String url = "/song/music/detail";
+        return DownloadUtils.postCookieToJsonObject(baseUrl + url, parameter, cookie);
     }
 
 
-    @MusicService(
-            url = "/song/download/url"
-    )
     public JSONObject songDownloadUrl(JSONObject parameter) {
-        this.setCurrentRunningMethod("songDownloadUrl");
-        this.setParameter(parameter);
-        return this.getResult();
+        String url = "/song/download/url";
+        return DownloadUtils.postCookieToJsonObject(baseUrl + url, parameter, cookie);
+
     }
 
-    @Override
-    public JSONObject getResult() {
-       return SqYumboAnnotationUtils.sendRequestAutowiredJson(this); // 调用反射发送请求注入数据通过下面的return返回
+
+    public JSONObject searchSuggest(JSONObject parameter) {
+        String url = "/search/suggest";
+        return DownloadUtils.postCookieToJsonObject(baseUrl + url, parameter, cookie);
+    }
+
+
+
+    public JSONObject cloudsearch(JSONObject parameter) {
+        String url = "/cloudsearch";
+        return DownloadUtils.postCookieToJsonObject(baseUrl + url, parameter, cookie);
+    }
+
+
+
+    public JSONObject songDetail(JSONObject parameter) {
+        String url = "/song/detail";
+        return DownloadUtils.postCookieToJsonObject(baseUrl + url, parameter, cookie);
+    }
+
+    public JSONObject artistDetail(JSONObject parameter) {
+        String url = "/artist/detail";
+        return DownloadUtils.postCookieToJsonObject(baseUrl + url, parameter, cookie);
+    }
+
+
+    public JSONObject album(JSONObject parameter) {
+        String url = "/album";
+        return DownloadUtils.postCookieToJsonObject(baseUrl + url, parameter, cookie);
+    }
+
+
+
+    public JSONObject lyric(JSONObject parameter) {
+        String url = "/lyric";
+        return DownloadUtils.postCookieToJsonObject(baseUrl + url, parameter, cookie);
+    }
+
+
+    public JSONObject artistAlbum(JSONObject parameter) {
+        String url = "/artist/album";
+        return DownloadUtils.postCookieToJsonObject(baseUrl + url, parameter, cookie);
+    }
+
+    public JSONObject playlistDetail(JSONObject parameter) {
+        String url = "/playlist/detail";
+        return DownloadUtils.postCookieToJsonObject(baseUrl + url, parameter, cookie);
+    }
+
+    public JSONObject playlistTrackAll(JSONObject parameter) {
+        String url = "/playlist/track/all";
+        return DownloadUtils.postCookieToJsonObject(baseUrl + url, parameter, cookie);
+    }
+
+
+
+    public String getBaseUrl() {
+        return baseUrl;
+    }
+
+    public String getCookie() {
+        return cookie;
+    }
+
+    public void setCookie(String cookie) {
+        this.cookie = cookie;
     }
 }

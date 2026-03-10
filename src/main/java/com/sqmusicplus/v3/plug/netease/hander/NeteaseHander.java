@@ -1,8 +1,8 @@
 package com.sqmusicplus.v3.plug.netease.hander;
 
-import cn.hutool.core.collection.ListUtil;
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
+
+import com.alibaba.fastjson2.JSONArray;
+import com.alibaba.fastjson2.JSONObject;
 import com.sqmusicplus.v3.base.entity.DownloadInfo;
 import com.sqmusicplus.v3.plug.entity.Album;
 import com.sqmusicplus.v3.plug.entity.Artists;
@@ -19,7 +19,6 @@ import com.sqmusicplus.v3.utils.OkHttpUtils;
 import com.sqmusicplus.v3.utils.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import top.yumbo.util.music.MusicEnum;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,7 +38,6 @@ import java.util.stream.Collectors;
 public class NeteaseHander extends SearchHanderAbstract {
 
 
-
     public SQNeteaseCloudMusicInfo neteaseCloudMusicInfo = new SQNeteaseCloudMusicInfo();
 
     private static final long serialVersionUID = 1L;
@@ -49,9 +47,8 @@ public class NeteaseHander extends SearchHanderAbstract {
     public void initPlug(){
         // 设置网易云音乐的地址
         String baseUrl = SqConfigCache.getSqConfigValue(SetConfigEnum.PLUG_NETEASE_BASEURL);
-
         for (String s : baseUrl.split(";")) {
-            MusicEnum.setBASE_URL_163Music(s);
+            neteaseCloudMusicInfo.init(s);
             String cookieUrl = SqConfigCache.getSqConfigValue(SetConfigEnum.PLUG_NETEASE_COOKIEURL);
             if (StringUtils.isNotEmpty(s)&&StringUtils.isNotEmpty(cookieUrl)){
                 JSONObject jsonObject = null;
@@ -71,7 +68,7 @@ public class NeteaseHander extends SearchHanderAbstract {
                     continue;
                 }
                 if(jsonObject.getInteger("code")==200){
-                    neteaseCloudMusicInfo.setCookieString(jsonObject.getString("cookie"));
+                    neteaseCloudMusicInfo.setCookie(jsonObject.getString("cookie"));
                     log.info("netease匿名登录成功使用：{}",s);
                     break;
                 }else{
@@ -82,7 +79,7 @@ public class NeteaseHander extends SearchHanderAbstract {
                 String cookie = SqConfigCache.getSqConfigValue(SetConfigEnum.PLUG_NETEASE_COOKIE);
 
                 if (StringUtils.isNotEmpty(cookie)){
-                    neteaseCloudMusicInfo.setCookieString(cookie);
+                    neteaseCloudMusicInfo.setCookie(cookie);
                 }
             }
         }
@@ -644,39 +641,36 @@ public class NeteaseHander extends SearchHanderAbstract {
 
 
     public ArrayList<Music>  getPlayList(String playlistId){
+        JSONObject playlistDetailParameter = new JSONObject();
+        playlistDetailParameter.put("id", playlistId);
+
+        JSONObject jsonObject1 = neteaseCloudMusicInfo.playlistDetail(playlistDetailParameter);
+        PlaylistTrackAllResult PlaylistResult = jsonObject1.toJavaObject(PlaylistTrackAllResult.class);
+        Long trackCount = PlaylistResult.getPlaylist().getTrackCount();
+
+
+
         ArrayList<Music> musics = new ArrayList<>();
 
-        int page = 1;
+        int limit = 50;
+        // 使用 trackCount 计算需要请求的总次数
+        int totalRequests = trackCount != null ? (int) Math.ceil((double) trackCount / limit) : 1;
+        
         JSONObject parameter = new JSONObject();// 请求参数
         parameter.put("id", playlistId);
-        parameter.put("limit", "50");
-        parameter.put("offset", (page - 1)*50);
-        boolean more = true;
-        JSONObject jsonObject = neteaseCloudMusicInfo.playlistDetail(parameter);
-        PlaylistTrackAllResult playlistTrackAllResult = jsonObject.toJavaObject(PlaylistTrackAllResult.class);
-        List<PlaylistTrackAllResult.SongsDTO> songs = playlistTrackAllResult.getSongs();
-        if (songs==null|| songs.isEmpty()){
-            more=false;
-            return musics;
-        }
-        try {
-            while (more) {
-                page++;
-                //继续补充
-                parameter.put("id", playlistId);
-                parameter.put("limit", "50");
-                parameter.put("offset", (page - 1)*50);
-                JSONObject jsonObject1 = neteaseCloudMusicInfo.playlistDetail(parameter);
-                PlaylistTrackAllResult javaObject = jsonObject1.toJavaObject(PlaylistTrackAllResult.class);
-                List<PlaylistTrackAllResult.SongsDTO> songs1 = javaObject.getSongs();
-                if (songs1==null|| songs1.isEmpty()){
-                    more=false;
-                    break;
-                }
-                songs.addAll(songs1);
+        parameter.put("limit", limit);
+        
+        List<PlaylistTrackAllResult.SongsDTO> songs = new ArrayList<>();
+        
+        // 根据计算的次数循环获取所有歌曲
+        for (int page = 0; page < totalRequests; page++) {
+            parameter.put("offset", page * limit);
+            JSONObject jsonObject = neteaseCloudMusicInfo.playlistTrackAll(parameter);
+            PlaylistTrackAllResult playlistTrackAllResult = jsonObject.toJavaObject(PlaylistTrackAllResult.class);
+            List<PlaylistTrackAllResult.SongsDTO> songsPage = playlistTrackAllResult.getSongs();
+            if (songsPage != null && !songsPage.isEmpty()) {
+                songs.addAll(songsPage);
             }
-        } catch (Exception e) {
-            more=false;
         }
         //处理歌曲
         songs.forEach(songsInfoDTO -> {
@@ -711,7 +705,8 @@ public class NeteaseHander extends SearchHanderAbstract {
                     .setMusicImage(songsInfoDTO.getAl().getPicUrl())
                     .setAlbumId(songsInfoDTO.getAl().getId().toString())
                     .setDataInfo(JSONObject.parseObject(JSONObject.toJSONString(songsInfoDTO)))
-                    .setArtistsIds(songsInfoDTO.getAr().stream().map(e -> e.getId().toString()).collect(Collectors.toList()));
+                    .setArtistsIds(songsInfoDTO.getAr().stream().map(e -> e.getId().toString()).collect(Collectors.toList()))
+                            .setBits(plugBrTypes);
             musics.add(music);
         });
         return musics;

@@ -1,6 +1,6 @@
 package com.sqmusicplus.v3.plug.qq.util;
 
-import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson2.JSONObject;
 import com.sqmusicplus.v3.teaboss.Pow.CharacterUtils;
 import com.sqmusicplus.v3.teaboss.Qimei.QQDevice;
 import com.sqmusicplus.v3.utils.OkHttpUtils;
