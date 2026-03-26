@@ -355,6 +355,7 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
                 .setDownloadUpdateTime(new Date())
                 .setRewriteMp3tag(DbBooleanConvert.YES.getValue())
                 .setDownloadBits(bitsStr)
+                .setDownloadPlugName(music.getPlugName())
                 .setDownloadBrTypes(plugBrTypes);
     }
 

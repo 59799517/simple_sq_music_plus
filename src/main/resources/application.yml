@@ -60,7 +60,7 @@ mybatis-plus:
 # 日志配置
 logging:
   level:
-    com.sqmusicplus: debug
+    com.sqmusicplus: info
     org.springframework: warn
     org.jaudiotagger: warn
 sa-token:
@@ -81,7 +81,7 @@ sa-token:
   is-print: false
   jwt-secret-key: xNQRcY7FgHM1dyJCoZKmcmksNT7aR0FlqvRCWJbmD
 
-version: 3.0.35
+version: 3.0.36
 webversion: 3.0.19
 
 

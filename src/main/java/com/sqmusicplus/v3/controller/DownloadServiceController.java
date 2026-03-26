@@ -196,21 +196,28 @@ public class DownloadServiceController {
                 List<ParserEntity> parserEntities = textMusicPlayListParser.parserParserEntity(parser);
 
                 if (parserEntities != null) {
-                    ArrayList<DownloadInfo> downloadInfos = new ArrayList<>();
-                    for (ParserEntity parserEntity : parserEntities) {
-                        PlugSearchMusicResult plugSearchMusicResult = parserEntity.getPlugSearchMusicResult();
-                        SearchHanderAbstract plugHander = MusicUtils.getPlugHander(plugSearchMusicResult.getPlugName(), searchHanderAbstractList);
-                        DownloadInfo downloadInfo = plugHander.musicToDownloadInfo(plugSearchMusicResult, null, false);
-                        downloadInfos.add(downloadInfo);
+                    try {
+                        ArrayList<DownloadInfo> downloadInfos = new ArrayList<>();
+                        for (ParserEntity parserEntity : parserEntities) {
+                            PlugSearchMusicResult plugSearchMusicResult = parserEntity.getPlugSearchMusicResult();
+                            if (StringUtils.isBlank(plugSearchMusicResult.getPlugName())){
+                                continue;
+                            }
+                            SearchHanderAbstract plugHander = MusicUtils.getPlugHander(plugSearchMusicResult.getPlugName(), searchHanderAbstractList);
+                            DownloadInfo downloadInfo = plugHander.musicToDownloadInfo(plugSearchMusicResult, null, false);
+                            downloadInfos.add(downloadInfo);
+                        }
+                        downloadInfoService.add(downloadInfos);
+                    } catch (Exception ignored) {
+
                     }
-                   downloadInfoService.add(downloadInfos);
                 }
             } catch (Exception e) {
                 log.error("解析失败", e);
             }
         });
         thread.start();
-        return AjaxResult.success("开始解析并下载，稍后在下载中查看！");
+        return AjaxResult.success("开始解析并下载，稍后在下载中查看！（每首识别大致需要500毫秒耐心等待）");
     }
 
     /**
