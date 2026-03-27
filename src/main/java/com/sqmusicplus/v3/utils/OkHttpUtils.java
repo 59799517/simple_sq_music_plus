@@ -78,9 +78,9 @@ public class OkHttpUtils {
                     
                     // 默认添加流量监控拦截器
                     okHttpClient = new OkHttpClient.Builder()
-                            .connectTimeout(15, TimeUnit.SECONDS)
-                            .writeTimeout(20, TimeUnit.SECONDS)
-                            .readTimeout(20, TimeUnit.SECONDS)
+                            .connectTimeout(0, TimeUnit.MILLISECONDS)
+                            .writeTimeout(0, TimeUnit.MILLISECONDS)
+                            .readTimeout(0, TimeUnit.MILLISECONDS)
                             .sslSocketFactory(createSSLSocketFactory(trustManagers), (X509TrustManager) trustManagers[0])
                             .hostnameVerifier((hostName, session) -> true)
                             .retryOnConnectionFailure(true)

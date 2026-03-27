@@ -704,6 +704,7 @@ public class NeteaseHander extends SearchHanderAbstract {
                     .setMusicArtists(songsInfoDTO.getAr().stream().map(e -> e.getName()).collect(Collectors.toList()))
                     .setMusicImage(songsInfoDTO.getAl().getPicUrl())
                     .setAlbumId(songsInfoDTO.getAl().getId().toString())
+                    .setPlugName(getPlugName())
                     .setDataInfo(JSONObject.parseObject(JSONObject.toJSONString(songsInfoDTO)))
                     .setArtistsIds(songsInfoDTO.getAr().stream().map(e -> e.getId().toString()).collect(Collectors.toList()))
                             .setBits(plugBrTypes);
