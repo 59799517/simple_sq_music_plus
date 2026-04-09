@@ -42,6 +42,7 @@ public class ParserController {
      * @param downlaodParserUrl
      * @return
      */
+    @Deprecated
     @SaCheckLogin
     @PostMapping("/parserUrl")
     public AjaxResult parserUrl(DownlaodParserUrl  downlaodParserUrl) {
@@ -63,6 +64,7 @@ public class ParserController {
      * @param downlaodParserUrl
      * @return
      */
+    @Deprecated
     @SaCheckLogin
     @PostMapping("/download/parserUrl")
     public AjaxResult downlaodParserUrl(DownlaodParserUrl  downlaodParserUrl) {
@@ -86,6 +88,7 @@ public class ParserController {
      * @return
      */
 
+    @Deprecated
     @SaCheckLogin
     @PostMapping("/parserText")
     public AjaxResult parserText(@RequestBody ParserTextParam param) {
@@ -105,6 +108,13 @@ public class ParserController {
             return AjaxResult.error("解析失败");
         }
     }
+
+    /**
+     *  解析URL歌曲信息
+     * @param downlaodParserUrl
+     * @return 解析信息
+     */
+    @Deprecated
     @SaCheckLogin
     @PostMapping("/parserUrlInfo")
     public AjaxResult parserUrlInfo(@RequestBody DownlaodParserUrl  downlaodParserUrl) {

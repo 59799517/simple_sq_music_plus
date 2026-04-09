@@ -19,8 +19,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * @Classname ExpandController
@@ -205,6 +208,105 @@ public class ExpandController {
         }).start();
         return AjaxResult.success("正在后台增量同步！");
     }
+
+
+    /**
+     * 查询所有已经上传的的文件列表
+     */
+    @SaCheckLogin
+    @RequestMapping("/queryAllUploadFile")
+    public AjaxResult queryAllUploadFile() {
+        List<SqAliSync> sqAliSyncs = sqAliSyncService.list();
+        return AjaxResult.success("查询成功",sqAliSyncs);
+    }
+    /**
+     * 查询所有已经上传的的文件列表树状展示
+     */
+    @SaCheckLogin
+    @RequestMapping("/queryAllUploadFileTree")
+    public AjaxResult queryAllUploadFileTree() {
+        List<SqAliSync> sqAliSyncs = sqAliSyncService.list();
+        Map<String, Object> treeRoot = buildFileTree(sqAliSyncs);
+        return AjaxResult.success("查询成功", treeRoot.get("children"));
+    }
+    
+    /**
+     * 构建文件树
+     * @param files 文件列表
+     * @return 树状结构
+     */
+    private Map<String, Object> buildFileTree(List<SqAliSync> files) {
+        Map<String, Object> root = new HashMap<>();
+        root.put("name", "根目录");
+        root.put("type", "folder");
+        root.put("children", new ArrayList<Map<String, Object>>());
+        
+        for (SqAliSync file : files) {
+            String path = file.getPath();
+            if (path == null || path.isEmpty()) {
+                continue;
+            }
+            // 按路径分隔符拆分（支持 / 和 \）
+            String[] parts = path.split("[/\\\\]");
+            // 递归添加到树中
+            addToTree(root, parts, file, 0);
+        }
+        
+        return root;
+    }
+    
+    /**
+     * 递归添加节点到树中
+     * @param parentNode 父节点
+     * @param parts 路径部分数组
+     * @param file 文件对象（仅在叶子节点使用）
+     * @param index 当前处理的路径索引
+     */
+    @SuppressWarnings("unchecked")
+    private void addToTree(Map<String, Object> parentNode, String[] parts, SqAliSync file, int index) {
+        if (index >= parts.length) {
+            return;
+        }
+        
+        String currentName = parts[index];
+        boolean isLastLevel = (index == parts.length - 1);
+        
+        List<Map<String, Object>> children = (List<Map<String, Object>>) parentNode.get("children");
+        
+        // 查找是否已存在该节点
+        Map<String, Object> existingNode = null;
+        for (Map<String, Object> child : children) {
+            if (child.get("name").equals(currentName)) {
+                existingNode = child;
+                break;
+            }
+        }
+        
+        if (existingNode == null) {
+            // 创建新节点
+            Map<String, Object> newNode = new HashMap<>();
+            newNode.put("name", currentName);
+            
+            if (isLastLevel) {
+                // 叶子节点（文件）
+                newNode.put("type", "file");
+                newNode.put("fileInfo", file);
+            } else {
+                // 文件夹节点
+                newNode.put("type", "folder");
+                newNode.put("children", new ArrayList<Map<String, Object>>());
+            }
+            
+            children.add(newNode);
+            existingNode = newNode;
+        }
+        
+        // 如果不是最后一层，继续递归
+        if (!isLastLevel) {
+            addToTree(existingNode, parts, file, index + 1);
+        }
+    }
+
 
 
 
