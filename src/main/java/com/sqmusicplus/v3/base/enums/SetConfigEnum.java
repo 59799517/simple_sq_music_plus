@@ -78,6 +78,7 @@ public enum SetConfigEnum {
     SYSTEM_DOWNLOAD_FILE_AUDIO_FORMAT("system.download.file.audio.format","下载文件音频格式","system"),
 
 
+
 //    ------------QQ插件配置-----------------
 
     /**
@@ -226,7 +227,103 @@ public enum SetConfigEnum {
     /**
      * apple 请求头  origin地址
      */
-    PLUG_APPLE_ORIGIN("plug.apple.origin","apple 请求头  origin地址","plug");
+    PLUG_APPLE_ORIGIN("plug.apple.origin","apple 请求头  origin地址","plug"),
+
+
+    /**
+     * 是否启用阿里云盘功能
+     */
+    EXPAND_ALIYUN_OPEN("expand.aliyun.open","是否开启阿里云盘插件","expand"),
+    /**
+     * 阿里云盘的用户类型（无后台模式还是有后台模式）
+     */
+//    EXPAND_ALIYUN_USER_TYPE("expand.aliyun.user.type","阿里云盘的用户类型（无后台模式还是有后台模式）","expand"),
+
+    /**
+     * 阿里云盘的appid
+     */
+    EXPAND_ALIYUN_APPID("expand.aliyun.appid","阿里云盘的appid","expand"),
+    /**
+     * 阿里云盘的appsecret
+     */
+    EXPAND_ALIYUN_APPSECRET("expand.aliyun.appsecret","阿里云盘的appsecret","expand"),
+    /**
+     * 阿里云盘的refresh_token
+     */
+    EXPAND_ALIYUN_REFRESH_TOKEN("expand.aliyun.refresh_token","阿里云盘的refresh_token","expand"),
+    /**
+     * 阿里云盘的drive_id
+     */
+//    EXPAND_ALIYUN_DRIVE_ID("expand.aliyun.drive_id","阿里云盘的drive_id","expand"),
+    /**
+     * 阿里圆盘的access_token
+     */
+    EXPAND_ALIYUN_ACCESS_TOKEN("expand.aliyun.access_token","阿里云盘的access_token","expand"),
+    /**
+     * 阿里云盘的code_verifier
+     */
+    EXPAND_ALIYUN_CODE_VERIFIER("expand.aliyun.code_verifier","阿里云盘的code_verifier","expand"),
+    /**
+     * 阿里云盘的授权码
+     */
+    EXPAND_ALIYUN_CODE("expand.aliyun.code","阿里云盘的授权码","expand"),
+    /**
+     * 阿里云盘的用户名称
+     */
+    EXPAND_ALIYUN_USER_NAME("expand.aliyun.user.name","阿里云盘的用户名称","expand"),
+    /**
+     * 阿里云盘的头像
+     */
+    EXPAND_ALIYUN_AVATAR("expand.aliyun.avatar","阿里云盘的头像","expand"),
+    /**
+     * 阿里云盘的user_id
+     */
+    EXPAND_ALIYUN_USER_ID("expand.aliyun.user.id","阿里云盘的user_id","expand"),
+    /**
+     * 阿里云盘的账号名称
+     */
+    EXPAND_ALIYUN_USER_INFO_NAME("expand.aliyun.user.info.name","阿里云盘的账号名称","expand"),
+    /**
+     * 阿里云盘的昵称
+     */
+    EXPAND_ALIYUN_NICK_NAME("expand.aliyun.nick.name","阿里云盘的昵称","expand"),
+    /**
+     * 阿里云盘的default_drive_id
+     */
+//    EXPAND_ALIYUN_DEFAULT_DRIVE_ID("expand.aliyun.default.drive_id","阿里云盘的default_drive_id","expand"),
+    /**
+     * 阿里云盘的backup_drive_id
+     */
+    EXPAND_ALIYUN_BACKUP_DRIVE_ID("expand.aliyun.backup.drive_id","阿里云盘的backup_drive_id","expand"),
+    /**
+     * 阿里云盘的resource_drive_id
+     */
+    EXPAND_ALIYUN_RESOURCE_DRIVE_ID("expand.aliyun.resource.drive_id","阿里云盘的resource_drive_id","expand"),
+    /**
+     * 阿里云盘的album_drive_id
+     */
+//    EXPAND_ALIYUN_ALBUM_DRIVE_ID("expand.aliyun.album.drive_id","阿里云盘的album_drive_id","expand"),
+    /**
+     * 阿里云盘的folder_id
+     */
+//    EXPAND_ALIYUN_FOLDER_ID("expand.aliyun.folder.id","阿里云盘的folder_id","expand"),
+    /**
+     * 存储到阿里云盘的目录位置
+     */
+    EXPAND_ALIYUN_FOLDER_PATH("expand.aliyun.folder.path","存储到阿里云盘的目录位置","expand"),
+    /**
+     * 同步模式
+     */
+    EXPAND_ALIYUN_SYNC_MODE("expand.aliyun.sync.mode","同步模式","expand"),
+    /**
+     * 阿里云盘access_token到期时间
+     */
+    EXPAND_ALIYUN_ACCESS_TOKEN_EXPIRE_TIME("expand.aliyun.access_token.expire.time","阿里云盘access_token到期时间","expand");
+
+
+
+
+
 
 
 

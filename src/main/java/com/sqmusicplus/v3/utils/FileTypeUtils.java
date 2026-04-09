@@ -88,6 +88,45 @@ public class FileTypeUtils {
 
     }
 
+    /**
+     * 判断是否为有效的音频
+     * 支持的格式：mp3, flac, wav, aac, ogg, m4a, wma,
+     */
+    public static boolean isValidAudioFile(File file) {
+        String fileName = file.getName().toLowerCase();
+        return fileName.endsWith(".mp3") ||
+                fileName.endsWith(".flac") ||
+                fileName.endsWith(".wav") ||
+                fileName.endsWith(".aac") ||
+                fileName.endsWith(".ogg") ||
+                fileName.endsWith(".m4a") ||
+                fileName.endsWith(".wma") ;
+    }
+
+    /**
+     * 判断是否为有效的歌词
+     *
+     */
+    public static boolean isValidLrcFile(File file) {
+        String fileName = file.getName().toLowerCase();
+        return fileName.endsWith(".lrc") ||
+                fileName.endsWith(".trc") ||
+                fileName.endsWith(".krc") ||
+                fileName.endsWith(".qrc") ||
+                fileName.endsWith(".ksc") ||
+                fileName.endsWith(".txt");
+    }
+    /**
+     * 判断是否为有效的图片
+     *
+     * @param file 文件名
+     * @return 是否是图片
+     */
+    public static boolean isValidImageFile(File file) {
+        String fileName = file.getName().toLowerCase();
+        return fileName.toLowerCase().matches(".*\\.(jpg|jpeg|png|gif|bmp|webp|svg|ico)$");
+    }
+
 
 
 }

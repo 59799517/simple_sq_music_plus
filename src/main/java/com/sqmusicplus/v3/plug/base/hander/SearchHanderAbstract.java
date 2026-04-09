@@ -4,6 +4,9 @@ import cn.hutool.core.io.FileTypeUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.io.IORuntimeException;
 import com.alibaba.fastjson2.JSONObject;
+import com.sqmusicplus.v3.alidrive.entity.SqAliSync;
+import com.sqmusicplus.v3.alidrive.hander.AliHander;
+import com.sqmusicplus.v3.alidrive.service.SqAliSyncService;
 import com.sqmusicplus.v3.base.entity.DownloadInfo;
 import com.sqmusicplus.v3.plug.entity.Album;
 import com.sqmusicplus.v3.plug.entity.Artists;
@@ -24,6 +27,7 @@ import org.springframework.stereotype.Service;
 import java.io.File;
 import java.io.Serializable;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -43,6 +47,10 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
 
     @Autowired
     private DownloadInfoService downloadInfoService;
+    @Autowired
+    private AliHander aliHander;
+    @Autowired
+    private SqAliSyncService sqAliSyncService;
 
     public DownloadInfoService getDownloadInfoService() {
         return downloadInfoService;
@@ -159,7 +167,23 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
                     throw new RuntimeException(downloadInfo.getDownloadMusicname() + "(未获取到播放链接)下载失败:" + e.getMessage());
                 }
             }
+            AtomicBoolean aliDriveSync  = new AtomicBoolean(false);
+            try {
+                String aliyun_open = SqConfigCache.getSqConfigValue(SetConfigEnum.EXPAND_ALIYUN_OPEN);
+                String aliyun_sync_mode = SqConfigCache.getSqConfigValue(SetConfigEnum.EXPAND_ALIYUN_SYNC_MODE);
 
+                if (StringUtils.isNotBlank(aliyun_open)) {
+                    if (aliyun_open.equals("true")) {
+                        if (StringUtils.isNotBlank(aliyun_sync_mode)){
+                            if (aliyun_sync_mode.equals("download")||aliyun_sync_mode.equals("all")){
+                                aliDriveSync.set(true);
+                            }
+                        }
+                    }
+                }
+            }catch (Exception e){
+
+            }
             DownloadUtils.download(downloadUrlResult.getUrl(), type, onProcess->{
                 log.debug("歌曲：{} 进度：{} , byte信息：{}/{}",music.getMusicName(),onProcess.getProgress(),onProcess.getBytesRead(),onProcess.getTotalBytes());
             },onSuccess ->
@@ -170,12 +194,18 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
                 log.debug("下载失败(文件写入异常){}", music.getMusicName());
                 throw new RuntimeException("下载失败:" + music.getMusicName());
             },onComplete -> {
+                if (aliDriveSync.get()) {
+                    SqAliSync sqAliSync = aliHander.uploadFile(onComplete, baseMusicName, baseMusicArtistName, baseMusicAlbumName, downloadInfo.getId());
+                    if (sqAliSync != null){
+                      log.debug("歌曲：{} 同步完成",music.getMusicName());
+                    }else{
+                        log.debug("歌曲：{} 同步错误，返回结果为null",music.getMusicName());
+                    }
+
+                }
+
                 Artists artists = searchHander.queryArtistById(baseArtistsID.get(0));
-//                String getSearheads = "";
-//                try {
-//                    getSearheads = ReflectUtil.invoke(searchHander.getConfig(), "getSearheads");
-//                } catch (Exception ignored) {
-//                }
+
                 //歌手图片地址
                 String downloadurl = artists.getMusicArtistsPhoto();
                 //歌手图片保存路径
@@ -196,10 +226,22 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
                         }, onArtistsPhoto -> {
                             try {
                                 String suffix = FileTypeUtil.getType(onArtistsPhoto);
-                                FileUtil.copy(onArtistsPhoto, new File(downliadpath + File.separator + "cover." + suffix), false);
-                                FileUtil.copy(onArtistsPhoto, new File(downliadpath + File.separator + "artist." + suffix), false);
-                                //取出文件名后缀
-                                FileUtil.copy(onArtistsPhoto, new File(downliadpath + File.separator + "folder." + suffix), true);
+                                File copy = FileUtil.copy(onArtistsPhoto, new File(downliadpath + File.separator + "cover." + suffix), false);
+                                File copy1 = FileUtil.copy(onArtistsPhoto, new File(downliadpath + File.separator + "artist." + suffix), false);
+                                File copy2 = FileUtil.copy(onArtistsPhoto, new File(downliadpath + File.separator + "folder." + suffix), true);
+                                if (aliDriveSync.get()) {
+                                    aliHander.uploadFile(onArtistsPhoto, baseMusicName, baseMusicArtistName, baseMusicAlbumName, downloadInfo.getId());
+                                    aliHander.uploadFile(copy, baseMusicName, baseMusicArtistName, baseMusicAlbumName, downloadInfo.getId());
+                                    aliHander.uploadFile(copy1, baseMusicName, baseMusicArtistName, baseMusicAlbumName, downloadInfo.getId());
+                                    SqAliSync sqAliSync3 = aliHander.uploadFile(copy2, baseMusicName, baseMusicArtistName, baseMusicAlbumName, downloadInfo.getId());
+                                    if (sqAliSync3 != null){
+                                        log.debug("歌手图片：{} 同步完成",music.getMusicName());
+                                    }else{
+                                        log.debug("歌手图片：{} 同步失败",music.getMusicName());
+                                    }
+                                }
+
+
                             } catch (Exception e) {
                                 SafeFileUtil.safeDelete(onArtistsPhoto);
                             } finally {
@@ -253,10 +295,19 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
                             try {
                                 String suffix = FileTypeUtil.getType(onAlbumImg);
                                 onAlbumImg = FileUtil.rename(onAlbumImg, "cover." + suffix, true);
-                                FileUtil.copy(onAlbumImg, new File(imagePath + File.separator + "album." + suffix), true);
+                                File copy = FileUtil.copy(onAlbumImg, new File(imagePath + File.separator + "album." + suffix), true);
                                 if (isAudioBook) {
-                                    FileUtil.copyFile(cover, Artistsfile);
+                                    File file1 = FileUtil.copyFile(cover, Artistsfile);
+                                    if (aliDriveSync.get()){
+                                        aliHander.uploadFile(file1, baseMusicName, baseMusicArtistName, baseMusicAlbumName, downloadInfo.getId());
+                                    }
+
                                 }
+                                if (aliDriveSync.get()){
+                                    aliHander.uploadFile(onAlbumImg, baseMusicName, baseMusicArtistName, baseMusicAlbumName, downloadInfo.getId());
+                                    aliHander.uploadFile(copy, baseMusicName, baseMusicArtistName, baseMusicAlbumName, downloadInfo.getId());
+                                }
+
                             } catch (Exception e) {
                                 SafeFileUtil.safeDelete(onAlbumImg);
                             } finally {
@@ -271,15 +322,15 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
                                 }
                             }
                             album.setAlbumImg("cover");
-                            extracted(music, onComplete, onAlbumImg, downloadInfo);
+                            extracted(music, onComplete, onAlbumImg, downloadInfo,aliDriveSync);
                         });
                     } catch (Exception e) {
                         e.printStackTrace();
                         log.debug("下载专辑封面失败：{}", downloadInfo.getDownloadMusicname());
-                        extracted(music, onComplete, albumfile, downloadInfo);
+                        extracted(music, onComplete, albumfile, downloadInfo,aliDriveSync);
                     }
                 } else {
-                    extracted(music, onComplete, albumfile, downloadInfo);
+                    extracted(music, onComplete, albumfile, downloadInfo,aliDriveSync);
                 }
             });
 
@@ -367,18 +418,22 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
      * @param albumfile
      * @param downloadInfo
      */
-    private void extracted(Music music, File onSuccess, File albumfile, DownloadInfo downloadInfo) {
+    private void extracted(Music music, File onSuccess, File albumfile, DownloadInfo downloadInfo,AtomicBoolean aliDriveSync) {
         //是否需要标签
         Integer rewriteMp3tag = downloadInfo.getRewriteMp3tag();
-
-
         //创建歌词
         try {
-
             if (StringUtils.isNotEmpty(music.getMusicLyric())) {
                 String name = FileUtil.getPrefix(onSuccess);
                 log.debug("lrc地址{}", onSuccess.getParentFile() + File.separator + name + ".lrc");
-                FileUtil.writeBytes(music.getMusicLyric().getBytes(), onSuccess.getParentFile() + File.separator + name + ".lrc");
+                File file = FileUtil.writeBytes(music.getMusicLyric().getBytes(), onSuccess.getParentFile() + File.separator + name + ".lrc");
+                if (file != null&&file.exists()){
+                    if (aliDriveSync.get()){
+                        String baseMusicArtistName_temp = music.getMusicArtists().stream().map(String::trim).limit(7).collect(Collectors.joining("&"));
+                        aliHander.uploadFile(file,music.getMusicName(),baseMusicArtistName_temp,music.getMusicAlbum(),downloadInfo.getId());
+                    }
+                }
+
             }
         } catch (IORuntimeException e) {
             log.error(e.getMessage());
@@ -573,7 +628,6 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
             }
         });
         return downloadInfos1;
-
     }
 
 }

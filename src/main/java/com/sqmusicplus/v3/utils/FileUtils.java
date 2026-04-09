@@ -108,4 +108,14 @@ public class FileUtils
         }
         return null;
     }
+
+    /**
+     * 获取文件后缀
+     * @param name 文件名
+     * @return 文件后缀
+     */
+    public static String getFileSuffix(String name) {
+        int index = name.lastIndexOf(".");
+        return index == -1 ? "" : name.substring(index + 1);
+    }
 }
