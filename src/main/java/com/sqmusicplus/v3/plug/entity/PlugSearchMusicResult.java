@@ -64,8 +64,6 @@ public class PlugSearchMusicResult {
 
     private String duration;
 
-
-
     /**
      * br 码
      */

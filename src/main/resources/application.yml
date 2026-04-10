@@ -1,8 +1,4 @@
-DB_IP: 192.168.31.70
-DB_PORT: 3306
-DB_NAME: sqmusicv3
-DB_USERNAME: root
-DB_PASSWORD: sqmusicv3password
+
 server:
   port: 8099
 spring:
@@ -37,7 +33,7 @@ spring:
     static-path-pattern: /**
   web:
     resources:
-      static-locations: classpath:/static/**
+      static-locations: classpath:/static/,classpath:/public/,classpath:/resources/,classpath:/META-INF/resources/,classpath:/docs/
   main:
     allow-circular-references: true
     banner-mode: off
@@ -86,7 +82,7 @@ sa-token:
   is-print: false
   jwt-secret-key: xNQRcY7FgHM1dyJCoZKmcmksNT7aR0FlqvRCWJbmD
 
-version: 3.0.37
-webversion: 3.0.19
+version: 3.1.0
+webversion: 3.1.0
 
 

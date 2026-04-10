@@ -33,7 +33,7 @@ public class SaTokenConfigure implements WebMvcConfigurer {
     public SaServletFilter getSaServletFilter() {
         return new SaServletFilter()
                 .addInclude("/**")
-                .addExclude("/**/*.webmanifest","/**/*.svg","/**/*.json","/**/*.js","/","/**/*.html","/**/*.css","/**/*.png","/**/*.jpg","/**/*.otf","/**/*.ttf","/**/*.wasm","/login", "/favicon.ico","/isLogin","/set/selectOption","/set/getSetList","/set/getSearchType","/set/getSearchTypeBrType","/set/getSetListByType","/set/getSetListByTypeBrType","/set/getSetListByTypeBrTypeId","/set/getSetListByTypeId","/set/getSetListByTypeIdBrType","/set/getSetListByTypeIdBrTypeId","/set/getSetListByTypeIdBrTypeIdId","/set/check","/download/freemp3")
+                .addExclude("/**/*.webmanifest","/**/*.md","/**/*.svg","/**/*.json","/**/*.js","/","/**/*.html","/**/*.css","/**/*.png","/**/*.jpg","/**/*.otf","/**/*.ttf","/**/*.wasm","/login", "/favicon.ico","/isLogin","/set/selectOption","/set/getSetList","/set/getSearchType","/set/getSearchTypeBrType","/set/getSetListByType","/set/getSetListByTypeBrType","/set/getSetListByTypeBrTypeId","/set/getSetListByTypeId","/set/getSetListByTypeIdBrType","/set/getSetListByTypeIdBrTypeId","/set/getSetListByTypeIdBrTypeIdId","/set/check","/download/freemp3")
                 .addExclude("/api/**")
                 .setBeforeAuth(obj -> {
                     // ---------- 设置跨域响应头 ----------
