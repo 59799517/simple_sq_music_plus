@@ -116,6 +116,8 @@ public class QQvipHander extends SearchHanderAbstract {
 
     @Override
     public DownloadUrlResult getDownloadUrl(DownloadInfo downloadInfo) {
+
+
         String musicId = downloadInfo.getDownloadMusicId();
         String brTypeid = downloadInfo.getDownloadBrType();
         PlugBrType brType =PlugBrType.findById(brTypeid);

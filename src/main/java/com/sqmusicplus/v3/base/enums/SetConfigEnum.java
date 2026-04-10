@@ -114,9 +114,14 @@ public enum SetConfigEnum {
      * QQ音乐qrcode
      */
     PLUG_QQVIP_QRCODE("plug.qqvip.qrcode","QQ音乐qrcode","plug"),
-
-
-
+    /**
+     * QQ音乐每日最大下载限额
+     */
+    PLUG_QQVIP_DOWNLOAD_DAILY_LIMIT("plug.qqvip.download.daily.limit","QQ音乐每日最大下载限额","plug"),
+    /**
+     * QQ音乐今日下载
+     */
+    PLUG_QQVIP_DOWNLOAD_TODAY("plug.qqvip.download.today","QQ音乐今日下载","plug"),
 
 
 //    -----------------网易云音乐插件配置-----------------
@@ -234,10 +239,6 @@ public enum SetConfigEnum {
      * 是否启用阿里云盘功能
      */
     EXPAND_ALIYUN_OPEN("expand.aliyun.open","是否开启阿里云盘插件","expand"),
-    /**
-     * 阿里云盘的用户类型（无后台模式还是有后台模式）
-     */
-//    EXPAND_ALIYUN_USER_TYPE("expand.aliyun.user.type","阿里云盘的用户类型（无后台模式还是有后台模式）","expand"),
 
     /**
      * 阿里云盘的appid
@@ -251,10 +252,6 @@ public enum SetConfigEnum {
      * 阿里云盘的refresh_token
      */
     EXPAND_ALIYUN_REFRESH_TOKEN("expand.aliyun.refresh_token","阿里云盘的refresh_token","expand"),
-    /**
-     * 阿里云盘的drive_id
-     */
-//    EXPAND_ALIYUN_DRIVE_ID("expand.aliyun.drive_id","阿里云盘的drive_id","expand"),
     /**
      * 阿里圆盘的access_token
      */
@@ -288,10 +285,6 @@ public enum SetConfigEnum {
      */
     EXPAND_ALIYUN_NICK_NAME("expand.aliyun.nick.name","阿里云盘的昵称","expand"),
     /**
-     * 阿里云盘的default_drive_id
-     */
-//    EXPAND_ALIYUN_DEFAULT_DRIVE_ID("expand.aliyun.default.drive_id","阿里云盘的default_drive_id","expand"),
-    /**
      * 阿里云盘的backup_drive_id
      */
     EXPAND_ALIYUN_BACKUP_DRIVE_ID("expand.aliyun.backup.drive_id","阿里云盘的backup_drive_id","expand"),
@@ -299,14 +292,6 @@ public enum SetConfigEnum {
      * 阿里云盘的resource_drive_id
      */
     EXPAND_ALIYUN_RESOURCE_DRIVE_ID("expand.aliyun.resource.drive_id","阿里云盘的resource_drive_id","expand"),
-    /**
-     * 阿里云盘的album_drive_id
-     */
-//    EXPAND_ALIYUN_ALBUM_DRIVE_ID("expand.aliyun.album.drive_id","阿里云盘的album_drive_id","expand"),
-    /**
-     * 阿里云盘的folder_id
-     */
-//    EXPAND_ALIYUN_FOLDER_ID("expand.aliyun.folder.id","阿里云盘的folder_id","expand"),
     /**
      * 存储到阿里云盘的目录位置
      */
