@@ -7,6 +7,7 @@
   <meta name="description" content="Simple SQ Music Plus - A powerful music download and management tool">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
   <link rel="stylesheet" href="./vue.css">
+  <link rel="stylesheet" href="/api/doc/vue.css" onerror="this.href='./vue.css'">
   <style>
     .cover.show {
       display: flex !important;
@@ -16,23 +17,30 @@
 <body>
   <div id="app"></div>
   <script>
-    window.$docsify = {
-      name: 'Simple SQ Music Plus',
-      repo: 'https://github.com/59799517/simple_sq_music_plus',
-      coverpage: true,
-      loadSidebar: true,
-      maxLevel: 0,
-      subMaxLevel: 0,
-      basePath: '',
-      homepage: 'README.md',
-      auto2top: true,
-      alias: {
-        '/.*/_sidebar.md': '/_sidebar.md'
-      }
-    }
+    (function() {
+      const pathname = window.location.pathname;
+      const isApiDoc = pathname.includes('/api/doc');
+
+      window.$docsify = {
+        name: 'Simple SQ Music Plus',
+        repo: 'https://github.com/59799517/simple_sq_music_plus',
+        coverpage: true,
+        loadSidebar: true,
+        maxLevel: 0,
+        subMaxLevel: 0,
+        basePath: isApiDoc ? '/api/doc/' : '',
+        homepage: 'README.md',
+        auto2top: true,
+        alias: {
+          '/.*/_sidebar.md': '/_sidebar.md'
+        }
+      };
+    })();
   </script>
   <!-- Docsify v4 -->
   <script src="./docsify.min.js"></script>
   <script src="./docsify-pagination.min.js"></script>
+  <script src="/api/doc/docsify.min.js" onerror="this.onerror=null; this.src='./docsify.min.js';"></script>
+  <script src="/api/doc/docsify-pagination.min.js" onerror="this.onerror=null; this.src='./docsify-pagination.min.js';"></script>
 </body>
 </html>
