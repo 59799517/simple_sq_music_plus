@@ -1,11 +1,14 @@
-name: Deploy Docsify
+name: Deploy Docsify to GitHub Pages
+
 on:
   push:
-    branches: [ 3.0 ]
+    branches: [ 3.0 ]   
     paths:
       - src/main/resources/docs/**
-
+  workflow_dispatch:    
+  
 permissions:
+  contents: read
   pages: write
   id-token: write
 
@@ -13,13 +16,16 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Upload
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload docs folder
         uses: actions/upload-pages-artifact@v3
         with:
-          path: src/main/resources/docs
+          path: "src/main/resources/docs"
 
-      - name: Deploy
+      - name: Deploy to GitHub Pages
         uses: actions/deploy-pages@v4
