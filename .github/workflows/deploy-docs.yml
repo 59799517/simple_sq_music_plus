@@ -1,31 +1,27 @@
-name: Deploy Docsify to GitHub Pages
+name: 部署 Docsify 文档
 
 on:
   push:
-    branches: [ 3.0 ]   
+    branches: [ 3.0 ]
     paths:
-      - src/main/resources/doc/**
-  workflow_dispatch:    
-  
+      - src/main/resources/docs/**
+  workflow_dispatch:  
+
 permissions:
-  contents: read
   pages: write
   id-token: write
 
 jobs:
-  deploy:
+  build-deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
+      - name: 拉取代码
         uses: actions/checkout@v4
 
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
-
-      - name: Upload docs folder
+      - name: 上传静态文件
         uses: actions/upload-pages-artifact@v3
         with:
-          path: "src/main/resources/doc"
+          path: src/main/resources/docs 
 
-      - name: Deploy to GitHub Pages
+      - name: 发布到 GitHub Pages
         uses: actions/deploy-pages@v4
