@@ -1,8 +1,3 @@
-DB_IP: 192.168.31.70
-DB_PORT: 3306
-DB_NAME: sqmusicv3
-DB_USERNAME: root
-DB_PASSWORD: sqmusicv3password
 server:
   port: 8099
 spring:
