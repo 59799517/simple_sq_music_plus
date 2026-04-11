@@ -4,7 +4,7 @@ on:
   push:
     branches: [ 3.0 ]   
     paths:
-      - src/main/resources/docs/**
+      - src/main/resources/doc/**
   workflow_dispatch:    
   
 permissions:
