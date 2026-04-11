@@ -25,7 +25,7 @@ jobs:
       - name: Upload docs folder
         uses: actions/upload-pages-artifact@v3
         with:
-          path: "src/main/resources/docs"
+          path: "src/main/resources/doc"
 
       - name: Deploy to GitHub Pages
         uses: actions/deploy-pages@v4
