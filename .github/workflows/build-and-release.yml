@@ -441,14 +441,14 @@ jobs:
             ### Docker Images Available:
             
             **阿里云镜像仓库:**
-            - `registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:${{ steps.app_version.outputs.version }}` (Multi-arch manifest)
-            - `registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:${{ steps.app_version.outputs.version }}-amd64`
-            - `registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:${{ steps.app_version.outputs.version }}-arm64`
+            - `registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:v${{ steps.app_version.outputs.version }}` (Multi-arch manifest)
+            - `registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:v${{ steps.app_version.outputs.version }}-amd64`
+            - `registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:v${{ steps.app_version.outputs.version }}-arm64`
             
             **GitHub Packages:**
-            - `ghcr.io/${{ github.actor }}/simple_sq_music_plus:${{ steps.app_version.outputs.version }}` (Multi-arch manifest)
-            - `ghcr.io/${{ github.actor }}/simple_sq_music_plus:${{ steps.app_version.outputs.version }}-amd64`
-            - `ghcr.io/${{ github.actor }}/simple_sq_music_plus:${{ steps.app_version.outputs.version }}-arm64`
+            - `ghcr.io/${{ github.actor }}/simple_sq_music_plus:v${{ steps.app_version.outputs.version }}` (Multi-arch manifest)
+            - `ghcr.io/${{ github.actor }}/simple_sq_music_plus:v${{ steps.app_version.outputs.version }}-amd64`
+            - `ghcr.io/${{ github.actor }}/simple_sq_music_plus:v${{ steps.app_version.outputs.version }}-arm64`
             
             ### Supported Architectures:
             - **AMD64**: Intel/AMD x86-64 processors
