@@ -31,7 +31,6 @@ public class MyWebMvcConfig implements WebMvcConfigurer {
         registry.addResourceHandler("/api/doc/**")
                 .addResourceLocations("classpath:/docs/")
                 .setCachePeriod(3600); // 缓存1小时
-
         WebMvcConfigurer.super.addResourceHandlers(registry);
     }
     @Bean
