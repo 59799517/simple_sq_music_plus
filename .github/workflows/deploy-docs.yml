@@ -5,23 +5,26 @@ on:
     branches: [ 3.0 ]
     paths:
       - src/main/resources/docs/**
-  workflow_dispatch:  
+  workflow_dispatch:
 
 permissions:
   pages: write
   id-token: write
 
 jobs:
-  build-deploy:
+  deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: 拉取代码
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: 上传静态文件
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload docs folder
         uses: actions/upload-pages-artifact@v3
         with:
-          path: src/main/resources/docs 
+          path: src/main/resources/docs
 
-      - name: 发布到 GitHub Pages
+      - name: Deploy to GitHub Pages
         uses: actions/deploy-pages@v4
