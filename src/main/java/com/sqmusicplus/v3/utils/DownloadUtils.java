@@ -115,54 +115,43 @@ public class DownloadUtils {
                     throw new IOException("Empty response body");
                 }
 
-                // 如果是文件夹，则生成目标文件
+                // ✅ 如果是文件夹，则生成目标文件（提前处理路径）
                 File file;
                 if (target.isDirectory()) {
                     String fileName = getHeaderFileName(response); // 从 URL 提取文件名
-                    file = new File(target, fileName);
                     target.mkdirs();
+                    file = new File(target, fileName);
                 } else {
                     file = target;
+                }
+                
+                // ✅ 确保父目录存在，处理特殊字符路径
+                try {
                     file.getParentFile().mkdirs();
+                } catch (Exception e) {
+                    // 如果创建目录失败，尝试过滤路径中的特殊字符
+                    String originalPath = file.getAbsolutePath();
+                    String filteredPath = filterPathCharacters(originalPath);
+                    
+                    if (!originalPath.equals(filteredPath)) {
+                        log.warn("原路径包含特殊字符，已过滤：{} -> {}", originalPath, filteredPath);
+                        file = new File(filteredPath);
+                        file.getParentFile().mkdirs();
+                    } else {
+                        onFailure.accept(e);
+                        return;
+                    }
                 }
 
-
-                InputStream is = null;
-                byte[] buf = new byte[2048];
-                int len = 0;
-                FileOutputStream fos = null;
-
-                try {
-                    is = response.body().byteStream();
-                    long total = response.body().contentLength();
-                    try {
-                        fos = new FileOutputStream(file);
-                    } catch (FileNotFoundException e) {
-                        // 如果失败，尝试过滤路径中的特殊字符后重试
-                        String originalPath = file.getAbsolutePath();
-                        String filteredPath = filterPathCharacters(originalPath);
-                        
-                        // 如果过滤后的路径不同，则使用新路径重试
-                        if (!originalPath.equals(filteredPath)) {
-                            System.err.println("原路径包含特殊字符，已过滤：" + originalPath + " -> " + filteredPath);
-                            File filteredFile = new File(filteredPath);
-                            filteredFile.getParentFile().mkdirs();
-                            try {
-                                fos = new FileOutputStream(filteredFile);
-                                // 更新 file 引用，以便后续操作使用过滤后的文件
-                                file = filteredFile;
-                            } catch (FileNotFoundException e2) {
-                                // 再次失败，通知回调
-                                onFailure.accept(e2);
-                                return;
-                            }
-                        } else {
-                            // 路径已经过滤过或无法过滤，直接失败
-                            onFailure.accept(e);
-                            return;
-                        }
-                    }
+                // ✅ 使用 try-with-resources 自动管理资源
+                long total = response.body().contentLength();
+                try (InputStream is = response.body().byteStream();
+                     FileOutputStream fos = new FileOutputStream(file)) {
+                    
+                    byte[] buf = new byte[8192]; // 优化：从 2KB 提升到 8KB，提高 I/O 效率
+                    int len = 0;
                     long sum = 0;
+                    
                     while ((len = is.read(buf)) != -1) {
                         fos.write(buf, 0, len);
                         sum += len;
@@ -176,16 +165,6 @@ public class DownloadUtils {
                 } catch (Exception e) {
                     onFailure.accept(e);
                 } finally {
-                    try {
-                        if (is != null)
-                            is.close();
-                    } catch (IOException e) {
-                    }
-                    try {
-                        if (fos != null)
-                            fos.close();
-                    } catch (IOException e) {
-                    }
                     onComplete.accept(file);
                 }
             }
@@ -269,17 +248,33 @@ public class DownloadUtils {
             if (!file.exists()){
                 file.getParentFile().mkdirs();
             }
-            OutputStream os = new FileOutputStream(file);
-            os.write(inputStream.readAllBytes());
-            os.flush();
-            // 确保文件完全写入磁盘
-            ((FileOutputStream) os).getFD().sync();
-            os.close();
+            
+            // ✅ 使用缓冲区流式写入，避免大文件占用大量内存
+            try (OutputStream os = new FileOutputStream(file)) {
+                byte[] buffer = new byte[8192]; // 8KB 缓冲区
+                int len;
+                while ((len = inputStream.read(buffer)) != -1) {
+                    os.write(buffer, 0, len);
+                }
+                os.flush();
+                // 确保文件完全写入磁盘
+                ((FileOutputStream) os).getFD().sync();
+            }
+            
             result = true;
         }catch (IOException e)
         {
             e.printStackTrace();
             result = false;
+        } finally {
+            // 确保 InputStream 被关闭
+            try {
+                if (inputStream != null) {
+                    inputStream.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
         return result;
     }

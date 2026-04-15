@@ -91,7 +91,7 @@ sa-token:
   is-print: false
   jwt-secret-key: xNQRcYuu7FgccHM1dyJCoZKmSSqqcmksmmNT7aR0FlqvRCWiiJbmD
 
-version: 3.1.0
+version: 3.1.1
 webversion: 3.1.0
 
 

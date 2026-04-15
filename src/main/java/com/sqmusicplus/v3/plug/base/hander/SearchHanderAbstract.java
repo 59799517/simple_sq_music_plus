@@ -25,6 +25,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -71,7 +73,14 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
                 throw new RuntimeException("下载失败歌曲信息不完整歌曲详情转化歌曲失败:" + JSONObject.toJSONString(downloadInfo));
             }
             String baseMusicName_temp = music.getMusicName().trim();
-            String baseMusicArtistName_temp = music.getMusicArtists().stream().map(String::trim).limit(7).collect(Collectors.joining("&"));
+            StringJoiner joiner = new StringJoiner("&");
+            long limit = 7;
+            for (String s : music.getMusicArtists()) {
+                String trim = s.trim();
+                if (limit-- == 0) break;
+                joiner.add(trim);
+            }
+            String baseMusicArtistName_temp = joiner.toString();
             String baseMusicAlbumName_temp = music.getMusicAlbum().trim();
             String baseMusicMainArtistName_temp =  "群星";
             if (StringUtils.isNotBlank( music.getMusicArtists().get(0).trim())){
@@ -103,7 +112,6 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
             final String baseMusicName = baseMusicName_temp;;
             //如果歌手超过7个则只取前7个
             final String baseMusicArtistName = baseMusicArtistName_temp;
-//            final String baseMusicArtistName = music.getMusicArtists().stream().map(String::trim).collect(Collectors.joining("&"));
             final String baseMusicAlbumName = baseMusicAlbumName_temp;
             final String baseMusicMainArtistName = baseMusicMainArtistName_temp;
 
@@ -121,7 +129,14 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
                 music_path_template="${musicName} - ${artists}";
             }
 
-            String artistsId = baseArtistsID.stream().map(String::trim).limit(7).collect(Collectors.joining("&"));
+            StringJoiner result = new StringJoiner("&");
+            long limit1 = 7;
+            for (String s : baseArtistsID) {
+                String trim = s.trim();
+                if (limit1-- == 0) break;
+                result.add(trim);
+            }
+            String artistsId = result.toString();
             pathTemplate.put("musicName", baseMusicName);
             pathTemplate.put("artists", baseMusicArtistName);
             pathTemplate.put("artist", baseMusicMainArtistName); //新增主要歌手
@@ -352,8 +367,18 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
         if (brType==null){
             brType = MusicUtils.getMaxBr(bits);
         }
-        String bitsStr = bits.stream().map(plugBrType -> plugBrType.getBit().toString()).collect(Collectors.joining(","));
-        String plugBrTypes = bits.stream().map(plugBrType -> plugBrType.getId()).collect(Collectors.joining(","));
+        StringJoiner joiner = new StringJoiner(",");
+        for (PlugBrType bit : bits) {
+            String string = bit.getBit().toString();
+            joiner.add(string);
+        }
+        String bitsStr = joiner.toString();
+        StringJoiner result = new StringJoiner(",");
+        for (PlugBrType plugBrType : bits) {
+            String id = plugBrType.getId();
+            result.add(id);
+        }
+        String plugBrTypes = result.toString();
 
         return new DownloadInfo()
                 .setDownloadGid(music.getId())
@@ -381,8 +406,18 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
         if (brType==null){
             brType = MusicUtils.getMaxBr(bits);
         }
-        String bitsStr = bits.stream().map(plugBrType -> plugBrType.getBit().toString()).collect(Collectors.joining(","));
-        String plugBrTypes = bits.stream().map(plugBrType -> plugBrType.getId()).collect(Collectors.joining(","));
+        StringJoiner joiner = new StringJoiner(",");
+        for (PlugBrType bit : bits) {
+            String string = bit.getBit().toString();
+            joiner.add(string);
+        }
+        String bitsStr = joiner.toString();
+        StringJoiner result = new StringJoiner(",");
+        for (PlugBrType plugBrType : bits) {
+            String id = plugBrType.getId();
+            result.add(id);
+        }
+        String plugBrTypes = result.toString();
         String jsonString ="";
         try {
             jsonString = music.getDataInfo().toJSONString();
@@ -425,18 +460,31 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
         try {
             if (StringUtils.isNotEmpty(music.getMusicLyric())) {
                 String name = FileUtil.getPrefix(onSuccess);
-                log.debug("lrc地址{}", onSuccess.getParentFile() + File.separator + name + ".lrc");
-                File file = FileUtil.writeBytes(music.getMusicLyric().getBytes(), onSuccess.getParentFile() + File.separator + name + ".lrc");
-                if (file != null&&file.exists()){
-                    if (aliDriveSync.get()){
-                        String baseMusicArtistName_temp = music.getMusicArtists().stream().map(String::trim).limit(7).collect(Collectors.joining("&"));
-                        aliHander.uploadFile(file,music.getMusicName(),baseMusicArtistName_temp,music.getMusicAlbum(),downloadInfo.getId());
+                String lrcPath = onSuccess.getParentFile() + File.separator + name + ".lrc";
+                log.debug("lrc地址{}", lrcPath);
+                
+                File lrcFile = new File(lrcPath);
+                try (FileWriter writer = new FileWriter(lrcFile)) {
+                    writer.write(music.getMusicLyric());
+                    writer.flush();
+                }
+                
+                if (lrcFile.exists()) {
+                    if (aliDriveSync.get()) {
+                        StringJoiner joiner = new StringJoiner("&");
+                        long limit = 7;
+                        for (String s : music.getMusicArtists()) {
+                            String trim = s.trim();
+                            if (limit-- == 0) break;
+                            joiner.add(trim);
+                        }
+                        String baseMusicArtistName_temp = joiner.toString();
+                        aliHander.uploadFile(lrcFile, music.getMusicName(), baseMusicArtistName_temp, music.getMusicAlbum(), downloadInfo.getId());
                     }
                 }
-
             }
-        } catch (IORuntimeException e) {
-            log.error(e.getMessage());
+        } catch (IOException e) {
+            log.error("歌词写入失败: {}", e.getMessage(), e);
         }
         //修改文件
         try {
@@ -594,7 +642,7 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
             }
         }
         String ignoreArtist = SqConfigCache.getSqConfigValue(SetConfigEnum.SYSTEM_SYNC_ARTISTS_EXCLUDE);
-        List<String> musicArtists = Arrays.stream(downloadInfo.getDownloadArtistname().split("&")).toList();
+        List<String> musicArtists = new ArrayList<>(Arrays.asList(downloadInfo.getDownloadArtistname().split("&")));
         String[] split = ignoreArtist.split("\\|");
         for (String musicArtist : musicArtists) {
             // 忽略的歌手
