@@ -2,7 +2,7 @@ package com.sqmusicplus.v3.plug.base.config;
 
 import lombok.Data;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * Created with IntelliJ IDEA.

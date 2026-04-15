@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.util.Base64Utils;
 
 import javax.net.ssl.*;
-import javax.script.ScriptException;
+import jakarta.script.ScriptException;
 import java.io.IOException;
 import java.security.KeyStore;
 import java.security.SecureRandom;

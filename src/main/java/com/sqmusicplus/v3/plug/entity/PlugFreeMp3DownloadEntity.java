@@ -3,7 +3,7 @@ package com.sqmusicplus.v3.plug.entity;
 import lombok.Data;
 import lombok.ToString;
 
-import javax.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotEmpty;
 
 /**
  * @Classname PlugFreeMp3DownloadEntity

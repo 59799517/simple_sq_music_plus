@@ -2,10 +2,10 @@ server:
   port: 8099
 spring:
   datasource:
-    url: jdbc:mysql://${DB_IP:localhost}:${DB_PORT:3306}/${DB_NAME:sqmusicv3}?useUnicode=true&useSSL=false&characterEncoding=utf8&serverTimezone=UTC&rewriteBatchedStatements=true&allowMultiQueries=true
-    driver-class-name: com.mysql.jdbc.Driver
-    username: ${DB_USERNAME:root}
-    password: ${DB_PASSWORD:root}
+    url: jdbc:h2:file:D:/code/simple_sq_musuc_plus/src/main/resources/db/sqmusic;MODE=MySQL;DB_CLOSE_DELAY=-1;AUTO_SERVER=TRUE;DATABASE_TO_LOWER=TRUE;SCHEMA=PUBLIC
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
     type: com.zaxxer.hikari.HikariDataSource
     # 连接池
     hikari:
@@ -24,6 +24,15 @@ spring:
       # 数据库连接超时时间,默认30秒，即30000
       connection-timeout: 30000
       connection-test-query: SELECT 1
+  h2:
+    console:
+      enabled: false              # 启用 H2 Console
+      path: /h2-console          # 访问路径
+      settings:
+        web-allow-others: false   # 允许远程访问
+  sql:
+    init:
+      mode: never
   jackson:
     default-property-inclusion: non_null
   profiles:
@@ -53,9 +62,10 @@ mybatis-plus:
     cache-enabled: true
   global-config:
     db-config:
-#      select-strategy: NOT_NULL
       select-strategy: NOT_NULL
+      schema: ""
     banner: false
+
 
 # 日志配置
 logging:
@@ -79,7 +89,7 @@ sa-token:
   # 是否输出操作日志
   is-log: false
   is-print: false
-  jwt-secret-key: xNQRcY7FgHM1dyJCoZKmcmksNT7aR0FlqvRCWJbmD
+  jwt-secret-key: xNQRcYuu7FgccHM1dyJCoZKmSSqqcmksmmNT7aR0FlqvRCWiiJbmD
 
 version: 3.1.0
 webversion: 3.1.0

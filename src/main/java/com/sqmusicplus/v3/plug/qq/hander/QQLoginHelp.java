@@ -1,5 +1,6 @@
 package com.sqmusicplus.v3.plug.qq.hander;
 
+import cn.hutool.core.codec.Base64;
 import com.alibaba.fastjson2.JSONObject;
 import com.sqmusicplus.v3.plug.qq.entity.QQMusicCookie;
 import com.sqmusicplus.v3.plug.qq.entity.QQMusicCookieInfo;
@@ -16,7 +17,6 @@ import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.apache.hc.core5.http.io.entity.EntityUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.util.Base64Utils;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
@@ -518,7 +518,7 @@ public class QQLoginHelp {
         if(qqMusicQr==null){
             return null;
         }
-        return  Base64Utils.encodeToString(qqMusicQr.getData());
+        return  Base64.encode(qqMusicQr.getData());
 
     }
     // 在类开头添加日志记录工具方法

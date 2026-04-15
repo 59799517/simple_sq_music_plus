@@ -33,3 +33,14 @@ build/
 .vscode/
 ### package-lock 在vue目录下的###
 vue/package-lock.json
+
+
+# H2 数据库文件
+*.mv.db
+*.trace.db
+db/*.mv.db
+db/*.trace.db
+db/sqmusic/**.*
+src/main/resources/db/*.mv.db
+src/main/resources/db/*.trace.db
+

@@ -1,4 +1,5 @@
 package com.sqmusicplus;
+import cn.hutool.core.codec.Base64;
 import cn.hutool.core.collection.ListUtil;
 import com.alibaba.fastjson2.JSONObject;
 
@@ -27,27 +28,17 @@ import org.apache.hc.core5.http.io.entity.EntityUtils;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.util.Base64Utils;
 
-import java.io.UnsupportedEncodingException;
 import java.net.http.HttpHeaders;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.script.ScriptException;
 import java.io.IOException;
 
 import java.util.*;
-import java.nio.charset.StandardCharsets;
-import java.io.ByteArrayInputStream;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
 
 
 @SpringBootTest
@@ -932,7 +923,7 @@ private QQHander qqHander;
         if(qqMusicQr==null){
             return null;
         }
-        return  Base64Utils.encodeToString(qqMusicQr.getData());
+        return  Base64.encode(qqMusicQr.getData());
 
     }
 
@@ -1137,7 +1128,7 @@ private QQHander qqHander;
 
 
     @Test
-    public void contextLoads() throws IOException, ScriptException, NoSuchMethodException {
+    public void contextLoads() throws IOException, NoSuchMethodException {
 
 //
 //

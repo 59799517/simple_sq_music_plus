@@ -40,7 +40,7 @@ public class MybatisPlusConfig {
     public PaginationInnerInterceptor paginationInnerInterceptor() {
         PaginationInnerInterceptor paginationInnerInterceptor = new PaginationInnerInterceptor();
         // 设置数据库类型
-        paginationInnerInterceptor.setDbType(DbType.SQLITE);
+        paginationInnerInterceptor.setDbType(DbType.H2);
         // 设置最大单页限制数量，默认 500 条，-1 不受限制
         paginationInnerInterceptor.setMaxLimit(-1L);
         return paginationInnerInterceptor;
