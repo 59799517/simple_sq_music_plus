@@ -31,6 +31,18 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Node.js (frontend-maven-plugin) ###
+.node/
+
+### Frontend dependencies ###
+web/node_modules/
+web/dist/
+
+### Docker ###
+music/
+mysql_data/
+
 ### package-lock 在vue目录下的###
 vue/package-lock.json
 

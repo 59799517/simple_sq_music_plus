@@ -1,0 +1,58 @@
+{
+  "id": "",
+  "name": "",
+  "font_family": "iconfont",
+  "css_prefix_text": "icon-",
+  "description": "",
+  "glyphs": [
+    {
+      "icon_id": "14732",
+      "name": "向下",
+      "font_class": "xiangxia",
+      "unicode": "f02a9",
+      "unicode_decimal": 983721
+    },
+    {
+      "icon_id": "1159909",
+      "name": "播放",
+      "font_class": "bofang",
+      "unicode": "e62d",
+      "unicode_decimal": 58925
+    },
+    {
+      "icon_id": "6776387",
+      "name": "声音开",
+      "font_class": "shengyinkai",
+      "unicode": "eca6",
+      "unicode_decimal": 60582
+    },
+    {
+      "icon_id": "7592577",
+      "name": "24gf-volumeDisable",
+      "font_class": "24gf-volumeDisable",
+      "unicode": "ea0f",
+      "unicode_decimal": 59919
+    },
+    {
+      "icon_id": "9345553",
+      "name": "暂停",
+      "font_class": "zanting",
+      "unicode": "e626",
+      "unicode_decimal": 58918
+    },
+    {
+      "icon_id": "43963747",
+      "name": "arrow_下一曲_go-end",
+      "font_class": "arrow_xiayiqu_go-end",
+      "unicode": "e69b",
+      "unicode_decimal": 59035
+    },
+    {
+      "icon_id": "43963827",
+      "name": "arrow_上一曲_go-start",
+      "font_class": "arrow_shangyiqu_go-start",
+      "unicode": "e69a",
+      "unicode_decimal": 59034
+    }
+  ]
+}
