@@ -145,6 +145,9 @@ public class DownloadUtils {
 
                 // ✅ 使用 try-with-resources 自动管理资源
                 long total = response.body().contentLength();
+                boolean downloadSuccess = false;
+                Exception downloadException = null;
+                
                 try (InputStream is = response.body().byteStream();
                      FileOutputStream fos = new FileOutputStream(file)) {
                     
@@ -160,12 +163,27 @@ public class DownloadUtils {
                         onProcess.accept(new DownloadProgress(sum, total, progress));
                     }
                     fos.flush();
-                    // 下载完成
-                    onSuccess.accept(file);
+                    // 确保文件完全写入磁盘
+                    fos.getFD().sync();
+                    downloadSuccess = true;
                 } catch (Exception e) {
+                    downloadException = e;
                     onFailure.accept(e);
-                } finally {
+                }
+                
+                // ✅ 文件流已完全关闭后，再调用回调
+                if (downloadSuccess) {
+                    try {
+                        onSuccess.accept(file);
+                    } catch (Exception e) {
+                        log.error("onSuccess回调执行失败: {}", e.getMessage(), e);
+                    }
+                }
+                
+                try {
                     onComplete.accept(file);
+                } catch (Exception e) {
+                    log.error("onComplete回调执行失败: {}", e.getMessage(), e);
                 }
             }
         });

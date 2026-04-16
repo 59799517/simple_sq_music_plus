@@ -118,4 +118,58 @@ public class FileUtils
         int index = name.lastIndexOf(".");
         return index == -1 ? "" : name.substring(index + 1);
     }
+
+    /**
+     * 安全地重命名文件，处理文件被占用的情况
+     * 在Windows系统下，文件可能被防病毒软件、索引服务等占用，需要重试机制
+     *
+     * @param sourceFile 源文件
+     * @param newName 新文件名
+     * @param isOverride 是否覆盖已存在的文件
+     * @return 重命名后的文件对象
+     * @throws RuntimeException 如果多次重试后仍然失败
+     */
+    public static File safeRename(File sourceFile, String newName, boolean isOverride) {
+        return safeRename(sourceFile, newName, isOverride, 5);
+    }
+
+    /**
+     * 安全地重命名文件，带自定义重试次数
+     *
+     * @param sourceFile 源文件
+     * @param newName 新文件名
+     * @param isOverride 是否覆盖已存在的文件
+     * @param maxRetries 最大重试次数
+     * @return 重命名后的文件对象
+     * @throws RuntimeException 如果多次重试后仍然失败
+     */
+    public static File safeRename(File sourceFile, String newName, boolean isOverride, int maxRetries) {
+        if (sourceFile == null || !sourceFile.exists()) {
+            throw new IllegalArgumentException("源文件不存在或为null");
+        }
+
+        Exception lastException = null;
+        for (int i = 1; i <= maxRetries; i++) {
+            try {
+                // 如果不是第一次尝试，等待一段时间让文件释放
+                if (i > 1) {
+                    Thread.sleep(500 * i); // 递增等待时间：500ms, 1000ms, 1500ms...
+                }
+                
+                File renamedFile = FileUtil.rename(sourceFile, newName, isOverride);
+                return renamedFile;
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new RuntimeException("文件重命名被中断", e);
+            } catch (Exception e) {
+                lastException = e;
+                // 最后一次重试仍失败，抛出异常
+                if (i >= maxRetries) {
+                    break;
+                }
+            }
+        }
+        
+        throw new RuntimeException("文件重命名失败（已重试" + maxRetries + "次）: " + sourceFile.getName(), lastException);
+    }
 }

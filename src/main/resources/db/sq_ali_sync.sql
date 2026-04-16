@@ -1,4 +1,4 @@
-create table sqmusicv3.sq_ali_sync
+create table sq_ali_sync
 (
     id            int auto_increment
         primary key,
