@@ -1,5 +1,6 @@
+# ARM64 专用 Dockerfile
 # 多阶段构建 - 第一阶段：使用 Maven 构建
-FROM maven:3.9.9-eclipse-temurin-21-alpine AS builder
+FROM maven:3.9.9-eclipse-temurin-21 AS builder
 MAINTAINER SQ
 
 WORKDIR /build/
@@ -16,14 +17,14 @@ COPY web /build/web/
 RUN mvn clean package -DskipTests -B
 
 # 第二阶段：提取分层 JAR
-FROM eclipse-temurin:21-jre-alpine AS extractor
+FROM eclipse-temurin:21-jre AS extractor
 WORKDIR /extractor
 COPY --from=builder /build/target/simple_sq_music_plus.jar app.jar
 # 使用 Spring Boot 的分层工具提取 JAR
 RUN java -Djarmode=layertools -jar app.jar extract --destination /extractor/layers
 
-# 第三阶段：运行环境
-FROM eclipse-temurin:21-jre-alpine
+# 第三阶段：运行环境（ARM64 优化）
+FROM eclipse-temurin:21-jre
 
 # 设置工作目录
 WORKDIR /app
@@ -42,8 +43,8 @@ COPY --from=extractor /extractor/layers/application/ ./
 RUN echo "Running on architecture: $(uname -m)" && \
     echo "Java version:" && java -version
 
-# 设置 JVM 参数优化
-ENV JAVA_OPTS="-Xms256m -Xmx512m -XX:+UseG1GC -XX:MaxGCPauseMillis=200"
+# 设置 JVM 参数优化（针对 ARM 架构）
+ENV JAVA_OPTS="-Xms256m -Xmx512m -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -XX:+UnlockExperimentalVMOptions -XX:+UseContainerSupport"
 
 # 暴露端口
 EXPOSE 8099
