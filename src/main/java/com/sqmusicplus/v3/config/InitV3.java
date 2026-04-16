@@ -129,15 +129,15 @@ public class InitV3  implements ApplicationRunner {
             log.error("网易云未开启插件！");
         }
         //------------------------其他-----------------------------
-        HashMap<String, String> QQoption = new HashMap<>();
-        QQoption.put("value","qq");
-        QQoption.put("label","鹅厂(不要太过频繁否则无法下载)");
-//        HashMap<String, String> MGoption = new HashMap<>();
-////        MGoption.put("value","mg");
-////        MGoption.put("label","10086(有问题暂停使用)");
-////        MGoption.put("disabled","true");
-        log.info("默认打开QQ插件！");
-        SqConfigCache.addPlugOptions(QQoption);
+//        HashMap<String, String> QQoption = new HashMap<>();
+//        QQoption.put("value","qq");
+//        QQoption.put("label","鹅厂(不要太过频繁否则无法下载)");
+////        HashMap<String, String> MGoption = new HashMap<>();
+//////        MGoption.put("value","mg");
+//////        MGoption.put("label","10086(有问题暂停使用)");
+//////        MGoption.put("disabled","true");
+//        log.info("默认打开QQ插件！");
+//        SqConfigCache.addPlugOptions(QQoption);
 //        SqConfigCache.addPlugOptions(MGoption);
         log.info("启动完毕：http://localhost:{}", port);
         log.info("当前服务版本->{}", version);
