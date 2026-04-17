@@ -16,10 +16,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -37,9 +38,12 @@ public class DownloadExcute {
 
     @Autowired
     private DownloadInfoService downloadInfoService;
-    @Autowired
-    @Qualifier("threadPoolTaskExecutor")
-    private ThreadPoolTaskExecutor threadPoolTaskExecutor;
+    
+    /**
+     * 虚拟线程执行器（Java 21+）
+     * 适合 I/O 密集型任务，如网络下载
+     */
+    private final ExecutorService virtualThreadExecutor = Executors.newVirtualThreadPerTaskExecutor();
 
     /**
      * 本次执行中QQVIP下载成功计数(线程安全)
@@ -93,7 +97,7 @@ public class DownloadExcute {
         }
         if (records != null && records.size() > 0) {
             for (DownloadInfo record : records) {
-                threadPoolTaskExecutor.execute(() -> {
+                virtualThreadExecutor.execute(() -> {
                     try {
                         record.setDownloadStatus(DownloadStatus.loading.getValue());
                         downloadInfoService.updateById(record);

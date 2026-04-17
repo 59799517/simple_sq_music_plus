@@ -19,5 +19,5 @@ services:
       # H2数据库和数据文件持久化
       - ./data:/app/data
     ports:
-      - "8099:8099"
+      - "8100:8100"
     restart: unless-stopped

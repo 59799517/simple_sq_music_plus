@@ -433,6 +433,7 @@
                                 <goals>
                                     <goal>install-node-and-npm</goal>
                                 </goals>
+                                <phase>initialize</phase>
                             </execution>
                         </executions>
                     </plugin>

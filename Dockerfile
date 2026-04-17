@@ -54,7 +54,7 @@ RUN echo "Running on architecture: $(uname -m)" && \
 ENV JAVA_OPTS="-Xms256m -Xmx512m -XX:+UseG1GC -XX:MaxGCPauseMillis=200"
 
 # 暴露端口
-EXPOSE 8099
+EXPOSE 8100
 
 # 挂载音乐目录
 VOLUME ["/music"]

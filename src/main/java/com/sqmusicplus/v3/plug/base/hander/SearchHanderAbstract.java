@@ -172,7 +172,11 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
             String sqConfigValue = SqConfigCache.getSqConfigValue(SetConfigEnum.SYSTEM_FILE_EXIST_NOT_DOWNLOAD);
             if (Boolean.valueOf(sqConfigValue)) {
                 if (type.exists()) {
-                    log.info("歌曲{}---->已存在不下载", baseMusicName);
+                    log.info("歌曲{}---->文件重复,无需下载", baseMusicName);
+                    // 文件已存在，标记为成功但不执行下载
+                    downloadInfo.setDownloadStatus(DownloadStatus.success.getValue());
+                    downloadInfo.setDownloadMsg("文件重复,无需下载");
+                    downloadInfoService.updateById(downloadInfo);
                     return;
                 }
             }
@@ -208,7 +212,7 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
             AtomicReference<Exception> downloadException = new AtomicReference<>(null);
             
             DownloadUtils.download(downloadUrlResult.getUrl(), type, onProcess->{
-//                log.debug("歌曲：{} 进度：{} , byte信息：{}/{}",music.getMusicName(),onProcess.getProgress(),onProcess.getBytesRead(),onProcess.getTotalBytes());
+                log.debug("歌曲：{} 进度：{} , byte信息：{}/{}",music.getMusicName(),onProcess.getProgress(),onProcess.getBytesRead(),onProcess.getTotalBytes());
             },onSuccess ->
             {
                 log.debug("歌曲：{} 文件下载完成处理后续步骤",music.getMusicName());
@@ -242,7 +246,7 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
                     if (StringUtils.isNotEmpty(downloadurl)) {
                         try {
                             DownloadUtils.download(downloadurl, downliadpath,onProcess->{
-//                            log.debug("歌曲歌手图片：{} 进度：{} , byte信息：{}/{}",music.getMusicName(),onProcess.getProgress(),onProcess.getBytesRead(),onProcess.getTotalBytes());
+                            log.debug("歌曲歌手图片：{} 进度：{} , byte信息：{}/{}",music.getMusicName(),onProcess.getProgress(),onProcess.getBytesRead(),onProcess.getTotalBytes());
                             },onSuccess ->
                             {
                                 log.debug("歌曲歌手图片：{} 文件下载完成处理后续步骤",music.getMusicName());
@@ -321,7 +325,7 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
                     if (downloadalubimage && StringUtils.isNotEmpty(albumImg)) {
                         try {
                             DownloadUtils.download(albumImg, imagePath, onProcess->{
-//                            log.debug("歌曲专辑图片：{} 进度：{} , byte信息：{}/{}",music.getMusicName(),onProcess.getProgress(),onProcess.getBytesRead(),onProcess.getTotalBytes());
+                            log.debug("歌曲专辑图片：{} 进度：{} , byte信息：{}/{}",music.getMusicName(),onProcess.getProgress(),onProcess.getBytesRead(),onProcess.getTotalBytes());
                             },onSuccess ->
                             {
                                 log.debug("歌曲专辑图片：{} 文件下载完成处理后续步骤",music.getMusicName());

@@ -2,12 +2,12 @@ version: '3.8'
 
 services:
   # 主应用服务（后端 + 前端 + H2数据库）- ARM64 架构
-  sqmusic_main:
+  small-sqmusic:
     build:
       context: .
       dockerfile: Dockerfile
     image: registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:small-latest
-    container_name: sqmusic_main_arm
+    container_name: small-sqmusic
     environment:
       # JVM 参数
       - JAVA_OPTS=-Xms256m -Xmx512m -XX:+UseG1GC -XX:MaxGCPauseMillis=200
@@ -19,5 +19,5 @@ services:
       # H2数据库和数据文件持久化
       - ./data:/app/data
     ports:
-      - "8099:8099"
+      - "8100:8100"
     restart: unless-stopped
