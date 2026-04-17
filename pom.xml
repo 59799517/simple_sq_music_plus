@@ -440,7 +440,7 @@
             </build>
         </profile>
 
-        <!-- Docker/CI 环境：使用系统已安装的 Node.js -->
+        <!-- Docker/CI 环境：前端构建在 Dockerfile 中完成 -->
         <profile>
             <id>docker-build</id>
             <build>
@@ -450,9 +450,17 @@
                         <artifactId>frontend-maven-plugin</artifactId>
                         <version>1.15.0</version>
                         <executions>
-                            <!-- 跳过 Node.js 安装，直接使用系统已有的 -->
+                            <!-- 完全跳过所有 frontend 插件执行 -->
                             <execution>
                                 <id>install-node-and-npm</id>
+                                <phase>none</phase>
+                            </execution>
+                            <execution>
+                                <id>npm-install</id>
+                                <phase>none</phase>
+                            </execution>
+                            <execution>
+                                <id>npm-run-build</id>
                                 <phase>none</phase>
                             </execution>
                         </executions>

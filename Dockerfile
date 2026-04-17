@@ -15,7 +15,12 @@ RUN mvn dependency:go-offline -B
 COPY src /build/src/
 COPY web /build/web/
 
-# 构建项目（跳过测试，使用 docker-build profile）
+# 前端构建（使用系统 Node.js）
+WORKDIR /build/web
+RUN npm install && npm run build
+
+# 返回 build 目录并构建 Java 项目
+WORKDIR /build/
 RUN mvn clean package -DskipTests -Pdocker-build -B
 
 # 第二阶段：提取分层 JAR
