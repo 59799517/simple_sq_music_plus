@@ -1,26 +1,28 @@
-# 多阶段构建 - 第一阶段：使用 Maven 构建
+# 多阶段构建 - 第一阶段：前端构建（平台无关）
+FROM node:20-alpine AS frontend-builder
+WORKDIR /frontend
+COPY web/package*.json ./
+RUN npm install
+COPY web/ ./
+RUN npm run build
+
+# 第二阶段：使用 Maven 构建 Java 项目
 FROM maven:3.9.9-eclipse-temurin-21-alpine AS builder
 MAINTAINER SQ
 
 WORKDIR /build/
 
-# 安装 Node.js 和 npm（Alpine 包管理器）
-RUN apk add --no-cache nodejs npm
-
 # 复制 pom.xml 并下载依赖（利用 Docker 缓存）
 COPY pom.xml /build/
 RUN mvn dependency:go-offline -B
 
-# 复制源代码和前端文件
+# 复制源代码
 COPY src /build/src/
-COPY web /build/web/
 
-# 前端构建（使用系统 Node.js）
-WORKDIR /build/web
-RUN npm install && npm run build
+# 复制前端构建产物
+COPY --from=frontend-builder /frontend/dist /build/web/dist
 
-# 返回 build 目录并构建 Java 项目
-WORKDIR /build/
+# 构建 Java 项目（跳过测试，使用 docker-build profile）
 RUN mvn clean package -DskipTests -Pdocker-build -B
 
 # 第二阶段：提取分层 JAR

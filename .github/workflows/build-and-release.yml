@@ -103,19 +103,11 @@ jobs:
             version.txt
             webversion.txt
 
-  build-multi-arch-images:
-    name: Build and Push Multi-Arch Docker Images
+  build-amd64:
+    name: Build and Push AMD64 Image
     needs: build
     if: needs.build.outputs.ci_enabled == 'true'
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        platform: [linux/amd64, linux/arm64]
-        include:
-          - platform: linux/amd64
-            tag_suffix: amd64
-          - platform: linux/arm64
-            tag_suffix: arm64
 
     steps:
       - name: Checkout code
@@ -126,9 +118,6 @@ jobs:
         with:
           name: build-info
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -136,8 +125,11 @@ jobs:
         id: app_version
         run: |
           VERSION=$(cat version.txt 2>/dev/null || echo "unknown")
+          DOCKER_VERSION="${VERSION}-small"
           echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "docker_version=$DOCKER_VERSION" >> $GITHUB_OUTPUT
           echo "APP_VERSION=$VERSION" >> $GITHUB_ENV
+          echo "DOCKER_VERSION=$DOCKER_VERSION" >> $GITHUB_ENV
 
       - name: Login to Aliyun Container Registry
         uses: docker/login-action@v3
@@ -153,54 +145,140 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and Push Multi-Arch Docker Image to Aliyun
+      - name: Build and Push AMD64 Image to Aliyun
         uses: docker/build-push-action@v5
         with:
           context: .
           file: Dockerfile
-          platforms: ${{ matrix.platform }}
+          platforms: linux/amd64
           push: true
           tags: |
-            registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:v${{ env.DOCKER_VERSION }}-${{ matrix.tag_suffix }}
-            registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:small-latest-${{ matrix.tag_suffix }}
+            registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:v${{ env.DOCKER_VERSION }}-amd64
+            registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:small-latest-amd64
           build-args: |
             JAR_FILE=target/simple_sq_music_plus.jar
           labels: |
             org.opencontainers.image.title=Simple Music Server
             org.opencontainers.image.description=Music streaming server with multi-arch support
             org.opencontainers.image.version=v${{ env.DOCKER_VERSION }}
-            org.opencontainers.image.architecture=${{ matrix.platform }}
-          # 确保生成单一架构镜像并强制覆盖
+            org.opencontainers.image.architecture=linux/amd64
           provenance: false
-          # 强制覆盖已存在的标签
-          no-cache: true
+          no-cache: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
-      - name: Build and Push Multi-Arch Docker Image to GitHub Packages
+      - name: Build and Push AMD64 Image to GitHub Packages
         uses: docker/build-push-action@v5
         with:
           context: .
           file: Dockerfile
-          platforms: ${{ matrix.platform }}
+          platforms: linux/amd64
           push: true
           tags: |
-            ghcr.io/${{ github.actor }}/simple_sq_music_plus:v${{ env.DOCKER_VERSION }}-${{ matrix.tag_suffix }}
-            ghcr.io/${{ github.actor }}/simple_sq_music_plus:small-latest-${{ matrix.tag_suffix }}
+            ghcr.io/${{ github.actor }}/simple_sq_music_plus:v${{ env.DOCKER_VERSION }}-amd64
+            ghcr.io/${{ github.actor }}/simple_sq_music_plus:small-latest-amd64
           build-args: |
             JAR_FILE=target/simple_sq_music_plus.jar
           labels: |
             org.opencontainers.image.title=Simple Music Server
             org.opencontainers.image.description=Music streaming server with multi-arch support
             org.opencontainers.image.version=v${{ env.DOCKER_VERSION }}
-            org.opencontainers.image.architecture=${{ matrix.platform }}
-          # 确保生成单一架构镜像并强制覆盖
+            org.opencontainers.image.architecture=linux/amd64
           provenance: false
-          # 强制覆盖已存在的标签
-          no-cache: true
+          no-cache: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  build-arm64:
+    name: Build and Push ARM64 Image
+    needs: build
+    if: needs.build.outputs.ci_enabled == 'true'
+    runs-on: ubuntu-24.04-arm
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Download Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: build-info
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Read Application Version
+        id: app_version
+        run: |
+          VERSION=$(cat version.txt 2>/dev/null || echo "unknown")
+          DOCKER_VERSION="${VERSION}-small"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "docker_version=$DOCKER_VERSION" >> $GITHUB_OUTPUT
+          echo "APP_VERSION=$VERSION" >> $GITHUB_ENV
+          echo "DOCKER_VERSION=$DOCKER_VERSION" >> $GITHUB_ENV
+
+      - name: Login to Aliyun Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: registry.cn-hangzhou.aliyuncs.com
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Login to GitHub Packages
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and Push ARM64 Image to Aliyun
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile
+          platforms: linux/arm64
+          push: true
+          tags: |
+            registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:v${{ env.DOCKER_VERSION }}-arm64
+            registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:small-latest-arm64
+          build-args: |
+            JAR_FILE=target/simple_sq_music_plus.jar
+          labels: |
+            org.opencontainers.image.title=Simple Music Server
+            org.opencontainers.image.description=Music streaming server with multi-arch support
+            org.opencontainers.image.version=v${{ env.DOCKER_VERSION }}
+            org.opencontainers.image.architecture=linux/arm64
+          provenance: false
+          no-cache: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and Push ARM64 Image to GitHub Packages
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile
+          platforms: linux/arm64
+          push: true
+          tags: |
+            ghcr.io/${{ github.actor }}/simple_sq_music_plus:v${{ env.DOCKER_VERSION }}-arm64
+            ghcr.io/${{ github.actor }}/simple_sq_music_plus:small-latest-arm64
+          build-args: |
+            JAR_FILE=target/simple_sq_music_plus.jar
+          labels: |
+            org.opencontainers.image.title=Simple Music Server
+            org.opencontainers.image.description=Music streaming server with multi-arch support
+            org.opencontainers.image.version=v${{ env.DOCKER_VERSION }}
+            org.opencontainers.image.architecture=linux/arm64
+          provenance: false
+          no-cache: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
   create-manifest-list:
     name: Create Manifest Lists
-    needs: build-multi-arch-images
-    if: needs.build-multi-arch-images.result == 'success'
+    needs: [build-amd64, build-arm64]
+    if: needs.build-amd64.result == 'success' && needs.build-arm64.result == 'success'
     runs-on: ubuntu-latest
 
     steps:

@@ -5,12 +5,12 @@ services:
   sqmusic_main:
     build:
       context: .
-      dockerfile: Dockerfile.arm
+      dockerfile: Dockerfile
     image: registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:small-latest
     container_name: sqmusic_main_arm
     environment:
-      # JVM 参数（ARM 优化）
-      - JAVA_OPTS=-Xms256m -Xmx512m -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -XX:+UnlockExperimentalVMOptions -XX:+UseContainerSupport
+      # JVM 参数
+      - JAVA_OPTS=-Xms256m -Xmx512m -XX:+UseG1GC -XX:MaxGCPauseMillis=200
       # Spring Profile
       - SPRING_PROFILES_ACTIVE=kw,mg,qq,netease,kg
     volumes:
