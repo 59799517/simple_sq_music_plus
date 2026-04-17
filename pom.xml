@@ -323,7 +323,7 @@
                     <installDirectory>${node.install.dir}</installDirectory>
                     <nodeVersion>${node.version}</nodeVersion>
                     <npmVersion>${npm.version}</npmVersion>
-                    <nodeDownloadRoot>https://mirrors.aliyun.com/nodejs/releases/</nodeDownloadRoot>
+                    <nodeDownloadRoot>https://mirrors.aliyun.com/nodejs-release/</nodeDownloadRoot>
                     <npmDownloadRoot>https://registry.npmmirror.com/npm/</npmDownloadRoot>
                 </configuration>
                 <executions>
