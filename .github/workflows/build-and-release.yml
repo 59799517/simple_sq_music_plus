@@ -16,6 +16,8 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
+    outputs:
+      ci_enabled: ${{ steps.app_version.outputs.ci_enabled }}
 
     steps:
       - name: Checkout code
