@@ -33,8 +33,6 @@ WORKDIR /app
 COPY --from=extractor /extractor/layers/dependencies/ ./
 # spring-boot-loader 层（很少变化）
 COPY --from=extractor /extractor/layers/spring-boot-loader/ ./
-# snapshot-dependencies 层（如果有快照依赖）
-COPY --from=extractor /extractor/layers/snapshot-dependencies/ ./ || true
 # application 层（经常变化）
 COPY --from=extractor /extractor/layers/application/ ./
 
