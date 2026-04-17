@@ -1,11 +1,7 @@
 version: '3.8'
 
 services:
-  # 主应用服务（后端 + 前端 + H2数据库）- ARM64 架构
   small-sqmusic:
-    build:
-      context: .
-      dockerfile: Dockerfile
     image: registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:small-latest
     container_name: small-sqmusic
     environment:

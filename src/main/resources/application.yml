@@ -2,7 +2,7 @@ server:
   port: 8100
 spring:
   datasource:
-    url: jdbc:h2:file:/app/data/sqmusic;MODE=MySQL;DB_CLOSE_DELAY=-1;AUTO_SERVER=TRUE;DATABASE_TO_LOWER=TRUE;SCHEMA=PUBLIC
+    url: jdbc:h2:file:/app/data/sqmusic;MODE=MySQL;DB_CLOSE_DELAY=-1;AUTO_SERVER=TRUE;DATABASE_TO_LOWER=TRUE;SCHEMA=PUBLIC;LOCK_TIMEOUT=10000
     driver-class-name: org.h2.Driver
     username: sa
     password:
