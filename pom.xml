@@ -26,8 +26,8 @@
         <skipTests>true</skipTests>
         <frontend-src-dir>${project.basedir}/web</frontend-src-dir>
         <node.install.dir>${project.basedir}/.node</node.install.dir>
-        <node.version>v22.14.1</node.version>
-        <npm.version>11.6.1</npm.version>
+        <node.version>v22.14.0</node.version>
+        <npm.version>10.8.2</npm.version>
     </properties>
     <dependencies>
         <dependency>
@@ -323,7 +323,7 @@
                     <installDirectory>${node.install.dir}</installDirectory>
                     <nodeVersion>${node.version}</nodeVersion>
                     <npmVersion>${npm.version}</npmVersion>
-                    <nodeDownloadRoot>https://mirrors.aliyun.com/nodejs/</nodeDownloadRoot>
+                    <nodeDownloadRoot>https://mirrors.aliyun.com/nodejs/releases/</nodeDownloadRoot>
                     <npmDownloadRoot>https://registry.npmmirror.com/npm/</npmDownloadRoot>
                 </configuration>
                 <executions>
