@@ -4,11 +4,8 @@ package com.sqmusicplus.v3.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import org.springframework.context.annotation.Scope;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
-
-import java.lang.reflect.Method;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * @Classname SyncThreadPoolConfig
@@ -21,36 +18,20 @@ import java.util.concurrent.*;
 public class SyncThreadPoolConfig  {
 //    private static final Logger log = LoggerFactory.getLogger(SyncThreadPoolConfig.class);
 
+    /**
+     * 酷我二维码线程池 - 使用虚拟线程（Java 21+）
+     */
     @Bean(name = "kwQrthreadPoolTaskExecutor")
-    public ThreadPoolExecutor getAsyncExecutor() {
-
-
-        ThreadPoolExecutor executor = new ThreadPoolExecutor(
-                10, // 核心线程数
-                15, // 最大线程数
-                60*5, // 线程最大空闲时间
-                TimeUnit.SECONDS, // 时间单位
-                new LinkedBlockingQueue<Runnable>(20), // 任务队列
-                Executors.defaultThreadFactory(), // 线程工厂
-                new ThreadPoolExecutor.CallerRunsPolicy() // 拒绝策略
-        );
-
-        return executor;
+    public ExecutorService getAsyncExecutor() {
+        return Executors.newVirtualThreadPerTaskExecutor();
     }
+
+    /**
+     * QQ二维码线程池 - 使用虚拟线程（Java 21+）
+     */
     @Bean(name = "qqQrthreadPoolTaskExecutor")
-    public ThreadPoolExecutor getQqAsyncExecutor() {
-
-        ThreadPoolExecutor executor = new ThreadPoolExecutor(
-                10, // 核心线程数
-                15, // 最大线程数
-                60*5, // 线程最大空闲时间
-                TimeUnit.SECONDS, // 时间单位
-                new LinkedBlockingQueue<Runnable>(20), // 任务队列
-                Executors.defaultThreadFactory(), // 线程工厂
-                new ThreadPoolExecutor.CallerRunsPolicy() // 拒绝策略
-        );
-
-        return executor;
+    public ExecutorService getQqAsyncExecutor() {
+        return Executors.newVirtualThreadPerTaskExecutor();
     }
 //
 //    public AsyncUncaughtExceptionHandler getAsyncUncaughtExceptionHandler() {

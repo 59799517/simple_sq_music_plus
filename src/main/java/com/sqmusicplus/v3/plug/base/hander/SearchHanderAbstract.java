@@ -437,7 +437,7 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
             
             // 等待异步下载完成
             try {
-                boolean completed = downloadLatch.await(5, TimeUnit.MINUTES);
+                boolean completed = downloadLatch.await(20, TimeUnit.MINUTES);
                 if (!completed) {
                     log.error("下载超时: {}", baseMusicName);
                     throw new RuntimeException("下载超时: " + baseMusicName);

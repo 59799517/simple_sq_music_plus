@@ -17,6 +17,7 @@ import com.sqmusicplus.v3.utils.MusicUtils;
 import com.sqmusicplus.v3.utils.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -25,6 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 
 /**
  * @Classname DownloadServiceController
@@ -49,6 +51,10 @@ public class DownloadServiceController {
     private UrlMusicPlayListParser urlMusicPlayListParser;
     @Autowired
     private TextMusicPlayListParser textMusicPlayListParser;
+    
+    @Autowired
+    @Qualifier("threadPoolTaskExecutor")
+    private ExecutorService threadPoolTaskExecutor;
 
     /**
      * 下载单曲
@@ -190,7 +196,9 @@ public class DownloadServiceController {
         if (StringUtils.isBlank(param.getText())) {
             return AjaxResult.error("请输入要解析的文本");
         }
-        Thread thread = new Thread(() -> {
+        
+        // 使用虚拟线程池执行异步任务
+        threadPoolTaskExecutor.execute(() -> {
             try {
                 List<ParserEntity> parser = textMusicPlayListParser.parser(param.getText());
                 List<ParserEntity> parserEntities = textMusicPlayListParser.parserParserEntity(parser);
@@ -208,15 +216,16 @@ public class DownloadServiceController {
                             downloadInfos.add(downloadInfo);
                         }
                         downloadInfoService.add(downloadInfos);
-                    } catch (Exception ignored) {
-
+                        log.info("文本解析完成，共添加 {} 首歌曲到下载队列", downloadInfos.size());
+                    } catch (Exception e) {
+                        log.error("添加下载任务失败", e);
                     }
                 }
             } catch (Exception e) {
                 log.error("解析失败", e);
             }
         });
-        thread.start();
+        
         return AjaxResult.success("开始解析并下载，稍后在下载中查看！（每首识别大致需要500毫秒耐心等待）");
     }
 
