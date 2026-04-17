@@ -326,13 +326,6 @@
                     <npmDownloadRoot>https://registry.npmmirror.com/npm/</npmDownloadRoot>
                 </configuration>
                 <executions>
-                    <!-- 安装Node.js和npm -->
-                    <execution>
-                        <id>install-node-and-npm</id>
-                        <goals>
-                            <goal>install-node-and-npm</goal>
-                        </goals>
-                    </execution>
                     <!-- 安装依赖 -->
                     <execution>
                         <id>npm-install</id>
@@ -419,4 +412,53 @@
             <url>https://www.jitpack.io</url>
         </repository>
     </repositories>
+
+    <profiles>
+        <!-- 本地开发环境：自动下载 Node.js -->
+        <profile>
+            <id>local-dev</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>com.github.eirslett</groupId>
+                        <artifactId>frontend-maven-plugin</artifactId>
+                        <version>1.15.0</version>
+                        <executions>
+                            <!-- 安装Node.js和npm -->
+                            <execution>
+                                <id>install-node-and-npm</id>
+                                <goals>
+                                    <goal>install-node-and-npm</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <!-- Docker/CI 环境：使用系统已安装的 Node.js -->
+        <profile>
+            <id>docker-build</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>com.github.eirslett</groupId>
+                        <artifactId>frontend-maven-plugin</artifactId>
+                        <version>1.15.0</version>
+                        <executions>
+                            <!-- 跳过 Node.js 安装，直接使用系统已有的 -->
+                            <execution>
+                                <id>install-node-and-npm</id>
+                                <phase>none</phase>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>

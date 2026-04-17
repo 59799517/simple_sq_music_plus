@@ -4,6 +4,9 @@ MAINTAINER SQ
 
 WORKDIR /build/
 
+# 安装 Node.js 和 npm（Alpine 包管理器）
+RUN apk add --no-cache nodejs npm
+
 # 复制 pom.xml 并下载依赖（利用 Docker 缓存）
 COPY pom.xml /build/
 RUN mvn dependency:go-offline -B
@@ -12,8 +15,8 @@ RUN mvn dependency:go-offline -B
 COPY src /build/src/
 COPY web /build/web/
 
-# 构建项目（跳过测试）
-RUN mvn clean package -DskipTests -B
+# 构建项目（跳过测试，使用 docker-build profile）
+RUN mvn clean package -DskipTests -Pdocker-build -B
 
 # 第二阶段：提取分层 JAR
 FROM eclipse-temurin:21-jre-alpine AS extractor
