@@ -323,6 +323,8 @@
                     <installDirectory>${node.install.dir}</installDirectory>
                     <nodeVersion>${node.version}</nodeVersion>
                     <npmVersion>${npm.version}</npmVersion>
+                    <nodeDownloadRoot>https://mirrors.aliyun.com/nodejs/</nodeDownloadRoot>
+                    <npmDownloadRoot>https://registry.npmmirror.com/npm/</npmDownloadRoot>
                 </configuration>
                 <executions>
                     <!-- 安装Node.js和npm -->
