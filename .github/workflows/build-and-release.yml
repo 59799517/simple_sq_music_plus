@@ -250,10 +250,10 @@ jobs:
           echo "Waiting for image synchronization..."
           sleep 30
 
-          # 验证基础镜像是否存在
+          # 验证基础镜像是否存在（可选，失败不中断）
           echo "Checking if base images exist..."
-          docker pull registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:v${{ env.DOCKER_VERSION }}-amd64
-          docker pull registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:v${{ env.DOCKER_VERSION }}-arm64
+          docker pull registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:v${{ env.DOCKER_VERSION }}-amd64 || echo "Warning: amd64 image not found, will retry in manifest create"
+          docker pull registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:v${{ env.DOCKER_VERSION }}-arm64 || echo "Warning: arm64 image not found, will retry in manifest create"
 
           # 检查拉取的镜像是不是manifest list
           echo "Verifying image types..."
@@ -302,10 +302,10 @@ jobs:
           echo "Waiting for image synchronization..."
           sleep 30
 
-          # 验证基础镜像是否存在
+          # 验证基础镜像是否存在（可选，失败不中断）
           echo "Checking if base images exist..."
-          docker pull ghcr.io/${{ github.actor }}/simple_sq_music_plus:v${{ env.DOCKER_VERSION }}-amd64
-          docker pull ghcr.io/${{ github.actor }}/simple_sq_music_plus:v${{ env.DOCKER_VERSION }}-arm64
+          docker pull ghcr.io/${{ github.actor }}/simple_sq_music_plus:v${{ env.DOCKER_VERSION }}-amd64 || echo "Warning: amd64 image not found, will retry in manifest create"
+          docker pull ghcr.io/${{ github.actor }}/simple_sq_music_plus:v${{ env.DOCKER_VERSION }}-arm64 || echo "Warning: arm64 image not found, will retry in manifest create"
 
           # 检查拉取的镜像是不是manifest list
           echo "Verifying image types..."
