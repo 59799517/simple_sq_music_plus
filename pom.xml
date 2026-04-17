@@ -26,8 +26,8 @@
         <skipTests>true</skipTests>
         <frontend-src-dir>${project.basedir}/web</frontend-src-dir>
         <node.install.dir>${project.basedir}/.node</node.install.dir>
-        <node.version>v20.11.0</node.version>
-        <npm.version>10.2.4</npm.version>
+        <node.version>v22.14.0</node.version>
+        <npm.version>10.9.2</npm.version>
     </properties>
     <dependencies>
         <dependency>
