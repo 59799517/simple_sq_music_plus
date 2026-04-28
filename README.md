@@ -113,5 +113,8 @@ Todo：
 
 #### 3.0后续升级脚本可以使用scrpit下的 check_update.sh脚本
 
+感谢：
+https://github.com/MakcRe/KuGouMusicApi  酷狗API
+
 
 

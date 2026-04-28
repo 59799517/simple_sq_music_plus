@@ -142,8 +142,8 @@ public class InitV3  implements ApplicationRunner {
         if (Boolean.valueOf(kgsqConfigvalue)) {
             String configValue = SqConfigCache.getSqConfigValue(SetConfigEnum.PLUG_KG_BASEURL);
 // 检测kugoumusicapi服务
-//            String dockerApiUrl = "http://kugoumusicapi:3000";
-            String dockerApiUrl = "http://192.168.31.70:3000";
+            String dockerApiUrl = "http://kugoumusicapi:3000";
+//            String dockerApiUrl = "http://192.168.31.70:3000";
             if(StringUtils.isNotBlank(configValue)){
                 dockerApiUrl= configValue;
             }

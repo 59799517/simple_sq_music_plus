@@ -50,6 +50,14 @@ services:
       timeout: 5s
       retries: 5
     restart: always
+  kugoumusicapi:
+    build:
+      context: https://github.com/MakcRe/KuGouMusicApi.git
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+    environment:
+      PLATFORM: lite
 
 networks:
   sq-app-network:
