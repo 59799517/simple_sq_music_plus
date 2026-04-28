@@ -30,6 +30,7 @@ public class AutoDdlConfig   extends SimpleDdl {
                 ,"db/sq_ali_sync.sql"
                 ,"db/3.1.0update.sql"
                 ,"db/3.1.2update.sql"
+                ,"db/3.1.3update.sql"
         );
     }
 
