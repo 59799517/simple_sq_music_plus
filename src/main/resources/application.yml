@@ -1,11 +1,9 @@
-DB_IP: 192.168.31.70
-DB_PORT: 3306
-DB_NAME: sqmusicv3test
-DB_USERNAME: root
-DB_PASSWORD: sqmusicv3password
 server:
   port: 8099
 spring:
+  threads:
+    virtual:
+      enabled: true
   datasource:
     url: jdbc:mysql://${DB_IP:localhost}:${DB_PORT:3306}/${DB_NAME:sqmusicv3}?useUnicode=true&useSSL=false&characterEncoding=utf8&serverTimezone=UTC&rewriteBatchedStatements=true&allowMultiQueries=true
     driver-class-name: com.mysql.jdbc.Driver
@@ -35,6 +33,8 @@ spring:
     active: kw,mg,qq,netease,kg
   mvc:
     static-path-pattern: /**
+    pathmatch:
+      matching-strategy: ant_path_matcher
   web:
     resources:
       static-locations: classpath:/static/,classpath:/public/,classpath:/resources/,classpath:/META-INF/resources/,classpath:/docs/
@@ -73,8 +73,6 @@ sa-token:
   token-name: sqmusic
   # token 有效期，单位s 默认30天, -1代表永不过期
   timeout: -1
-  # token 临时有效期 (指定时间内无操作就视为token过期) 单位: 秒
-  activity-timeout: -1
   # 是否允许同一账号并发登录 (为true时允许一起登录, 为false时新登录挤掉旧登录)
   is-concurrent: true
   # 在多人登录同一账号时，是否共用一个token (为true时所有登录共用一个token, 为false时每次登录新建一个token)
@@ -85,8 +83,11 @@ sa-token:
   is-log: false
   is-print: false
   jwt-secret-key: xNQRcY7FgHM1dyJCoZKmcmksNT7aR0FlqvRCWJbmD
+  # token 临时有效期 (指定时间内无操作就视为token过期) 单位: 秒
+  active-timeout: -1
 
-version: 3.1.2
+
+version: 3.1.3
 webversion: 3.1.0
 
 

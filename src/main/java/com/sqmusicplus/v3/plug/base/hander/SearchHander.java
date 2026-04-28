@@ -9,6 +9,7 @@ import com.sqmusicplus.v3.base.enums.PlugBrType;
 import com.sqmusicplus.v3.download.vo.DownloadUrlResult;
 import com.sqmusicplus.v3.plug.entity.*;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 

@@ -23,9 +23,8 @@ public class MgAlbumInfoResult {
     private String code;
     @JsonProperty("info")
     private String info;
-    @JsonProperty("data")
-    private DataDTO data;
-
+    @JsonProperty("resource")
+    private List<DataDTO> resource;
     @NoArgsConstructor
     @Data
     public static class DataDTO {

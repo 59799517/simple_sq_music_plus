@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>2.7.1</version>
+        <version>3.5.12</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>com.sqmusicplus</groupId>
@@ -16,31 +16,25 @@
     <description>simple_sq_musuc_plus</description>
 
     <properties>
-        <java.version>17</java.version>
-        <jsoup.version>1.15.3</jsoup.version>
+        <java.version>21</java.version>
+        <jsoup.version>1.22.1</jsoup.version>
         <jave-all-deps.version>3.5.0</jave-all-deps.version>
         <jaudiotagger.version>2.0.3</jaudiotagger.version>
         <hutool.version>5.8.25</hutool.version>
         <jcommander.version>1.82</jcommander.version>
         <commons.collections.version>3.2.2</commons.collections.version>
-        <fastjson.version>1.2.83</fastjson.version>
         <skipTests>true</skipTests>
+<!--        <frontend-src-dir>${project.basedir}/web</frontend-src-dir>-->
+<!--        <node.install.dir>${project.basedir}/.node</node.install.dir>-->
+        <node.version>v22.14.0</node.version>
+<!--        <npm.version>10.8.2</npm.version>-->
     </properties>
     <dependencies>
-<!--&lt;!&ndash;war依赖&ndash;&gt;-->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-tomcat</artifactId>
-            <scope>provided</scope>
-        </dependency>
-
-
         <dependency>
             <groupId>com.zaxxer</groupId>
             <artifactId>HikariCP</artifactId>
             <version>5.1.0</version>
         </dependency>
-
 <!--配置文件支持-->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -48,18 +42,10 @@
             <optional>true</optional>
         </dependency>
 
-<!--        <dependency>-->
-<!--            <groupId>org.apache.httpcomponents</groupId>-->
-<!--            <artifactId>httpclient</artifactId>-->
-<!--            <version>4.5.13</version>-->
-<!--        </dependency>-->
-
-
-
         <dependency>
             <groupId>org.apache.httpcomponents.client5</groupId>
             <artifactId>httpclient5</artifactId>
-            <version>5.2.1</version>
+            <version>5.6</version>
         </dependency>
 
 
@@ -68,16 +54,6 @@
             <artifactId>core</artifactId>
             <version>3.5.1</version>
         </dependency>
-
-<!--        <dependency>-->
-<!--            <groupId>org.apache.tomcat.embed</groupId>-->
-<!--            <artifactId>tomcat-embed-jasper</artifactId>-->
-<!--        </dependency>-->
-
-<!--        <dependency>-->
-<!--            <groupId>org.springframework.boot</groupId>-->
-<!--            <artifactId>spring-boot-starter</artifactId>-->
-<!--        </dependency>-->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
@@ -118,7 +94,7 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <version>1.18.22</version>
+            <version>1.18.42</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -131,39 +107,36 @@
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
         </dependency>
-
 <!-- 爬虫工具-->
         <dependency>
             <groupId>org.jsoup</groupId>
             <artifactId>jsoup</artifactId>
             <version>${jsoup.version}</version>
         </dependency>
-
-
         <dependency>
             <groupId>com.squareup.okhttp3</groupId>
             <artifactId>logging-interceptor</artifactId>
-            <version>3.14.9</version>
+            <version>4.12.0</version>
         </dependency>
 
 
 
         <dependency>
             <groupId>cn.dev33</groupId>
-            <artifactId>sa-token-spring-boot-starter</artifactId>
-            <version>1.30.0</version>
+            <artifactId>sa-token-spring-boot3-starter</artifactId>
+            <version>1.45.0</version>
         </dependency>
 
         <dependency>
             <groupId>cn.dev33</groupId>
             <artifactId>sa-token-jwt</artifactId>
-            <version>1.30.0</version>
+            <version>1.45.0</version>
         </dependency>
 
         <dependency>
             <groupId>com.squareup.okio</groupId>
             <artifactId>okio</artifactId>
-            <version>2.8.0</version>
+            <version>3.6.0</version>
         </dependency>
         <!-- collections工具类 -->
         <dependency>
@@ -172,11 +145,11 @@
             <version>${commons.collections.version}</version>
         </dependency>
 
-        <dependency>
-            <groupId>commons-httpclient</groupId>
-            <artifactId>commons-httpclient</artifactId>
-            <version>3.1</version>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>commons-httpclient</groupId>-->
+<!--            <artifactId>commons-httpclient</artifactId>-->
+<!--            <version>3.1</version>-->
+<!--        </dependency>-->
 
 <!--    json    -->
         <!-- 阿里JSON解析器 -->
@@ -189,7 +162,7 @@
         <dependency>
             <groupId>com.alibaba.fastjson2</groupId>
             <artifactId>fastjson2</artifactId>
-            <version>2.0.61</version>
+            <version>2.0.59</version>
         </dependency>
 
         <!--音乐标签工具-->
@@ -211,26 +184,16 @@
         </dependency>
 
 
-
-
         <dependency>
             <groupId>com.baomidou</groupId>
-            <artifactId>mybatis-plus-boot-starter</artifactId>
-            <version>3.5.10.1</version>
+            <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
+            <version>3.5.15</version>
         </dependency>
 
-        <!-- jdk 11+ 引入可选模块 -->
         <dependency>
             <groupId>com.baomidou</groupId>
             <artifactId>mybatis-plus-jsqlparser</artifactId>
-            <version>3.5.10.1</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.baomidou</groupId>
-            <artifactId>mybatis-plus-generator</artifactId>
-            <version>3.5.10.1</version>
-            <scope>test</scope>
+            <version>3.5.15</version>
         </dependency>
         <dependency>
             <groupId>org.freemarker</groupId>
@@ -314,9 +277,10 @@
             <resource>
                 <directory>src/main/resources</directory>
                 <includes>
-                    <include>**/*.*</include>
-                    <include>**/*.js</include>
-                    <include>**/*.css</include>
+                    <include>**/*.yml</include>
+                    <include>**/*.yaml</include>
+                    <include>**/*.properties</include>
+                    <include>**/*.xml</include>
                     <include>**/*.html</include>
                     <include>**/*.json</include>
                     <include>**/*.otf</include>
@@ -332,7 +296,11 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
-
+                <configuration>
+                    <layers>
+                        <enabled>true</enabled>
+                    </layers>
+                </configuration>
             </plugin>
 
             <plugin>

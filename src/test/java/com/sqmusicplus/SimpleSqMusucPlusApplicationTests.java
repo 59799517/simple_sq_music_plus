@@ -1,12 +1,9 @@
 package com.sqmusicplus;
-import cn.hutool.core.collection.ListUtil;
+import cn.hutool.core.codec.Base64;
 import com.alibaba.fastjson2.JSONObject;
 
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.sqmusicplus.v3.plug.apple.hander.AppleMusicDRMHandler;
-import com.sqmusicplus.v3.plug.entity.Music;
-import com.sqmusicplus.v3.plug.qq.entity.QQMusicCookieInfo;
+
 import com.sqmusicplus.v3.plug.qq.entity.QQMusicQr;
 import com.sqmusicplus.v3.plug.qq.entity.QQMusicQrEventResult;
 import com.sqmusicplus.v3.plug.qq.enums.LoginType;
@@ -27,7 +24,6 @@ import org.apache.hc.core5.http.io.entity.EntityUtils;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.util.Base64Utils;
 
 import java.io.UnsupportedEncodingException;
 import java.net.http.HttpHeaders;
@@ -932,7 +928,7 @@ private QQHander qqHander;
         if(qqMusicQr==null){
             return null;
         }
-        return  Base64Utils.encodeToString(qqMusicQr.getData());
+        return  Base64.encode(qqMusicQr.getData());
 
     }
 

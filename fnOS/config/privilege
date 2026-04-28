@@ -1,8 +1,7 @@
 {
-    "defaults":
-    {
-        "run-as": "package"
-    },
-    "username": "docker-SimpleSqMusicPlus",
-    "groupname": "docker-SimpleSqMusicPlus"
+  "username": "sq_music",
+  "groupname": "sq_music",
+  "defaults": {
+    "run-as": "package"
+  }
 }

@@ -1,13 +1,18 @@
 {
-    ".url": {
-        "SimpleSqMusicPlus.Application": {
-            "title": "SimpleSqMusicPlus",
-            "icon": "images/icon_{0}.png",
-            "type": "url",
-            "protocol": "",
-            "port": "8096",
-            "url": "/",
-            "allUsers": false
-        }
+  ".url": {
+    "sq_music.Application": {
+      "noDisplay": false,
+      "allUsers": true,
+      "fileTypes": [],
+      "control": {
+        "accessPerm": "readonly"
+      },
+      "protocol": "",
+      "title": "sq_music",
+      "icon": "images/icon_{0}.png",
+      "type": "url",
+      "port": "8100",
+      "url": "/"
     }
+  }
 }

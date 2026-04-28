@@ -25,10 +25,9 @@ import ws.schild.jave.info.MultimediaInfo;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * @Classname MusicUtils
@@ -40,6 +39,11 @@ import java.util.List;
 
 @Slf4j
 public class MusicUtils {
+
+
+    public static final String KEY_ARTIST_DIR = "artistDir"; // 歌手目录
+    public static final String KEY_ALBUM_DIR = "albumDir";   // 专辑目录
+    public static final String KEY_SONG_DIR = "songDir";     // 歌曲所在目录 (完整目录)
 
     /**
      * 获取文件内容
@@ -176,4 +180,141 @@ public class MusicUtils {
         return brTypes.stream().max(Comparator.comparing(PlugBrType::getBit)).get();
     }
 
+
+    // 变量分类配置
+    private static final Set<String> ARTIST_VARS = Set.of("artists", "artist", "artistsId");
+    private static final Set<String> ALBUM_VARS = Set.of("album", "albumId");
+// ================== 公共入口方法 ==================
+
+    /**
+     * 解析路径模板
+     *
+     * @param template         主路径模板 (例如: "${artists}/${album}/${musicName}")
+     * @param fallbackTemplate 备用模板 (主模板渲染失败时使用，可为 null)
+     * @param pathTemplate     模板参数 Map (用于渲染)
+     * @param separator        文件分隔符 (建议传入 File.separator)
+     * @return 包含 artistDir, albumDir, songDir 的 HashMap，未找到则值为 null
+     */
+    // ================== 公共入口方法 ==================
+
+    public static Map<String, String> parse(String template, String fallbackTemplate,
+                                            Map<String, Object> pathTemplate, String separator) {
+
+        Map<String, String> result = new HashMap<>();
+        result.put(KEY_ARTIST_DIR, null);
+        result.put(KEY_ALBUM_DIR, null);
+        result.put(KEY_SONG_DIR, null);
+
+        if (template == null || template.isEmpty()) return result;
+
+        String sep = (separator == null) ? File.separator : separator;
+
+        // 1. 归一化分隔符
+        String activeTemplate = normalizeSeparator(template, sep);
+        String safeFallback = (fallbackTemplate != null) ? normalizeSeparator(fallbackTemplate, sep) : null;
+
+        // 2. 选择可用模板
+        String finalTemplate = selectWorkingTemplate(activeTemplate, safeFallback, pathTemplate);
+        if (finalTemplate == null) return result;
+
+        // 3. 提取目录部分
+        String dirTemplate = extractDirectoryPart(finalTemplate, sep);
+        if (dirTemplate.isEmpty()) return result;
+
+        // 4. 拆分路径段
+        List<String> segments = splitAndClean(dirTemplate, sep);
+        if (segments.isEmpty()) return result;
+
+        // ================== 核心修复逻辑：范围截取 ==================
+
+        // 5. 找到关键变量最后一次出现的索引
+        int lastArtistIdx = -1;
+        int lastAlbumIdx = -1;
+
+        for (int i = 0; i < segments.size(); i++) {
+            String seg = segments.get(i);
+            if (containsAnyVariable(seg, ARTIST_VARS)) {
+                lastArtistIdx = i; // 更新为当前索引，保证是最后一次出现
+            }
+            if (containsAnyVariable(seg, ALBUM_VARS)) {
+                lastAlbumIdx = i; // 更新为当前索引
+            }
+        }
+
+        // 6. 根据索引范围截取
+        // 歌手目录：从 0 到 最后一个歌手变量 (包含)
+        List<String> artistSegs = subListSafe(segments, 0, lastArtistIdx);
+
+        // 专辑目录：从 0 到 最后一个专辑变量 (包含)
+        List<String> albumSegs = subListSafe(segments, 0, lastAlbumIdx);
+
+        // 7. 渲染
+        result.put(KEY_ARTIST_DIR, renderSegments(artistSegs, pathTemplate, sep));
+        result.put(KEY_ALBUM_DIR, renderSegments(albumSegs, pathTemplate, sep));
+        result.put(KEY_SONG_DIR, renderSegments(segments, pathTemplate, sep));
+
+        return result;
+    }
+
+    // ================== 私有辅助方法 ==================
+
+    /**
+     * 安全截取 List：如果 endIdx < 0，返回空 list
+     */
+    private static List<String> subListSafe(List<String> list, int start, int endIdx) {
+        if (endIdx < 0) return Collections.emptyList();
+        // subList 是 [start, end)，所以要 +1
+        int end = Math.min(endIdx + 1, list.size());
+        return new ArrayList<>(list.subList(start, end));
+    }
+
+    private static String normalizeSeparator(String path, String sep) {
+        return path.replace("/", sep).replace("\\", sep);
+    }
+
+    private static String selectWorkingTemplate(String main, String fallback, Map<String, Object> ctx) {
+        if (tryRender(main, ctx)) return main;
+        if (fallback != null && tryRender(fallback, ctx)) return fallback;
+        return null;
+    }
+
+    private static boolean tryRender(String tpl, Map<String, Object> ctx) {
+        try {
+            SpelTemplateUtils.formatTemplateWithDollar(tpl, ctx);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private static String extractDirectoryPart(String template, String sep) {
+        int lastIdx = template.lastIndexOf(sep);
+        return (lastIdx != -1) ? template.substring(0, lastIdx) : "";
+    }
+
+    private static List<String> splitAndClean(String dirTemplate, String sep) {
+        return Arrays.stream(dirTemplate.split(Pattern.quote(sep)))
+                .filter(s -> s != null && !s.trim().isEmpty())
+                .collect(Collectors.toList());
+    }
+
+    private static boolean containsAnyVariable(String segment, Set<String> keys) {
+        for (String key : keys) {
+            if (segment.contains("${" + key + "}")) return true;
+        }
+        return false;
+    }
+
+    private static String renderSegments(List<String> segments, Map<String, Object> ctx, String sep) {
+        if (segments == null || segments.isEmpty()) return null;
+        String tpl = String.join(sep, segments);
+        try {
+            String res = SpelTemplateUtils.formatTemplateWithDollar(tpl, ctx);
+            return (res == null || res.trim().isEmpty()) ? null : res;
+        } catch (Exception e) {
+            return null;
+        }
+    }
 }
+
+

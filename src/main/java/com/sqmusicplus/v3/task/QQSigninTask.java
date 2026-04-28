@@ -24,12 +24,17 @@ public class QQSigninTask {
     @Autowired
     private QQHander qqHander;
     @Scheduled(cron="1 0 0,4,8,12,16,20,23 * * ? ")
-    public void excuteSignIn() {
-        String qqopenconfigKey = SqConfigCache.getSqConfigValue(SetConfigEnum.PLUG_QQVIP_OPEN);
-        String qqautologin = SqConfigCache.getSqConfigValue(SetConfigEnum.PLUG_QQVIP_AUTO_REFRESH_LOGIN);
-        if (StringUtils.isNotBlank(qqopenconfigKey)&& Boolean.parseBoolean(qqopenconfigKey) && Boolean.parseBoolean(qqautologin)) {
-            log.info("QQ音乐插件已开启，开始自动刷新登录信息");
-            qqHander.refreshToken();
+    public void excute() {
+        try {
+            String qqopenconfigKey = SqConfigCache.getSqConfigValue(SetConfigEnum.PLUG_QQVIP_OPEN);
+            String qqautologin = SqConfigCache.getSqConfigValue(SetConfigEnum.PLUG_QQVIP_AUTO_REFRESH_LOGIN);
+            if (StringUtils.isNotBlank(qqopenconfigKey)&& Boolean.parseBoolean(qqopenconfigKey) && Boolean.parseBoolean(qqautologin)) {
+                log.info("QQ音乐插件已开启，开始自动刷新登录信息");
+                qqHander.refreshToken();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.error("QQ音乐插件自动刷新登录信息异常！");
         }
 
 

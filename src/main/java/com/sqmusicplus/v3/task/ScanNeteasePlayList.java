@@ -54,11 +54,15 @@ public class ScanNeteasePlayList {
 
     @Scheduled(cron = "10 */1 * * * ? ")
     public void excute() {
-        String netopen = SqConfigCache.getSqConfigValue(SetConfigEnum.PLUG_NETEASE_OPEN);
-        if (StringUtils.isNotBlank(netopen)) {
-            log.info("开始扫描网易云歌单");
-            //需要排除的歌单名称
-            queryAndDownloadPlayList();
+        try {
+            String netopen = SqConfigCache.getSqConfigValue(SetConfigEnum.PLUG_NETEASE_OPEN);
+            if (StringUtils.isNotBlank(netopen)) {
+                log.info("开始扫描网易云歌单");
+                queryAndDownloadPlayList();
+            }
+        } catch (Exception e) { // 必须捕获 Throwable，避免OOM等严重异常也漏抓
+            e.printStackTrace();
+            log.error("网易云歌单扫描定时任务执行异常，等待重试！", e);
         }
     }
     //查询需要扫描的歌单

@@ -201,6 +201,14 @@ public enum SetConfigEnum {
     PLUG_KW_OPEN("plug.kw.open","是否开启酷我插件","plug"),
 
 
+
+
+    //    ------------------咪咕插件配置-----------------
+    /**
+     * 是否开启酷我插件
+     */
+    PLUG_MG_OPEN("plug.mg.open","是否开启酷我插件","plug"),
+
 // --------------------------freemp3------------------
     PLUG_FREEMP3_OPEN("plug.freemp3.open","是否开启freemp3插件","plug"),
 

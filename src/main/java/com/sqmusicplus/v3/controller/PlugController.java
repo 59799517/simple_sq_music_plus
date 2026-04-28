@@ -1,6 +1,7 @@
 package com.sqmusicplus.v3.controller;
 
 import cn.dev33.satoken.annotation.SaCheckLogin;
+import cn.hutool.core.codec.Base64;
 import com.sqmusicplus.v3.base.entity.SqConfig;
 import com.sqmusicplus.v3.base.enums.DbBooleanConvert;
 import com.sqmusicplus.v3.base.enums.SetConfigEnum;
@@ -15,7 +16,6 @@ import com.sqmusicplus.v3.plug.qqvip.QQvipHander;
 import com.sqmusicplus.v3.utils.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.util.Base64Utils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -132,7 +132,7 @@ public class PlugController {
     @GetMapping("/qqvip/getQrImage")
     public AjaxResult  getQQvipQrimage(){
             QQMusicQr qqLoginQr = qqHander.getQQLoginQr();
-            String image ="data:"+qqLoginQr.getMimeType()+";base64,"+ Base64Utils.encodeToString(qqLoginQr.getData());
+            String image ="data:"+qqLoginQr.getMimeType()+";base64,"+ Base64.encode(qqLoginQr.getData());
             return AjaxResult.success("成功", image);
     }
 
@@ -144,7 +144,7 @@ public class PlugController {
     @GetMapping("/qqvip/getWechatQrImage")
     public AjaxResult  getWechatQrImage(){
         QQMusicQr qqLoginQr = qqHander.getWechatLoginQr();
-        String image ="data:"+qqLoginQr.getMimeType()+";base64,"+ Base64Utils.encodeToString(qqLoginQr.getData());
+        String image ="data:"+qqLoginQr.getMimeType()+";base64,"+ Base64.encode(qqLoginQr.getData());
         return AjaxResult.success("成功", image);
     }
 

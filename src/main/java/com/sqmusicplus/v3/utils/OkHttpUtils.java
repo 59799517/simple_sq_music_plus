@@ -209,6 +209,19 @@ public class OkHttpUtils {
         headerMap.put(key, value);
         return this;
     }
+    /**
+     * 添加请求头
+     *
+     * @param headerMap
+     * @return
+     */
+    public OkHttpUtils addHeader(Map<String, String> headerMap) {
+        if (headerMap == null) {
+            return this;
+        }
+        headerMap.putAll(headerMap);
+        return this;
+    }
 
     /**
      * 初始化get方法

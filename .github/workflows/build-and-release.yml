@@ -22,10 +22,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
       
-      - name: Set up JDK 17
+      - name: Set up JDK 21
         uses: actions/setup-java@v3
         with:
-          java-version: '17'
+          java-version: '21'
           distribution: 'temurin'
           cache: 'maven'
           cache-dependency-path: 'pom.xml'
@@ -167,15 +167,17 @@ jobs:
   build-multi-arch-images:
     name: Build and Push Multi-Arch Docker Images
     needs: build
-    runs-on: ubuntu-latest
     strategy:
       matrix:
-        platform: [linux/amd64, linux/arm64]
         include:
           - platform: linux/amd64
             tag_suffix: amd64
+            runner: ubuntu-latest
           - platform: linux/arm64
             tag_suffix: arm64
+            runner: ubuntu-24.04-arm
+    
+    runs-on: ${{ matrix.runner }}
     
     steps:
       - name: Checkout code
@@ -185,9 +187,6 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: java-artifact
-      
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
       
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -213,7 +212,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       
-      - name: Build and Push Multi-Arch Docker Image to Aliyun
+      - name: Build and Push Docker Image to Aliyun
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -230,12 +229,10 @@ jobs:
             org.opencontainers.image.description=Music streaming server with multi-arch support
             org.opencontainers.image.version=v${{ env.APP_VERSION }}
             org.opencontainers.image.architecture=${{ matrix.platform }}
-          # 确保生成单一架构镜像并强制覆盖
           provenance: false
-          # 强制覆盖已存在的标签
           no-cache: true
       
-      - name: Build and Push Multi-Arch Docker Image to GitHub Packages
+      - name: Build and Push Docker Image to GitHub Packages
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -252,9 +249,7 @@ jobs:
             org.opencontainers.image.description=Music streaming server with multi-arch support
             org.opencontainers.image.version=v${{ env.APP_VERSION }}
             org.opencontainers.image.architecture=${{ matrix.platform }}
-          # 确保生成单一架构镜像并强制覆盖
           provenance: false
-          # 强制覆盖已存在的标签
           no-cache: true
 
   create-manifest-list:

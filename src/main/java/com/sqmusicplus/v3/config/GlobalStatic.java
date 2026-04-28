@@ -21,7 +21,7 @@ public class GlobalStatic {
     /**
      * 最大同步次数 超过就算失败放弃同步
      */
-    public static Integer SUBSONIC_SYNC_MAXIMUM_STATISTICS = 3;
+    public static Boolean IS_INIT = false;
 
 
 

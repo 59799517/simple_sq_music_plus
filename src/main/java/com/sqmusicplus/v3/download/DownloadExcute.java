@@ -20,6 +20,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -39,7 +40,7 @@ public class DownloadExcute {
     private DownloadInfoService downloadInfoService;
     @Autowired
     @Qualifier("threadPoolTaskExecutor")
-    private ThreadPoolTaskExecutor threadPoolTaskExecutor;
+    private ExecutorService executorService;
 
     /**
      * 本次执行中QQVIP下载成功计数(线程安全)
@@ -93,7 +94,7 @@ public class DownloadExcute {
         }
         if (records != null && records.size() > 0) {
             for (DownloadInfo record : records) {
-                threadPoolTaskExecutor.execute(() -> {
+                executorService.execute(() -> {
                     try {
                         record.setDownloadStatus(DownloadStatus.loading.getValue());
                         downloadInfoService.updateById(record);

@@ -4,55 +4,36 @@ import com.sqmusicplus.v3.utils.Threads;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadPoolExecutor;
 
 /**
- * 总线程池配置与下载线程池
+ * 总线程池配置与下载线程池 - JDK 21 虚拟线程版本
  *
  * @author SQ
  **/
 @Configuration
 public class ThreadPoolConfig
 {
-    // 核心线程池大小
+    // 核心线程池大小（用于定时任务）
     private int corePoolSize = 20;
 
-    // 最大可创建的线程数
-    private int maxPoolSize = 80;
-
-    // 队列最大长度
-    private int queueCapacity = 500;
-
-    // 线程池维护线程所允许的空闲时间
-    private int keepAliveSeconds = 300;
-
     @Bean(name = "threadPoolTaskExecutor")
-    public ThreadPoolTaskExecutor threadPoolTaskExecutor()
+    public ExecutorService threadPoolTaskExecutor()
     {
-        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setMaxPoolSize(maxPoolSize);
-        executor.setCorePoolSize(corePoolSize);
-        executor.setQueueCapacity(queueCapacity);
-        executor.setKeepAliveSeconds(keepAliveSeconds);
-        // 线程池对拒绝任务(无线程可用)的处理策略
-        executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
-        return executor;
+        // 使用虚拟线程执行器
+        return Executors.newVirtualThreadPerTaskExecutor();
     }
+    
     @Bean(name = "downloadThreadPool")
-    public ThreadPoolTaskExecutor downloadThreadPool()
+    public ExecutorService downloadThreadPool()
     {
-        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setMaxPoolSize(10);
-        executor.setCorePoolSize(5);
-        executor.setQueueCapacity(500);
-        executor.setKeepAliveSeconds(100);
-        // 线程池对拒绝任务(无线程可用)的处理策略
-        executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
-        return executor;
+        // 使用虚拟线程执行器
+        return Executors.newVirtualThreadPerTaskExecutor();
     }
     /**
      * 执行周期性或定时任务

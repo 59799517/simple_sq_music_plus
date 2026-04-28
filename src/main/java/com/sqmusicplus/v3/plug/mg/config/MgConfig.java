@@ -15,13 +15,20 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @ConfigurationProperties(prefix = "mg")
 public class MgConfig {
+
+    private String SearchTipUrl;
+
     private String SearchUrl;
 
     private String SongInfoUrl;
 
+    private String SongInfoUrl2;
+
     private String ArtistInfoUrl;
 
     private String AlbumInfoUrl;
+
+    private String AlbumInfoUrl2;
 
     private String ArtistAlbumListUrl;
 

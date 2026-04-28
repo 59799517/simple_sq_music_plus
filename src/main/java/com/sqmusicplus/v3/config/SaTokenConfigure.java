@@ -2,12 +2,15 @@ package com.sqmusicplus.v3.config;
 
 import cn.dev33.satoken.context.SaHolder;
 import cn.dev33.satoken.filter.SaServletFilter;
-import cn.dev33.satoken.jwt.StpLogicJwtForSimple;
 import cn.dev33.satoken.jwt.StpLogicJwtForStateless;
 import cn.dev33.satoken.router.SaHttpMethod;
 import cn.dev33.satoken.router.SaRouter;
+import cn.dev33.satoken.spring.pathmatch.SaPathMatcherHolder;
+import cn.dev33.satoken.spring.pathmatch.SaPatternsRequestConditionHolder;
 import cn.dev33.satoken.stp.StpLogic;
 import cn.dev33.satoken.stp.StpUtil;
+import cn.dev33.satoken.strategy.SaStrategy;
+import jakarta.annotation.PostConstruct;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -49,7 +52,6 @@ public class SaTokenConfigure implements WebMvcConfigurer {
 
                     // 如果是预检请求，则立即返回到前端
                     SaRouter.match(SaHttpMethod.OPTIONS)
-                            .free(r -> System.out.println("--------OPTIONS预检请求，不做处理"))
                             .back();
                 })
 

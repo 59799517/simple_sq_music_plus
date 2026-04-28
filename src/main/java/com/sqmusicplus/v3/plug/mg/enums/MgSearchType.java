@@ -11,7 +11,9 @@ public enum MgSearchType {
 
 //    类型   type：歌曲 2  歌手：1  专辑： 4 歌单：6  MV：5  歌词：7
 
-    MUSIC("2"),ARTIST("1"),ALBUM("4");
+    MUSIC("{\"song\":1,\"album\":0,\"singer\":0,\"tagSong\":0,\"mvSong\":0,\"songlist\":0,\"bestShow\":1,,\"lyricSong\":0}"),
+    ARTIST("{\"song\":0,\"album\":0,\"singer\":1,\"tagSong\":0,\"mvSong\":0,\"songlist\":0,\"bestShow\":1,,\"lyricSong\":0}"),
+    ALBUM("{\"song\":0,\"album\":1,\"singer\":0,\"tagSong\":0,\"mvSong\":0,\"songlist\":0,\"bestShow\":1,,\"lyricSong\":0}");
     String  value;
 
     MgSearchType(String value) {

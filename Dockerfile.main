@@ -1,4 +1,4 @@
-FROM maven:3.9.4-eclipse-temurin-17-alpine AS builder
+FROM maven:3.9.4-eclipse-temurin-21-alpine AS builder
 MAINTAINER SQ
 
 WORKDIR /build/
@@ -8,7 +8,7 @@ COPY src /build/src/
 
 RUN mvn clean package
 
-From mcr.microsoft.com/openjdk/jdk:17-ubuntu
+From mcr.microsoft.com/openjdk/jdk:21-ubuntu
 
 # 设置默认的环境变量
 #ENV DB_IP="localhost"

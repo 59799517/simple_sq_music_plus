@@ -11,7 +11,7 @@ services:
       - DB_USERNAME=root
       - DB_PASSWORD=sqmusicv3password
     volumes:
-      - ./data:/music
+      - ./music:/music
     depends_on:
       mysql:
         condition: service_healthy
@@ -25,7 +25,7 @@ services:
     image: registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus_web:latest
     container_name: sqmusic_web
     ports:
-      - "8099:80"
+      - "8100:80"
     networks:
       - sq-app-network
     depends_on:
@@ -38,7 +38,6 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: sqmusicv3password
       MYSQL_DATABASE: sqmusicv3
-      MYSQL_ROOT_HOST: "%"
     volumes:
       - ./mysql_data:/var/lib/mysql
     ports:
@@ -46,7 +45,7 @@ services:
     networks:
       - sq-app-network
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "mysql", "-u", "root", "-psqmusicv3password"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -55,7 +54,3 @@ services:
 networks:
   sq-app-network:
     driver: bridge
-
-
-
-

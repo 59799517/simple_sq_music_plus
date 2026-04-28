@@ -17,21 +17,17 @@ import com.sqmusicplus.v3.base.service.SqConfigService;
 import com.sqmusicplus.v3.base.service.SqSyncService;
 import com.sqmusicplus.v3.config.AjaxResult;
 import com.sqmusicplus.v3.config.SqConfigCache;
+import com.sqmusicplus.v3.config.exception.SQException;
 import com.sqmusicplus.v3.plug.kg.hander.KGHander;
 import com.sqmusicplus.v3.plug.netease.hander.NeteaseHander;
-import com.sqmusicplus.v3.plug.qq.entity.QQMusicCookieInfo;
-import com.sqmusicplus.v3.plug.qq.entity.QQMusicQr;
 import com.sqmusicplus.v3.plug.qq.hander.QQHander;
 import com.sqmusicplus.v3.plug.qqvip.QQvipHander;
-import com.sqmusicplus.v3.utils.NetworkSpeedReport;
 import com.sqmusicplus.v3.utils.StringUtils;
 import com.sqmusicplus.v3.utils.SystemUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.util.Base64Utils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -246,36 +242,25 @@ public class ConfigController {
      * @param configValue
      */
     private void specialPlugConfigUpdate(String configKey, String configValue) {
-//        酷狗
-        if (configKey.equals(SetConfigEnum.PLUG_KG_OPEN.getKey())) {
-            if (configValue.equals(DbBooleanConvert.YES.getBooleanValue().toString())) {
-                HashMap<String, String> KGoption = new HashMap<>();
-                KGoption.put("value", "kg");
-                KGoption.put("label", "某狗-概念版");
-                //修改酷狗插打开插件功能
-                SqConfigCache.updatePlugOptions(KGoption);
-            } else {
-                SqConfigCache.removePlugOptions("kg");
-            }
-        }
+
         //        酷我
         if (configKey.equals(SetConfigEnum.PLUG_KW_OPEN.getKey())) {
             if (configValue.equals(DbBooleanConvert.YES.getBooleanValue().toString())) {
                 HashMap<String, String> kwoption = new HashMap<>();
                 kwoption.put("value", "kw");
-                kwoption.put("label", "某我");
+                kwoption.put("label", "某我(无需登录支持flac)");
                 //修改酷狗插打开插件功能
                 SqConfigCache.updatePlugOptions(kwoption);
             } else {
                 SqConfigCache.removePlugOptions("kw");
             }
         }
-        //        酷我
+        //        qqvip
         if (configKey.equals(SetConfigEnum.PLUG_QQVIP_OPEN.getKey())) {
             if (configValue.equals(DbBooleanConvert.YES.getBooleanValue().toString())) {
                 HashMap<String, String> QQVIPoption = new HashMap<>();
                 QQVIPoption.put("value", "qqvip");
-                QQVIPoption.put("label", "鹅厂VIP下载（自动同步喜欢的去设置开启）");
+                QQVIPoption.put("label","鹅厂VIP下载（登录支持flac，自动同步喜欢的去设置开启）");
                 //修改酷狗插打开插件功能
                 SqConfigCache.updatePlugOptions(QQVIPoption);
                 qqvipHander.initPlug();
@@ -286,20 +271,53 @@ public class ConfigController {
 // 网易
         if (configKey.equals(SetConfigEnum.PLUG_NETEASE_OPEN.getKey())) {
             if (configValue.equals(DbBooleanConvert.YES.getBooleanValue().toString())) {
-                HashMap<String, String> neteaseoption = new HashMap<>();
-                neteaseoption.put("value", "netease");
-                neteaseoption.put("label", "猪厂");
-                //修改酷狗插打开插件功能
-                SqConfigCache.updatePlugOptions(neteaseoption);
-                neteaseHander.initPlug();
+
+                boolean b = neteaseHander.initPlug();
+                if (b) {
+                    HashMap<String, String> neteaseoption = new HashMap<>();
+                    neteaseoption.put("value", "netease");
+                    neteaseoption.put("label", "猪厂(无需登录支持flac)");
+                    //修改酷狗插打开插件功能
+                    SqConfigCache.updatePlugOptions(neteaseoption);
+                }else{
+                    throw new SQException("访问接口失败,请检查网易云音乐是否正常!");
+                }
             } else {
                 SqConfigCache.removePlugOptions("netease");
             }
         }
+
+        if (configKey.equals(SetConfigEnum.PLUG_MG_OPEN.getKey())) {
+            if (configValue.equals(DbBooleanConvert.YES.getBooleanValue().toString())) {
+                HashMap<String, String> kwoption = new HashMap<>();
+                kwoption.put("value","mg");
+                kwoption.put("label","移动(无需登录支持320Mp3)");
+                SqConfigCache.addPlugOptions(kwoption);
+            } else {
+                SqConfigCache.removePlugOptions("mg");
+            }
+        }
+        //        酷狗
+        if (configKey.equals(SetConfigEnum.PLUG_KG_OPEN.getKey())) {
+            if (configValue.equals(DbBooleanConvert.YES.getBooleanValue().toString())) {
+                HashMap<String, String> KGoption = new HashMap<>();
+                KGoption.put("value", "kg");
+                KGoption.put("label","某狗-概念版（签到只支持128Mp3）");
+                //修改酷狗插打开插件功能
+                SqConfigCache.updatePlugOptions(KGoption);
+            } else {
+                SqConfigCache.removePlugOptions("kg");
+            }
+        }
+
         //网易API地址修改
         if (configKey.equals(SetConfigEnum.PLUG_NETEASE_BASEURL.getKey())) {
             if (StringUtils.isNotBlank(configValue)) {
-                neteaseHander.initPlug();
+                boolean b = neteaseHander.initPlug();
+                if (!b) {
+                 throw   new SQException("访问接口失败,请检查网易云音乐是否正常!");
+                }
+
             }
         }
     }
