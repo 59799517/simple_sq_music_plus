@@ -1,5 +1,5 @@
 FROM maven:3.9.15-amazoncorretto-21 AS builder
-MAINTAINER SQ
+LABEL maintainer="SQ"
 
 WORKDIR /build/
 
@@ -19,10 +19,12 @@ COPY --from=builder /build/target/*.jar /app/app.jar
 RUN java -Djarmode=layertools -jar app.jar extract
 
 # 按顺序复制各层（利用Docker缓存）
-COPY dependencies/ ./
-COPY spring-boot-loader/ ./
-COPY snapshot-dependencies/ ./
-COPY application/ ./
+# Spring Boot 默认分层：dependencies, spring-boot-loader, snapshot-dependencies, application
+# 如果某个层不存在（如没有SNAPSHOT依赖），COPY会失败，所以使用条件复制
+RUN if [ -d /app/dependencies ]; then cp -r /app/dependencies/* /app/; fi && \
+    if [ -d /app/spring-boot-loader ]; then cp -r /app/spring-boot-loader/* /app/; fi && \
+    if [ -d /app/snapshot-dependencies ]; then cp -r /app/snapshot-dependencies/* /app/; fi && \
+    if [ -d /app/application ]; then cp -r /app/application/* /app/; fi
 
 # 显示架构信息（便于调试）
 RUN echo "Running on architecture: $(uname -m)"
