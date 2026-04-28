@@ -118,17 +118,17 @@ jobs:
       #     echo "=== $TARGET_PATH_ARM ==="
       #     cat "$TARGET_PATH_ARM"
       
-      - name: Generate new manifest file
-        run: |
-          # 进入 fnOS 目录
-          cd fnOS
-
-          # 从模板生成新的 manifest 文件
-          sed "s/{VERSION}/$APP_VERSION/g; s/{WEB_VERSION}/$WEB_VERSION/g" manifest.template > manifest
-          # 显示生成后的内容以供验证
-          echo "=== Generated manifest ==="
-          cat manifest
-      
+#      - name: Generate new manifest file
+#        run: |
+#          # 进入 fnOS 目录
+#          cd fnOS
+#
+#          # 从模板生成新的 manifest 文件
+#          sed "s/{VERSION}/$APP_VERSION/g; s/{WEB_VERSION}/$WEB_VERSION/g" manifest.template > manifest
+#          # 显示生成后的内容以供验证
+#          echo "=== Generated manifest ==="
+#          cat manifest
+#
       # 已取消：不再提交带版本号的 docker-compose 文件，统一使用 latest 标签
       # - name: Commit updated docker-compose files
       #   run: |
