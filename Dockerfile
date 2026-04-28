@@ -20,11 +20,10 @@ RUN java -Djarmode=layertools -jar app.jar extract
 
 # 按顺序复制各层（利用Docker缓存）
 # Spring Boot 默认分层：dependencies, spring-boot-loader, snapshot-dependencies, application
-# 如果某个层不存在（如没有SNAPSHOT依赖），COPY会失败，所以使用条件复制
-RUN if [ -d /app/dependencies ]; then cp -r /app/dependencies/* /app/; fi && \
-    if [ -d /app/spring-boot-loader ]; then cp -r /app/spring-boot-loader/* /app/; fi && \
-    if [ -d /app/snapshot-dependencies ]; then cp -r /app/snapshot-dependencies/* /app/; fi && \
-    if [ -d /app/application ]; then cp -r /app/application/* /app/; fi
+# COPY 指令在源路径不存在时会报错，所以只复制确定存在的层
+COPY dependencies/ /
+COPY spring-boot-loader/ /
+COPY application/ /
 
 # 显示架构信息（便于调试）
 RUN echo "Running on architecture: $(uname -m)"
