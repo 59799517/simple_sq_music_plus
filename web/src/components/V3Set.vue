@@ -475,7 +475,7 @@ let  handleFinish = ({
       </n-tab-pane>
       
       <n-tab-pane display-directive="if" name="酷狗概念" tab="酷狗概念" v-if="kgPlugopen">
-        <n-image v-if="kgqr" :src="kgqr"></n-image>
+        <n-image v-if="kgqr" width="200" :src="kgqr"></n-image>
         <n-divider v-if="kgLastTime!==''">
           酷狗签到领取VIP信息：
           <br>
@@ -590,7 +590,7 @@ let  handleFinish = ({
         role="card"
         aria-modal="true"
     >
-      描述：{{tempModalRemark}}
+      <div style="white-space: pre-wrap;">描述：{{tempModalRemark}}</div>
       <template #footer>
         <div v-if="tempModalType==='input'" >
           <n-input v-model:value="tempModalValue" :disabled="tempModalDisabled===1" />
