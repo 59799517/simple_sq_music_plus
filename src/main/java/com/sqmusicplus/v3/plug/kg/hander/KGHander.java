@@ -29,13 +29,9 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
-import static com.sqmusicplus.v3.base.enums.PlugBrType.KG_Flac_890;
 
 
 /**
@@ -56,7 +52,7 @@ public class KGHander extends SearchHanderAbstract {
 
     @Autowired
     @Qualifier("kwQrthreadPoolTaskExecutor")
-    private ThreadPoolExecutor threadPoolExecutor;
+    private ExecutorService executorService;
     //二维码检查线程
     private Future<Boolean> qrCodeCheckFuture;
 
@@ -157,18 +153,18 @@ public class KGHander extends SearchHanderAbstract {
             SearchMusicResult.DataDTO.ListsDTO.HQDTO hq = listsDTO.getHq();//320
             Long fileSize = listsDTO.getFileSize();//128
             ArrayList<PlugBrType> brTypes = new ArrayList<>();
-            if (sq!=null){
-                Long fileSize1 = sq.getFileSize();
-                if (fileSize1!=null&&fileSize1>0){
-                    brTypes.add(PlugBrType.KG_Flac_2000);
-                }
-            }
-            if (hq!=null){
-                Long fileSize1 = hq.getFileSize();
-                if (fileSize1!=null&&fileSize1>0){
-                    brTypes.add(PlugBrType.KG_MP3_320);
-                }
-            }
+//            if (sq!=null){
+//                Long fileSize1 = sq.getFileSize();
+//                if (fileSize1!=null&&fileSize1>0){
+//                    brTypes.add(PlugBrType.KG_Flac_2000);
+//                }
+//            }
+//            if (hq!=null){
+//                Long fileSize1 = hq.getFileSize();
+//                if (fileSize1!=null&&fileSize1>0){
+//                    brTypes.add(PlugBrType.KG_MP3_320);
+//                }
+//            }
             if (fileSize!=null&&fileSize>0){
                 brTypes.add(PlugBrType.KG_MP3_128);
             }
@@ -373,21 +369,21 @@ public class KGHander extends SearchHanderAbstract {
                                 } catch (Exception ignored) {
                                 }
 
-                                try {
-                                    String hashFlac = dataDTO1.getAudioInfo().getHashFlac();
-
-                                    if (StringUtils.isNotEmpty(hashFlac)){
-                                        plugBrTypes.add(PlugBrType.KG_Flac_2000);
-                                    }
-                                } catch (Exception e) {
-                                }
-                                try {
-                                    String hash320 = dataDTO1.getAudioInfo().getHash320();
-                                    if (StringUtils.isNotEmpty(hash320)){
-                                        plugBrTypes.add(PlugBrType.KG_MP3_320);
-                                    }
-                                } catch (Exception e) {
-                                }
+//                                try {
+//                                    String hashFlac = dataDTO1.getAudioInfo().getHashFlac();
+//
+//                                    if (StringUtils.isNotEmpty(hashFlac)){
+//                                        plugBrTypes.add(PlugBrType.KG_Flac_2000);
+//                                    }
+//                                } catch (Exception e) {
+//                                }
+//                                try {
+//                                    String hash320 = dataDTO1.getAudioInfo().getHash320();
+//                                    if (StringUtils.isNotEmpty(hash320)){
+//                                        plugBrTypes.add(PlugBrType.KG_MP3_320);
+//                                    }
+//                                } catch (Exception e) {
+//                                }
                                 try {
                                     String hash = dataDTO1.getAudioInfo().getHash();
                                     if (StringUtils.isNotEmpty(hash)){
@@ -637,16 +633,26 @@ public class KGHander extends SearchHanderAbstract {
             return downloadUrlResult;
         }
         String url="" ;
-        String type;
-        String bit;
-        for (String s : bean.getUrl()) {
-            if (StringUtils.isNotEmpty(s)){
-                url = s;
-                break;
+        String type ="";
+        String bit="";
+        List<DownloadResult.DataDTO> data = bean.getData();
+        DownloadResult.DataDTO dataDTO = data.get(0);
+        for (DownloadResult.DataDTO.RelateGoodsDTO relateGood : dataDTO.getRelateGoods()) {
+            if (relateGood.getQuality().equals(plugBrType.getValue())) {
+                if(relateGood.getInfo().getTrackerStatus()==1){
+                    List<String> trackerUrl = relateGood.getInfo().getTrackerUrl();
+                    url = trackerUrl.get(0);
+                    type = relateGood.getInfo().getExtname();
+                    bit = relateGood.getInfo().getBitrate().toString();
+                    break;
+
+                }
             }
         }
-        type = bean.getExtName();
-        bit = bean.getBitRate().toString();
+        if (StringUtils.isBlank(url)){
+            downloadUrlResult.setErrorMsg("下载链接获取失败：未找到对应音质！");
+            return downloadUrlResult;
+        }
 
         downloadUrlResult.setUrl(url);
         downloadUrlResult.setPlugBrTypeId(downloadInfo.getDownloadBrType());
@@ -692,29 +698,29 @@ public class KGHander extends SearchHanderAbstract {
 
 
 
-    public PlugBrType getMaxPlugBrType(PlugBrType brType){
-        if (brType==PlugBrType.KG_Flac_2000||brType==PlugBrType.KG_Flac_3000||brType== KG_Flac_890) {
-            //flac走flac
-            if (brType==PlugBrType.KG_Flac_3000){
-                return PlugBrType.KG_Flac_2000;
-            }
-            if (brType== KG_Flac_890){
-                return PlugBrType.KG_Flac_2000;
-            }
-            return PlugBrType.KG_MP3_320;
-        }
-        if (brType==PlugBrType.KG_Flac_4000||brType==PlugBrType.KG_Flac_5000){
-            //特殊的走特殊的没有最优解
-            return PlugBrType.KG_Flac_3000;
-        }
-        if (brType==PlugBrType.KG_MP3_128||brType==PlugBrType.KG_MP3_320){
-            if (brType==PlugBrType.KG_MP3_320){
-                return PlugBrType.KG_MP3_128;
-            }
-            return null;
-        }
-        return brType;
-    }
+//    public PlugBrType getMaxPlugBrType(PlugBrType brType){
+//        if (brType==PlugBrType.KG_Flac_2000||brType==PlugBrType.KG_Flac_3000||brType== KG_Flac_890) {
+//            //flac走flac
+//            if (brType==PlugBrType.KG_Flac_3000){
+//                return PlugBrType.KG_Flac_2000;
+//            }
+//            if (brType== KG_Flac_890){
+//                return PlugBrType.KG_Flac_2000;
+//            }
+//            return PlugBrType.KG_MP3_320;
+//        }
+//        if (brType==PlugBrType.KG_Flac_4000||brType==PlugBrType.KG_Flac_5000){
+//            //特殊的走特殊的没有最优解
+//            return PlugBrType.KG_Flac_3000;
+//        }
+//        if (brType==PlugBrType.KG_MP3_128||brType==PlugBrType.KG_MP3_320){
+//            if (brType==PlugBrType.KG_MP3_320){
+//                return PlugBrType.KG_MP3_128;
+//            }
+//            return null;
+//        }
+//        return brType;
+//    }
 
 
 
@@ -746,21 +752,21 @@ public class KGHander extends SearchHanderAbstract {
                 }
             } catch (Exception e) {
             }
-            try {
-                String hash320 = audioInfo.getHash320();
-                if (StringUtils.isNotEmpty(hash320)){
-                    brTypes.add(PlugBrType.KG_MP3_320);
-                }
-            } catch (Exception e) {
-            }
-            try {
-                String hashFlac = audioInfo.getHashFlac();
-
-                if (StringUtils.isNotEmpty(hashFlac)){
-                    brTypes.add(PlugBrType.KG_Flac_2000);
-                }
-            } catch (Exception e) {
-            }
+//            try {
+//                String hash320 = audioInfo.getHash320();
+//                if (StringUtils.isNotEmpty(hash320)){
+//                    brTypes.add(PlugBrType.KG_MP3_320);
+//                }
+//            } catch (Exception e) {
+//            }
+//            try {
+//                String hashFlac = audioInfo.getHashFlac();
+//
+//                if (StringUtils.isNotEmpty(hashFlac)){
+//                    brTypes.add(PlugBrType.KG_Flac_2000);
+//                }
+//            } catch (Exception e) {
+//            }
 
             Music music = new Music()
                     .setId(audioInfo.getHash())
@@ -869,13 +875,20 @@ public class KGHander extends SearchHanderAbstract {
 //
 //                }
 //            }
+            String receive_day = DateUtils.dateTimeSP();
 
             String signInfoUrl = builder.url(getBaseURL() + getConfig().getSignInfoUrl())
                     .addParam("cookie", token)
+                    .addParam("receive_day", receive_day)
                     .get().sync();
             SignResultInfo signResultInfo = JSONObject.parseObject(signInfoUrl, SignResultInfo.class);
             Integer status = signResultInfo.getStatus();
             if (status == 1){
+                String vipUpgrade = builder.url(getBaseURL() + getConfig().getVipUpgrade())
+                        .addParam("cookie", token)
+                        .get().sync();
+
+
                 List<SignResultInfo.DataDTO.BusiVipDTO> busiVip = signResultInfo.getData().getBusiVip();
                 SignResultInfo.DataDTO.BusiVipDTO busiVipDTO = busiVip.get(0);
                 if (StringUtils.isNoneBlank(busiVipDTO.getVipBeginTime())) {
@@ -973,7 +986,7 @@ public class KGHander extends SearchHanderAbstract {
           long timeout = 5 * 60 * 1000; // 5 minutes in milliseconds
           // 异步监控二维码超5分钟自动放弃
           Callable<Boolean> task = this::checkQrCodeStatus;
-          qrCodeCheckFuture = threadPoolExecutor.submit(task);
+          qrCodeCheckFuture = executorService.submit(task);
           while (System.currentTimeMillis() - startTime < timeout) {
               try {
                   // 每次等待1秒
@@ -993,7 +1006,7 @@ public class KGHander extends SearchHanderAbstract {
                           break; // 任务成功完成，终止循环
                       }else{
                           // 任务失败，重新提交任务
-                          qrCodeCheckFuture = threadPoolExecutor.submit(task);
+                          qrCodeCheckFuture = executorService.submit(task);
                       }
                   } catch (InterruptedException | ExecutionException e) {
                       log.error("获取二维码检查任务结果时发生错误", e);
@@ -1114,7 +1127,7 @@ public class KGHander extends SearchHanderAbstract {
             long timeout = 5 * 60 * 1000; // 5 minutes in milliseconds
             // 异步监控二维码超5分钟自动放弃
             Callable<Boolean> task = this::checkWxQrCodeStatus;
-            wxQrCodeCheckFuture = threadPoolExecutor.submit(task);
+            wxQrCodeCheckFuture = executorService.submit(task);
             while (System.currentTimeMillis() - startTime < timeout) {
                 try {
                     // 每次等待1秒
@@ -1134,7 +1147,7 @@ public class KGHander extends SearchHanderAbstract {
                             break; // 任务成功完成，终止循环
                         }else{
                             // 任务失败，重新提交任务
-                            wxQrCodeCheckFuture = threadPoolExecutor.submit(task);
+                            wxQrCodeCheckFuture = executorService.submit(task);
                         }
                     } catch (InterruptedException | ExecutionException e) {
                         log.error("获取二维码检查任务结果时发生错误", e);

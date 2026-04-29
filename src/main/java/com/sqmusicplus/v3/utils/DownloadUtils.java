@@ -15,6 +15,7 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
@@ -364,15 +365,25 @@ public class DownloadUtils {
 
         return okHttpClient;
     }
-    public  static <T> T get(String url,HashMap<String,String> params,Class<T> clazz){
+    public  static <T> T get(String url,HashMap<String,String> params,Map<String,String> headers,Class<T> clazz){
         OkHttpUtils builder = OkHttpUtils.builder().url(url);
 
         if (params!=null){
             builder.addParam(params);
         }
+        if (headers!=null){
+            for (Map.Entry<String, String> stringStringEntry : headers.entrySet()) {
+                builder.addHeader(stringStringEntry.getKey(),stringStringEntry.getValue());
+            }
+        }
         String sync =builder
                 .get().sync();
         return (T)JSONObject.parseObject(sync,clazz);
+
+    }
+    public  static <T> T get(String url,HashMap<String,String> params,Class<T> clazz){
+        return get(url,params,null,clazz);
+
 
     }
     public static JSONObject getToJsonObject(String url, HashMap<String,String> params){
@@ -388,6 +399,9 @@ public class DownloadUtils {
     }
     public static <T> T get(String url ,Class<T> clazz){
         return get(url,null,clazz);
+    }
+    public static <T> T get(String url ,Class<T> clazz,Map<String,String> headers){
+        return get(url,null,headers,clazz);
     }
 
     public static JSONObject getToJsonObject(String url){
@@ -552,6 +566,27 @@ public class DownloadUtils {
 
         if (params!=null){
             builder.addParam(params);
+        }
+        return  builder
+                .get().sync();
+    }
+
+    /**
+     * 获取body的字符串不转化
+     * @param url
+     * @return
+     */
+    public static String getBodyStr(String url,HashMap<String,String> params,Map<String,String> haders){
+        OkHttpUtils builder = OkHttpUtils.builder().url(url);
+
+        if (params!=null){
+            builder.addParam(params);
+        }
+        if (haders!=null){
+            for (Map.Entry<String, String> stringStringEntry : haders.entrySet()) {
+                builder.addHeader(stringStringEntry.getKey(),stringStringEntry.getValue());
+            }
+
         }
         return  builder
                 .get().sync();

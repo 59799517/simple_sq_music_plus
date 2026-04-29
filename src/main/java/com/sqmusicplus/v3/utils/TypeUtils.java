@@ -40,9 +40,9 @@ public class TypeUtils {
         if (plugTypeName.equals(PlugBrType.KW_FLAC_2000.getPlugName())&&br==null){
             return PlugBrType.KW_FLAC_2000;
         }
-        if (plugTypeName.equals(PlugBrType.MG_FLAC_2000.getPlugName())&&br==null){
-            return PlugBrType.MG_FLAC_2000;
-        }
+//        if (plugTypeName.equals(PlugBrType.MG_FLAC_2000.getPlugName())&&br==null){
+//            return PlugBrType.MG_FLAC_2000;
+//        }
         if (plugTypeName.equals(PlugBrType.QQ_Flac_2000.getPlugName())&&br==null){
             return PlugBrType.QQ_Flac_2000;
         }
@@ -52,9 +52,13 @@ public class TypeUtils {
         if (plugTypeName.equals(PlugBrType.NETEASE_FLAC_2000.getPlugName())&&br==null){
             return PlugBrType.NETEASE_FLAC_2000;
         }
-        if (plugTypeName.equals(PlugBrType.KG_Flac_2000.getPlugName())&&br==null){
-            return PlugBrType.KG_Flac_2000;
+        if (plugTypeName.equals(PlugBrType.MG_MP3_320.getPlugName())&&br==null){
+            return PlugBrType.MG_MP3_320;
         }
+
+//        if (plugTypeName.equals(PlugBrType.KG_Flac_2000.getPlugName())&&br==null){
+//            return PlugBrType.KG_Flac_2000;
+//        }
 
 
         List<PlugBrType> collect = Arrays.stream(PlugBrType.values()).filter(e -> e.getPlugName().equals(plugTypeName) && e.getBit().intValue() == br.intValue()).collect(Collectors.toList());
@@ -82,9 +86,9 @@ public class TypeUtils {
         if (plugTypeName.equals(PlugBrType.KW_FLAC_2000.getPlugName())&&StringUtils.isEmpty(value)){
             return PlugBrType.KW_FLAC_2000;
         }
-        if (plugTypeName.equals(PlugBrType.MG_FLAC_2000.getPlugName())&&StringUtils.isEmpty(value)){
-            return PlugBrType.MG_FLAC_2000;
-        }
+//        if (plugTypeName.equals(PlugBrType.MG_FLAC_2000.getPlugName())&&StringUtils.isEmpty(value)){
+//            return PlugBrType.MG_FLAC_2000;
+//        }
         if (plugTypeName.equals(PlugBrType.QQ_Flac_2000.getPlugName())&&StringUtils.isEmpty(value)){
             return PlugBrType.QQ_Flac_3000;
         }
@@ -93,6 +97,9 @@ public class TypeUtils {
         }
         if (plugTypeName.equals(PlugBrType.NETEASE_FLAC_2000.getPlugName())&&StringUtils.isEmpty(value)){
             return PlugBrType.NETEASE_FLAC_2000;
+        }
+        if (plugTypeName.equals(PlugBrType.MG_MP3_320.getPlugName())&&StringUtils.isEmpty(value)){
+            return PlugBrType.MG_MP3_320;
         }
 
         List<PlugBrType> collect = Arrays.stream(PlugBrType.values()).filter(e -> e.getPlugName().equals(plugTypeName) && e.getValue().equals(value)).collect(Collectors.toList());

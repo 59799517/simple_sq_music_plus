@@ -15,6 +15,7 @@ import com.sqmusicplus.v3.plug.base.hander.SearchHanderAbstract;
 import com.sqmusicplus.v3.plug.entity.*;
 import com.sqmusicplus.v3.plug.netease.entity.*;
 import com.sqmusicplus.v3.plug.netease.enums.SearchEnums;
+import com.sqmusicplus.v3.plug.netease.utils.NeteaseAnonCookieUtil;
 import com.sqmusicplus.v3.utils.OkHttpUtils;
 import com.sqmusicplus.v3.utils.StringUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -44,36 +45,29 @@ public class NeteaseHander extends SearchHanderAbstract {
 
 
 
-    public void initPlug(){
+    public boolean initPlug(){
         // 设置网易云音乐的地址
         String baseUrl = SqConfigCache.getSqConfigValue(SetConfigEnum.PLUG_NETEASE_BASEURL);
+        boolean isOpen = false;
         for (String s : baseUrl.split(";")) {
             neteaseCloudMusicInfo.init(s);
-            String cookieUrl = SqConfigCache.getSqConfigValue(SetConfigEnum.PLUG_NETEASE_COOKIEURL);
-            if (StringUtils.isNotEmpty(s)&&StringUtils.isNotEmpty(cookieUrl)){
-                JSONObject jsonObject = null;
+//            String cookieUrl = SqConfigCache.getSqConfigValue(SetConfigEnum.PLUG_NETEASE_COOKIEURL);
+            if (StringUtils.isNotEmpty(s)){
                 try {
-                    String data = OkHttpUtils.builder()
-                            .url(s+cookieUrl)
-                            .addHeader("Accept", "application/xml;version=1")
-                            .get()
-                            .sync();
-                    jsonObject = JSONObject.parseObject(data);
-                    if(jsonObject==null){
-                        log.error("netease使用{}匿名登录失败",s);
+                    JSONObject cloudsearch = neteaseCloudMusicInfo.innerVersion();
+                    if (cloudsearch.getInteger("code")==200) {
+                        log.info("当前接口版本：{}",cloudsearch.getJSONObject("data").toJSONString());
+                        String anonCookie = NeteaseAnonCookieUtil.getAnonCookie();
+                        neteaseCloudMusicInfo.setCookie(anonCookie);
+                        isOpen=true;
+                        log.info("netease访问成功：{}",s);
+                        break;
+                    }else{
+                        log.error("netease使用{}访问失败！",s);
                         continue;
                     }
                 } catch (Exception e) {
-                    log.error("netease使用{}匿名登录失败",s);
-                    continue;
-                }
-                if(jsonObject.getInteger("code")==200){
-                    neteaseCloudMusicInfo.setCookie(jsonObject.getString("cookie"));
-                    log.info("netease匿名登录成功使用：{}",s);
-                    break;
-                }else{
-                    log.error("netease使用{}匿名登录失败",s);
-                    continue;
+                    log.error("netease使用{}访问失败！",s);
                 }
             }else{
                 String cookie = SqConfigCache.getSqConfigValue(SetConfigEnum.PLUG_NETEASE_COOKIE);
@@ -83,8 +77,10 @@ public class NeteaseHander extends SearchHanderAbstract {
                 }
             }
         }
-
-
+        if (!isOpen){
+            log.error("网易云音乐未配置成功！请检查配置！");
+        }
+        return isOpen;
 
     }
 

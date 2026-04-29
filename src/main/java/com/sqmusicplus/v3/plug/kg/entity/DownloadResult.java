@@ -1,6 +1,8 @@
 package com.sqmusicplus.v3.plug.kg.entity;
 
-import com.alibaba.fastjson2.annotation.JSONField;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.List;
 
@@ -12,288 +14,540 @@ import java.util.List;
  * @Created by SQ
  */
 
+@NoArgsConstructor
+@Data
 public class DownloadResult {
 
 
-    @JSONField(name = "extName")
-    private String extName;
-    @JSONField(name = "classmap")
-    private ClassmapDTO classmap;
-    @JSONField(name = "status")
+    @JsonProperty("data")
+    private List<DataDTO> data;
+    @JsonProperty("status")
     private Long status;
-    @JSONField(name = "volume")
-    private Double volume;
-    @JSONField(name = "std_hash_time")
-    private Long stdHashTime;
-    @JSONField(name = "backupUrl")
-    private List<String> backupUrl;
-    @JSONField(name = "url")
-    private List<String> url;
-    @JSONField(name = "std_hash")
-    private String stdHash;
-    @JSONField(name = "trans_param")
-    private TransParamDTO transParam;
-    @JSONField(name = "fileHead")
-    private Long fileHead;
-    @JSONField(name = "timeLength")
-    private Long timeLength;
-    @JSONField(name = "bitRate")
-    private Long bitRate;
-    @JSONField(name = "priv_status")
-    private Long privStatus;
-    @JSONField(name = "volume_peak")
-    private Double volumePeak;
-    @JSONField(name = "volume_gain")
-    private Long volumeGain;
-    @JSONField(name = "q")
-    private Long q;
-    @JSONField(name = "fileName")
-    private String fileName;
-    @JSONField(name = "fileSize")
-    private Long fileSize;
-    @JSONField(name = "hash")
-    private String hash;
+    @JsonProperty("error_code")
+    private Long errorCode;
+    @JsonProperty("message")
+    private String message;
 
-    public String getExtName() {
-        return extName;
-    }
+    @NoArgsConstructor
+    @Data
+    public static class DataDTO {
+        @JsonProperty("_errno")
+        private Long errno;
+        @JsonProperty("_msg")
+        private String msg;
+        @JsonProperty("album_audio_id")
+        private Long albumAudioId;
+        @JsonProperty("fail_process")
+        private Long failProcess;
+        @JsonProperty("hash")
+        private String hash;
+        @JsonProperty("info")
+        private InfoDTO info;
+        @JsonProperty("quality")
+        private String quality;
+        @JsonProperty("privilege")
+        private Long privilege;
+        @JsonProperty("publish")
+        private Long publish;
+        @JsonProperty("status")
+        private Long status;
+        @JsonProperty("relate_goods")
+        private List<RelateGoodsDTO> relateGoods;
+        @JsonProperty("type")
+        private String type;
+        @JsonProperty("trans_param")
+        private TransParamDTO transParam;
+        @JsonProperty("album_id")
+        private String albumId;
+        @JsonProperty("albumname")
+        private String albumname;
+        @JsonProperty("buy_count")
+        private Long buyCount;
+        @JsonProperty("buy_count_kubi")
+        private Long buyCountKubi;
+        @JsonProperty("buy_count_audios")
+        private Long buyCountAudios;
+        @JsonProperty("buy_count_vip")
+        private Long buyCountVip;
+        @JsonProperty("cid")
+        private Long cid;
+        @JsonProperty("discount")
+        private List<?> discount;
+        @JsonProperty("end_time")
+        private String endTime;
+        @JsonProperty("expire")
+        private Long expire;
+        @JsonProperty("id")
+        private Long id;
+        @JsonProperty("is_search_top")
+        private Long isSearchTop;
+        @JsonProperty("level")
+        private Long level;
+        @JsonProperty("name")
+        private String name;
+        @JsonProperty("old_cpy")
+        private Long oldCpy;
+        @JsonProperty("old_hide")
+        private Long oldHide;
+        @JsonProperty("pay_block_text")
+        private String payBlockText;
+        @JsonProperty("is_separate")
+        private Long isSeparate;
+        @JsonProperty("pay_type")
+        private Long payType;
+        @JsonProperty("pkg_price")
+        private Long pkgPrice;
+        @JsonProperty("price")
+        private Long price;
+        @JsonProperty("cd_url")
+        private String cdUrl;
+        @JsonProperty("rebuy_pay_type")
+        private Long rebuyPayType;
+        @JsonProperty("recommend_album_id")
+        private String recommendAlbumId;
+        @JsonProperty("singername")
+        private String singername;
+        @JsonProperty("start_time")
+        private String startTime;
+        @JsonProperty("topic_url")
+        private String topicUrl;
+        @JsonProperty("topic_remark")
+        private String topicRemark;
+        @JsonProperty("is_publish")
+        private Long isPublish;
+        @JsonProperty("popup")
+        private PopupDTO popup;
 
-    public void setExtName(String extName) {
-        this.extName = extName;
-    }
+        @NoArgsConstructor
+        @Data
+        public static class InfoDTO {
+            @JsonProperty("imgsize")
+            private List<Long> imgsize;
+            @JsonProperty("flag")
+            private Long flag;
+            @JsonProperty("image")
+            private String image;
+            @JsonProperty("intro")
+            private String intro;
+            @JsonProperty("filesize")
+            private Long filesize;
+            @JsonProperty("extname")
+            private String extname;
+            @JsonProperty("bitrate")
+            private Long bitrate;
+            @JsonProperty("duration")
+            private Long duration;
+            @JsonProperty("hasseed")
+            private Long hasseed;
+            @JsonProperty("en_hasseed")
+            private Long enHasseed;
+            @JsonProperty("tracker_url")
+            private List<String> trackerUrl;
+            @JsonProperty("volume")
+            private String volume;
+            @JsonProperty("volume_peak")
+            private String volumePeak;
+            @JsonProperty("volume_gain")
+            private String volumeGain;
+            @JsonProperty("tracker_status")
+            private Long trackerStatus;
+            @JsonProperty("tracker_type")
+            private String trackerType;
+            @JsonProperty("climax_info")
+            private ClimaxInfoDTO climaxInfo;
 
-    public ClassmapDTO getClassmap() {
-        return classmap;
-    }
+            @NoArgsConstructor
+            @Data
+            public static class ClimaxInfoDTO {
+                @JsonProperty("url")
+                private List<String> url;
+                @JsonProperty("hash_offset")
+                private HashOffsetDTO hashOffset;
 
-    public void setClassmap(ClassmapDTO classmap) {
-        this.classmap = classmap;
-    }
-
-    public Long getStatus() {
-        return status;
-    }
-
-    public void setStatus(Long status) {
-        this.status = status;
-    }
-
-    public Double getVolume() {
-        return volume;
-    }
-
-    public void setVolume(Double volume) {
-        this.volume = volume;
-    }
-
-    public Long getStdHashTime() {
-        return stdHashTime;
-    }
-
-    public void setStdHashTime(Long stdHashTime) {
-        this.stdHashTime = stdHashTime;
-    }
-
-    public List<String> getBackupUrl() {
-        return backupUrl;
-    }
-
-    public void setBackupUrl(List<String> backupUrl) {
-        this.backupUrl = backupUrl;
-    }
-
-    public List<String> getUrl() {
-        return url;
-    }
-
-    public void setUrl(List<String> url) {
-        this.url = url;
-    }
-
-    public String getStdHash() {
-        return stdHash;
-    }
-
-    public void setStdHash(String stdHash) {
-        this.stdHash = stdHash;
-    }
-
-    public TransParamDTO getTransParam() {
-        return transParam;
-    }
-
-    public void setTransParam(TransParamDTO transParam) {
-        this.transParam = transParam;
-    }
-
-    public Long getFileHead() {
-        return fileHead;
-    }
-
-    public void setFileHead(Long fileHead) {
-        this.fileHead = fileHead;
-    }
-
-    public Long getTimeLength() {
-        return timeLength;
-    }
-
-    public void setTimeLength(Long timeLength) {
-        this.timeLength = timeLength;
-    }
-
-    public Long getBitRate() {
-        return bitRate;
-    }
-
-    public void setBitRate(Long bitRate) {
-        this.bitRate = bitRate;
-    }
-
-    public Long getPrivStatus() {
-        return privStatus;
-    }
-
-    public void setPrivStatus(Long privStatus) {
-        this.privStatus = privStatus;
-    }
-
-    public Double getVolumePeak() {
-        return volumePeak;
-    }
-
-    public void setVolumePeak(Double volumePeak) {
-        this.volumePeak = volumePeak;
-    }
-
-    public Long getVolumeGain() {
-        return volumeGain;
-    }
-
-    public void setVolumeGain(Long volumeGain) {
-        this.volumeGain = volumeGain;
-    }
-
-    public Long getQ() {
-        return q;
-    }
-
-    public void setQ(Long q) {
-        this.q = q;
-    }
-
-    public String getFileName() {
-        return fileName;
-    }
-
-    public void setFileName(String fileName) {
-        this.fileName = fileName;
-    }
-
-    public Long getFileSize() {
-        return fileSize;
-    }
-
-    public void setFileSize(Long fileSize) {
-        this.fileSize = fileSize;
-    }
-
-    public String getHash() {
-        return hash;
-    }
-
-    public void setHash(String hash) {
-        this.hash = hash;
-    }
-
-    public static class ClassmapDTO {
-        @JSONField(name = "attr0")
-        private Long attr0;
-
-        public Long getAttr0() {
-            return attr0;
-        }
-
-        public void setAttr0(Long attr0) {
-            this.attr0 = attr0;
-        }
-    }
-
-    public static class TransParamDTO {
-        @JSONField(name = "classmap")
-        private ClassmapDTO classmap;
-        @JSONField(name = "qualitymap")
-        private QualitymapDTO qualitymap;
-        @JSONField(name = "display")
-        private Long display;
-        @JSONField(name = "display_rate")
-        private Long displayRate;
-
-        public ClassmapDTO getClassmap() {
-            return classmap;
-        }
-
-        public void setClassmap(ClassmapDTO classmap) {
-            this.classmap = classmap;
-        }
-
-        public QualitymapDTO getQualitymap() {
-            return qualitymap;
-        }
-
-        public void setQualitymap(QualitymapDTO qualitymap) {
-            this.qualitymap = qualitymap;
-        }
-
-        public Long getDisplay() {
-            return display;
-        }
-
-        public void setDisplay(Long display) {
-            this.display = display;
-        }
-
-        public Long getDisplayRate() {
-            return displayRate;
-        }
-
-        public void setDisplayRate(Long displayRate) {
-            this.displayRate = displayRate;
-        }
-
-        public static class ClassmapDTO {
-            @JSONField(name = "attr0")
-            private Long attr0;
-
-            public Long getAttr0() {
-                return attr0;
-            }
-
-            public void setAttr0(Long attr0) {
-                this.attr0 = attr0;
+                @NoArgsConstructor
+                @Data
+                public static class HashOffsetDTO {
+                    @JsonProperty("start_byte")
+                    private Long startByte;
+                    @JsonProperty("end_byte")
+                    private Long endByte;
+                    @JsonProperty("start_ms")
+                    private Long startMs;
+                    @JsonProperty("end_ms")
+                    private Long endMs;
+                    @JsonProperty("offset_hash")
+                    private String offsetHash;
+                    @JsonProperty("file_type")
+                    private Long fileType;
+                }
             }
         }
 
-        public static class QualitymapDTO {
-            @JSONField(name = "attr0")
-            private Long attr0;
-            @JSONField(name = "attr1")
-            private Long attr1;
+        @NoArgsConstructor
+        @Data
+        public static class TransParamDTO {
+            @JsonProperty("hash_offset")
+            private HashOffsetDTO hashOffset;
+            @JsonProperty("musicpack_advance")
+            private Long musicpackAdvance;
+            @JsonProperty("pay_block_tpl")
+            private Long payBlockTpl;
+            @JsonProperty("display")
+            private Long display;
+            @JsonProperty("display_rate")
+            private Long displayRate;
+            @JsonProperty("appid_block")
+            private String appidBlock;
+            @JsonProperty("cpy_grade")
+            private Long cpyGrade;
+            @JsonProperty("cpy_level")
+            private Long cpyLevel;
+            @JsonProperty("cid")
+            private Long cid;
+            @JsonProperty("cpy_attr0")
+            private Long cpyAttr0;
+            @JsonProperty("classmap")
+            private ClassmapDTO classmap;
+            @JsonProperty("hash_multitrack")
+            private String hashMultitrack;
+            @JsonProperty("qualitymap")
+            private QualitymapDTO qualitymap;
+            @JsonProperty("language")
+            private String language;
+            @JsonProperty("ipmap")
+            private IpmapDTO ipmap;
+            @JsonProperty("ogg_128_hash")
+            private String ogg128Hash;
+            @JsonProperty("ogg_128_filesize")
+            private Long ogg128Filesize;
+            @JsonProperty("ogg_320_hash")
+            private String ogg320Hash;
+            @JsonProperty("ogg_320_filesize")
+            private Long ogg320Filesize;
+            @JsonProperty("union_cover")
+            private String unionCover;
 
-            public Long getAttr0() {
-                return attr0;
+            @NoArgsConstructor
+            @Data
+            public static class HashOffsetDTO {
+                @JsonProperty("start_byte")
+                private Long startByte;
+                @JsonProperty("end_byte")
+                private Long endByte;
+                @JsonProperty("start_ms")
+                private Long startMs;
+                @JsonProperty("end_ms")
+                private Long endMs;
+                @JsonProperty("offset_hash")
+                private String offsetHash;
+                @JsonProperty("file_type")
+                private Long fileType;
+                @JsonProperty("clip_hash")
+                private String clipHash;
             }
 
-            public void setAttr0(Long attr0) {
-                this.attr0 = attr0;
+            @NoArgsConstructor
+            @Data
+            public static class ClassmapDTO {
+                @JsonProperty("attr0")
+                private Long attr0;
             }
 
-            public Long getAttr1() {
-                return attr1;
+            @NoArgsConstructor
+            @Data
+            public static class QualitymapDTO {
+                @JsonProperty("attr0")
+                private Long attr0;
+                @JsonProperty("attr1")
+                private Long attr1;
+                @JsonProperty("bits")
+                private String bits;
             }
 
-            public void setAttr1(Long attr1) {
-                this.attr1 = attr1;
+            @NoArgsConstructor
+            @Data
+            public static class IpmapDTO {
+                @JsonProperty("attr0")
+                private Long attr0;
+            }
+        }
+
+        @NoArgsConstructor
+        @Data
+        public static class PopupDTO {
+            @JsonProperty("title")
+            private String title;
+            @JsonProperty("content")
+            private String content;
+            @JsonProperty("btn_name")
+            private String btnName;
+            @JsonProperty("btn_url_ios")
+            private String btnUrlIos;
+            @JsonProperty("btn_url_android")
+            private String btnUrlAndroid;
+            @JsonProperty("redirect_url_h5")
+            private String redirectUrlH5;
+        }
+
+        @NoArgsConstructor
+        @Data
+        public static class RelateGoodsDTO {
+            @JsonProperty("_errno")
+            private Long errno;
+            @JsonProperty("_msg")
+            private String msg;
+            @JsonProperty("album_audio_id")
+            private Long albumAudioId;
+            @JsonProperty("fail_process")
+            private Long failProcess;
+            @JsonProperty("hash")
+            private String hash;
+            @JsonProperty("info")
+            private InfoDTO info;
+            @JsonProperty("quality")
+            private String quality;
+            @JsonProperty("privilege")
+            private Long privilege;
+            @JsonProperty("publish")
+            private Long publish;
+            @JsonProperty("status")
+            private Long status;
+            @JsonProperty("relate_goods")
+            private List<?> relateGoods;
+            @JsonProperty("type")
+            private String type;
+            @JsonProperty("trans_param")
+            private TransParamDTO transParam;
+            @JsonProperty("album_id")
+            private String albumId;
+            @JsonProperty("albumname")
+            private String albumname;
+            @JsonProperty("buy_count")
+            private Long buyCount;
+            @JsonProperty("buy_count_kubi")
+            private Long buyCountKubi;
+            @JsonProperty("buy_count_audios")
+            private Long buyCountAudios;
+            @JsonProperty("buy_count_vip")
+            private Long buyCountVip;
+            @JsonProperty("cid")
+            private Long cid;
+            @JsonProperty("discount")
+            private List<?> discount;
+            @JsonProperty("end_time")
+            private String endTime;
+            @JsonProperty("expire")
+            private Long expire;
+            @JsonProperty("id")
+            private Long id;
+            @JsonProperty("is_search_top")
+            private Long isSearchTop;
+            @JsonProperty("level")
+            private Long level;
+            @JsonProperty("name")
+            private String name;
+            @JsonProperty("old_cpy")
+            private Long oldCpy;
+            @JsonProperty("old_hide")
+            private Long oldHide;
+            @JsonProperty("pay_block_text")
+            private String payBlockText;
+            @JsonProperty("is_separate")
+            private Long isSeparate;
+            @JsonProperty("pay_type")
+            private Long payType;
+            @JsonProperty("pkg_price")
+            private Long pkgPrice;
+            @JsonProperty("price")
+            private Long price;
+            @JsonProperty("cd_url")
+            private String cdUrl;
+            @JsonProperty("rebuy_pay_type")
+            private Long rebuyPayType;
+            @JsonProperty("recommend_album_id")
+            private String recommendAlbumId;
+            @JsonProperty("singername")
+            private String singername;
+            @JsonProperty("start_time")
+            private String startTime;
+            @JsonProperty("topic_url")
+            private String topicUrl;
+            @JsonProperty("topic_remark")
+            private String topicRemark;
+            @JsonProperty("is_publish")
+            private Long isPublish;
+            @JsonProperty("popup")
+            private PopupDTO popup;
+
+            @NoArgsConstructor
+            @Data
+            public static class InfoDTO {
+                @JsonProperty("imgsize")
+                private List<Long> imgsize;
+                @JsonProperty("flag")
+                private Long flag;
+                @JsonProperty("image")
+                private String image;
+                @JsonProperty("intro")
+                private String intro;
+                @JsonProperty("filesize")
+                private Long filesize;
+                @JsonProperty("extname")
+                private String extname;
+                @JsonProperty("bitrate")
+                private Long bitrate;
+                @JsonProperty("duration")
+                private Long duration;
+                @JsonProperty("hasseed")
+                private Long hasseed;
+                @JsonProperty("en_hasseed")
+                private Long enHasseed;
+                @JsonProperty("tracker_url")
+                private List<String> trackerUrl;
+                @JsonProperty("volume")
+                private String volume;
+                @JsonProperty("volume_peak")
+                private String volumePeak;
+                @JsonProperty("volume_gain")
+                private String volumeGain;
+                @JsonProperty("tracker_status")
+                private Long trackerStatus;
+                @JsonProperty("tracker_type")
+                private String trackerType;
+                @JsonProperty("climax_info")
+                private ClimaxInfoDTO climaxInfo;
+
+                @NoArgsConstructor
+                @Data
+                public static class ClimaxInfoDTO {
+                    @JsonProperty("url")
+                    private List<String> url;
+                    @JsonProperty("hash_offset")
+                    private HashOffsetDTO hashOffset;
+
+                    @NoArgsConstructor
+                    @Data
+                    public static class HashOffsetDTO {
+                        @JsonProperty("start_byte")
+                        private Long startByte;
+                        @JsonProperty("end_byte")
+                        private Long endByte;
+                        @JsonProperty("start_ms")
+                        private Long startMs;
+                        @JsonProperty("end_ms")
+                        private Long endMs;
+                        @JsonProperty("offset_hash")
+                        private String offsetHash;
+                        @JsonProperty("file_type")
+                        private Long fileType;
+                    }
+                }
+            }
+
+            @NoArgsConstructor
+            @Data
+            public static class TransParamDTO {
+                @JsonProperty("hash_offset")
+                private HashOffsetDTO hashOffset;
+                @JsonProperty("musicpack_advance")
+                private Long musicpackAdvance;
+                @JsonProperty("pay_block_tpl")
+                private Long payBlockTpl;
+                @JsonProperty("display")
+                private Long display;
+                @JsonProperty("display_rate")
+                private Long displayRate;
+                @JsonProperty("appid_block")
+                private String appidBlock;
+                @JsonProperty("cpy_grade")
+                private Long cpyGrade;
+                @JsonProperty("cpy_level")
+                private Long cpyLevel;
+                @JsonProperty("cid")
+                private Long cid;
+                @JsonProperty("cpy_attr0")
+                private Long cpyAttr0;
+                @JsonProperty("classmap")
+                private ClassmapDTO classmap;
+                @JsonProperty("hash_multitrack")
+                private String hashMultitrack;
+                @JsonProperty("qualitymap")
+                private QualitymapDTO qualitymap;
+                @JsonProperty("language")
+                private String language;
+                @JsonProperty("ipmap")
+                private IpmapDTO ipmap;
+                @JsonProperty("ogg_128_hash")
+                private String ogg128Hash;
+                @JsonProperty("ogg_128_filesize")
+                private Long ogg128Filesize;
+                @JsonProperty("ogg_320_hash")
+                private String ogg320Hash;
+                @JsonProperty("ogg_320_filesize")
+                private Long ogg320Filesize;
+                @JsonProperty("union_cover")
+                private String unionCover;
+
+                @NoArgsConstructor
+                @Data
+                public static class HashOffsetDTO {
+                    @JsonProperty("start_byte")
+                    private Long startByte;
+                    @JsonProperty("end_byte")
+                    private Long endByte;
+                    @JsonProperty("start_ms")
+                    private Long startMs;
+                    @JsonProperty("end_ms")
+                    private Long endMs;
+                    @JsonProperty("offset_hash")
+                    private String offsetHash;
+                    @JsonProperty("file_type")
+                    private Long fileType;
+                    @JsonProperty("clip_hash")
+                    private String clipHash;
+                }
+
+                @NoArgsConstructor
+                @Data
+                public static class ClassmapDTO {
+                    @JsonProperty("attr0")
+                    private Long attr0;
+                }
+
+                @NoArgsConstructor
+                @Data
+                public static class QualitymapDTO {
+                    @JsonProperty("attr0")
+                    private Long attr0;
+                    @JsonProperty("attr1")
+                    private Long attr1;
+                    @JsonProperty("bits")
+                    private String bits;
+                }
+
+                @NoArgsConstructor
+                @Data
+                public static class IpmapDTO {
+                    @JsonProperty("attr0")
+                    private Long attr0;
+                }
+            }
+
+            @NoArgsConstructor
+            @Data
+            public static class PopupDTO {
+                @JsonProperty("title")
+                private String title;
+                @JsonProperty("content")
+                private String content;
+                @JsonProperty("btn_name")
+                private String btnName;
+                @JsonProperty("btn_url_ios")
+                private String btnUrlIos;
+                @JsonProperty("btn_url_android")
+                private String btnUrlAndroid;
+                @JsonProperty("redirect_url_h5")
+                private String redirectUrlH5;
             }
         }
     }

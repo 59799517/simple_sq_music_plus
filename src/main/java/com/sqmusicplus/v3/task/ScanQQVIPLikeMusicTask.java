@@ -52,29 +52,34 @@ public class ScanQQVIPLikeMusicTask {
 
     @Scheduled(cron = "0 */10 * * * ? ")
     public void excute() {
-        String qqopenconfigKey = SqConfigCache.getSqConfigValue(SetConfigEnum.PLUG_QQVIP_OPEN);
-        String myLikeSongSyncConfig = SqConfigCache.getSqConfigValue(SetConfigEnum.PLUG_QQVIP_SYNC_MY_LIKE_MUSIC);
-        String myLikePlaylistSyncConfig = SqConfigCache.getSqConfigValue(SetConfigEnum.PLUG_QQVIP_SYNC_MY_LIKE_PLAYLIST);
-        String myLikeAlbumSyncConfig = SqConfigCache.getSqConfigValue(SetConfigEnum.PLUG_QQVIP_SYNC_MY_LIKE_ALBUM);
-        String myLikeArtistsSyncConfig = SqConfigCache.getSqConfigValue(SetConfigEnum.PLUG_QQVIP_SYNC_MY_LIKE_ARTISTS);
+        try {
+            String qqopenconfigKey = SqConfigCache.getSqConfigValue(SetConfigEnum.PLUG_QQVIP_OPEN);
+            String myLikeSongSyncConfig = SqConfigCache.getSqConfigValue(SetConfigEnum.PLUG_QQVIP_SYNC_MY_LIKE_MUSIC);
+            String myLikePlaylistSyncConfig = SqConfigCache.getSqConfigValue(SetConfigEnum.PLUG_QQVIP_SYNC_MY_LIKE_PLAYLIST);
+            String myLikeAlbumSyncConfig = SqConfigCache.getSqConfigValue(SetConfigEnum.PLUG_QQVIP_SYNC_MY_LIKE_ALBUM);
+            String myLikeArtistsSyncConfig = SqConfigCache.getSqConfigValue(SetConfigEnum.PLUG_QQVIP_SYNC_MY_LIKE_ARTISTS);
 
-        if (StringUtils.isNotBlank(qqopenconfigKey)&& Boolean.parseBoolean(myLikeSongSyncConfig)) {
-            if (StringUtils.isNotBlank(myLikeSongSyncConfig)&& Boolean.parseBoolean(myLikeSongSyncConfig)){
-                log.info("扫描QQVIP同步我喜欢单曲");
-                syncLikeSong();
+            if (StringUtils.isNotBlank(qqopenconfigKey)&& Boolean.parseBoolean(myLikeSongSyncConfig)) {
+                if (StringUtils.isNotBlank(myLikeSongSyncConfig)&& Boolean.parseBoolean(myLikeSongSyncConfig)){
+                    log.info("扫描QQVIP同步我喜欢单曲");
+                    syncLikeSong();
+                }
+                if (StringUtils.isNotBlank(myLikePlaylistSyncConfig)&& Boolean.parseBoolean(myLikePlaylistSyncConfig)){
+                    log.info("扫描QQVIP同步所有歌单");
+                    syncplaylist();
+                }
+                if (StringUtils.isNotBlank(myLikeAlbumSyncConfig)&& Boolean.parseBoolean(myLikeAlbumSyncConfig)){
+                    log.info("扫描QQVIP同步所有专辑");
+                    syncalbu();
+                }
+                if (StringUtils.isNotBlank(myLikeArtistsSyncConfig)&& Boolean.parseBoolean(myLikeArtistsSyncConfig)){
+                    log.info("扫描QQVIP同步所有关注歌手");
+                    syncArtist();
+                }
             }
-            if (StringUtils.isNotBlank(myLikePlaylistSyncConfig)&& Boolean.parseBoolean(myLikePlaylistSyncConfig)){
-                log.info("扫描QQVIP同步所有歌单");
-                syncplaylist();
-            }
-            if (StringUtils.isNotBlank(myLikeAlbumSyncConfig)&& Boolean.parseBoolean(myLikeAlbumSyncConfig)){
-                log.info("扫描QQVIP同步所有专辑");
-                syncalbu();
-            }
-            if (StringUtils.isNotBlank(myLikeArtistsSyncConfig)&& Boolean.parseBoolean(myLikeArtistsSyncConfig)){
-                log.info("扫描QQVIP同步所有关注歌手");
-                syncArtist();
-            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.error("扫描QQVIP同步我喜欢单曲异常",e);
         }
     }
     private void syncArtist() {

@@ -18,52 +18,85 @@ import java.util.List;
 @Data
 public class MgSearchAlbumResult {
 
-    @JsonProperty("albums")
-    private List<AlbumsDTO> albums;
-    @JsonProperty("pgt")
-    private Integer pgt;
-    @JsonProperty("keyword")
-    private String keyword;
-    @JsonProperty("pageNo")
-    private String pageNo;
-    @JsonProperty("success")
-    private Boolean success;
+    @JsonProperty("code")
+    private String code;
+    @JsonProperty("resultNum")
+    private Integer resultNum;
+    @JsonProperty("dynamicEffect")
+    private Integer dynamicEffect;
+    @JsonProperty("mod")
+    private Integer mod;
+    @JsonProperty("end")
+    private Boolean end;
+    @JsonProperty("albumResultData")
+    private AlbumResultDataDTO albumResultData;
+    @JsonProperty("concertResultData")
+    private ConcertResultDataDTO concertResultData;
+    @JsonProperty("userSortTypes")
+    private List<UserSortTypesDTO> userSortTypes;
 
     @NoArgsConstructor
     @Data
-    public static class AlbumsDTO {
-        @JsonProperty("fullSongTotal")
-        private Integer fullSongTotal;
-        @JsonProperty("singer")
-        private List<SingerDTO> singer;
-        @JsonProperty("albumPicS")
-        private String albumPicS;
-        @JsonProperty("songNum")
-        private Integer songNum;
-        @JsonProperty("programName")
-        private Object programName;
-        @JsonProperty("publishDate")
-        private String publishDate;
-        @JsonProperty("id")
-        private String id;
-        @JsonProperty("title")
-        private String title;
-        @JsonProperty("movieName")
-        private List<?> movieName;
-        @JsonProperty("albumPicL")
-        private String albumPicL;
-        @JsonProperty("albumPicM")
-        private String albumPicM;
-        @JsonProperty("highlightStr")
-        private List<String> highlightStr;
+    public static class AlbumResultDataDTO {
+        @JsonProperty("totalCount")
+        private String totalCount;
+        @JsonProperty("correct")
+        private List<List<String>> correct;
+        @JsonProperty("result")
+        private List<ResultDTO> result;
 
         @NoArgsConstructor
         @Data
-        public static class SingerDTO {
+        public static class ResultDTO {
             @JsonProperty("id")
             private String id;
+            @JsonProperty("resourceType")
+            private String resourceType;
             @JsonProperty("name")
             private String name;
+            @JsonProperty("type")
+            private String type;
+            @JsonProperty("singer")
+            private String singer;
+            @JsonProperty("highlightStr")
+            private List<String> highlightStr;
+            @JsonProperty("publishDate")
+            private String publishDate;
+            @JsonProperty("desc")
+            private String desc;
+            @JsonProperty("imgItems")
+            private List<ImgItemsDTO> imgItems;
+            @JsonProperty("isPay")
+            private Integer isPay;
+
+            @NoArgsConstructor
+            @Data
+            public static class ImgItemsDTO {
+                @JsonProperty("img")
+                private String img;
+                @JsonProperty("imgSizeType")
+                private String imgSizeType;
+                @JsonProperty("fileId")
+                private String fileId;
+            }
         }
+    }
+
+    @NoArgsConstructor
+    @Data
+    public static class ConcertResultDataDTO {
+        @JsonProperty("result")
+        private List<?> result;
+        @JsonProperty("totalCount")
+        private String totalCount;
+    }
+
+    @NoArgsConstructor
+    @Data
+    public static class UserSortTypesDTO {
+        @JsonProperty("name")
+        private String name;
+        @JsonProperty("value")
+        private String value;
     }
 }

@@ -1,16 +1,21 @@
 mg:
-  #  不需要登录
-  islogin: false
-#  搜索
-  SearchUrl: http://m.music.migu.cn/migu/remoting/scr_search_tag?rows=#{pageSize}&type=#{searchType}&keyword=#{searchKey}&pgc=#{pageNo}
-#  歌曲信息以及下载链接
-  SongInfoUrl: http://c.musicapp.migu.cn/MIGUM2.0/v1.0/content/resourceinfo.do?copyrightId=#{musicId}&resourceType=3
-#歌词
-  SongLyricUrl: http://music.migu.cn/v3/api/music/audioPlayer/getLyric?copyrightId=#{musicId}
+#  提示词
+  SearchTipUrl:  https://jadeite.migu.cn/music_search/v2/suggest?pageSize=10&text=#{SearchTip}
+#
+  #  搜索
+  SearchUrl:  https://jadeite.migu.cn/music_search/v3/search/searchAll?&pageNo=#{pageNo}&pageSize=#{pageSize}&sort=1&text=#{searchKey}&searchSwitch=#{searchType}&isCopyright=1&isCorrect=1&sid=USS
+#  歌曲信息
+  SongInfoUrl: http://c.musicapp.migu.cn/MIGUM2.0/v1.0/content/resourceinfo.do?resourceId=#{musicId}&resourceType=2
+#  歌曲信息2
+  SongInfoUrl2: https://app.c.nf.migu.cn/MIGUM3.0/resource/song/by-contentids/v2.0?contentId=#{musicId}&contentType=2
+
 # 歌手信息
-  ArtistInfoUrl: https://m.music.migu.cn/migu/remoting/cms_artist_detail_tag?artistId=#{artistid}
+  ArtistInfoUrl: https://app.c.nf.migu.cn/MIGUM2.0/v1.0/content/resourceinfo.do?resourceId=#{artistid}&resourceType=2002
 #专辑信息
   AlbumInfoUrl: https://app.c.nf.migu.cn/MIGUM3.0/resource/album/v2.0?albumId=#{albumid}
+  #专辑信息2
+  AlbumInfoUrl2: https://c.musicapp.migu.cn/MIGUM2.0/v1.0/content/resourceinfo.do?resourceId=#{albumid}&resourceType=#{resourceType}
+
 #  专辑列表
   ArtistAlbumListUrl: https://app.pd.nf.migu.cn/MIGUM3.0/bmw/singer/album/v1.0?pageNo=#{pageNo}&singerId=#{artistid}
 # 特殊专辑id转换
@@ -20,7 +25,7 @@ mg:
 # 图片前缀
   SongCoverUrl: http://d.musicapp.migu.cn
 # 下载链接
-  DownloadUrl: http://c.musicapp.migu.cn/MIGUM2.0/v1.0/content/resourceinfo.do?copyrightId=#{musicId}&resourceType=2
+  DownloadUrl:  https://app.c.nf.migu.cn/MIGUM2.0/strategy/listen-url/v2.4?resourceType=2&toneFlag=HQ&contentId=#{musicId}&lowerQualityContentId=#{musicId}&channel=0
 # 下载链接前缀
   DownloadUrlPrefix: https://freetyst.nf.migu.cn/
 #  歌手全部歌曲搜索

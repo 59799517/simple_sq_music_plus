@@ -22,7 +22,7 @@ kg:
 #  专辑歌曲
   albumSongUrl: /album/songs
 #  获取下载链接
-  downloadUrl: /song/url
+  downloadUrl: /song/url/new
 #  用户歌单
   userPlaylist: /user/playlist
 #  歌单详情
@@ -53,6 +53,9 @@ kg:
   signUrl: /youth/day/vip
 #  签到状态
   signInfoUrl: /youth/union/vip
+#  签到vip换概念vip
+  vipUpgrade: /youth/day/vip/upgrade
+
 
   SearchTipUrl: https://searchtip.kugou.com/getSearchTip?MusicTipCount=10&keyword=#{SearchTip}
 

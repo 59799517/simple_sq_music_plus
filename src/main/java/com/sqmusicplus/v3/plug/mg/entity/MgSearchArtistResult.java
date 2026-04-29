@@ -18,38 +18,72 @@ import java.util.List;
 @Data
 public class MgSearchArtistResult {
 
-
-    @JsonProperty("artists")
-    private List<ArtistsDTO> artists;
-    @JsonProperty("pgt")
-    private Integer pgt;
-    @JsonProperty("keyword")
-    private String keyword;
-    @JsonProperty("pageNo")
-    private String pageNo;
-    @JsonProperty("success")
-    private Boolean success;
+    @JsonProperty("code")
+    private String code;
+    @JsonProperty("resultNum")
+    private Integer resultNum;
+    @JsonProperty("dynamicEffect")
+    private Integer dynamicEffect;
+    @JsonProperty("mod")
+    private Integer mod;
+    @JsonProperty("end")
+    private Boolean end;
+    @JsonProperty("singerResultData")
+    private SingerResultDataDTO singerResultData;
+    @JsonProperty("concertResultData")
+    private ConcertResultDataDTO concertResultData;
 
     @NoArgsConstructor
     @Data
-    public static class ArtistsDTO {
-        @JsonProperty("artistPicL")
-        private String artistPicL;
-        @JsonProperty("fullSongTotal")
-        private Integer fullSongTotal;
-        @JsonProperty("artistPicM")
-        private String artistPicM;
-        @JsonProperty("songNum")
-        private Integer songNum;
-        @JsonProperty("albumNum")
-        private Integer albumNum;
-        @JsonProperty("artistPicS")
-        private String artistPicS;
-        @JsonProperty("id")
-        private String id;
-        @JsonProperty("title")
-        private String title;
-        @JsonProperty("highlightStr")
-        private List<String> highlightStr;
+    public static class SingerResultDataDTO {
+        @JsonProperty("totalCount")
+        private String totalCount;
+        @JsonProperty("correct")
+        private List<?> correct;
+        @JsonProperty("result")
+        private List<ResultDTO> result;
+
+        @NoArgsConstructor
+        @Data
+        public static class ResultDTO {
+            @JsonProperty("id")
+            private String id;
+            @JsonProperty("name")
+            private String name;
+            @JsonProperty("highlightStr")
+            private List<String> highlightStr;
+            @JsonProperty("albumCount")
+            private Integer albumCount;
+            @JsonProperty("songCount")
+            private Integer songCount;
+            @JsonProperty("mvCount")
+            private Integer mvCount;
+            @JsonProperty("vrbtCount")
+            private Integer vrbtCount;
+            @JsonProperty("singerPicUrl")
+            private List<SingerPicUrlDTO> singerPicUrl;
+            @JsonProperty("relationDesc")
+            private String relationDesc;
+
+            @NoArgsConstructor
+            @Data
+            public static class SingerPicUrlDTO {
+                @JsonProperty("img")
+                private String img;
+                @JsonProperty("imgSizeType")
+                private String imgSizeType;
+                @JsonProperty("fileId")
+                private String fileId;
+            }
+        }
+    }
+
+    @NoArgsConstructor
+    @Data
+    public static class ConcertResultDataDTO {
+        @JsonProperty("result")
+        private List<?> result;
+        @JsonProperty("totalCount")
+        private String totalCount;
     }
 }

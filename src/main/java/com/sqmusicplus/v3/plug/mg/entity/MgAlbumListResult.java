@@ -62,7 +62,7 @@ public class MgAlbumListResult {
             @JsonProperty("audioFormats")
             private List<AudioFormatsDTO> audioFormats;
             @JsonProperty("duration")
-            private Integer duration;
+            private Long duration;
             @JsonProperty("playNumDesc")
             private String playNumDesc;
             @JsonProperty("copyrightId")

@@ -25,20 +25,12 @@ import com.sqmusicplus.v3.plug.qq.util.QQMusicUtil;
 import com.sqmusicplus.v3.utils.OkHttpUtils;
 import com.sqmusicplus.v3.utils.StringUtils;
 import lombok.extern.slf4j.Slf4j;
-import okhttp3.HttpUrl;
-import okhttp3.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.concurrent.*;
 
 /**
  * @Classname QQHander
@@ -56,7 +48,7 @@ public class QQHander extends SearchHanderAbstract {
 
     @Autowired
     @Qualifier("qqQrthreadPoolTaskExecutor")
-    private ThreadPoolExecutor threadPoolExecutor;
+    private ExecutorService executorService;
 
     //二维码检查线程
     private Future<QQMusicQrEventResult> qrCodeCheckFuture;
@@ -595,7 +587,7 @@ public class QQHander extends SearchHanderAbstract {
             long timeout = 5 * 60 * 1000; // 5 minutes in milliseconds
             // 异步监控二维码超5分钟自动放弃
             Callable<QQMusicQrEventResult> task = this::checkQQQr;
-            qrCodeCheckFuture = threadPoolExecutor.submit(task);
+            qrCodeCheckFuture = executorService.submit(task);
             while (System.currentTimeMillis() - startTime < timeout) {
                 try {
                     // 每次等待1秒
@@ -624,7 +616,7 @@ public class QQHander extends SearchHanderAbstract {
                             break; // 任务成功完成，终止循环
                         }else{
                             // 任务失败，重新提交任务
-                            qrCodeCheckFuture = threadPoolExecutor.submit(task);
+                            qrCodeCheckFuture = executorService.submit(task);
                         }
                     } catch (InterruptedException | ExecutionException e) {
                         log.error("获取QQ二维码检查任务结果时发生错误", e);

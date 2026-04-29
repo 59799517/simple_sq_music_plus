@@ -26,8 +26,13 @@ public class DownloadTask {
 
     @Scheduled(cron="*/10 * * * * ? ")
     public void excute(){
-        log.debug("=============开始检测下载===============");
-        downloadExcute.getDownloadInfo();
+        try {
+            log.debug("=============开始检测下载===============");
+            downloadExcute.getDownloadInfo();
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.debug("=============下载任务执行失败===============");
+        }
     }
 
 }

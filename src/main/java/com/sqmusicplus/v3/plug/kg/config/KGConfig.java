@@ -26,6 +26,7 @@ public class KGConfig {
     private  String wxQropenplatUrl ;
     private  String signUrl ;
     private  String signInfoUrl;
+    private  String vipUpgrade ;
     private  String songinfoUrl ;
     private  String songinfoAddUrl;
     private  String lyricIdUrl;

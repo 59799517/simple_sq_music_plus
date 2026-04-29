@@ -26,48 +26,56 @@ public class AliDriceSyncTask {
 
     @Autowired
     private AliHander aliHander;
-    @Autowired
-    private SqAliSyncService sqAliSyncService;
     @Scheduled(cron="0 0 0/1 * * ? ")
     public void excute(){
-        String aliyun_sync_mode = SqConfigCache.getSqConfigValue(SetConfigEnum.EXPAND_ALIYUN_SYNC_MODE);
-        if (StringUtils.isBlank(aliyun_sync_mode)){
-            return;
+        try {
+            String aliyun_sync_mode = SqConfigCache.getSqConfigValue(SetConfigEnum.EXPAND_ALIYUN_SYNC_MODE);
+            if (StringUtils.isBlank(aliyun_sync_mode)){
+                return;
+            }
+            if (!aliyun_sync_mode.equals("scheduled")){
+                return;
+            }
+            log.info("=============开始同步阿里云盘===============");
+            List<SqAliSync> sqAliSyncs = aliHander.uploadFile(true,true);
+            log.info("=============同步阿里云盘{}共计：{}首歌曲===============", !sqAliSyncs.isEmpty() ?"成功":"失败",sqAliSyncs.size());
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.error("同步阿里云盘失败：{}", e.getMessage());
         }
-        if (!aliyun_sync_mode.equals("scheduled")){
-            return;
-        }
-        log.info("=============开始同步阿里云盘===============");
-        List<SqAliSync> sqAliSyncs = aliHander.uploadFile(true,true);
-        log.info("=============同步阿里云盘{}共计：{}首歌曲===============", !sqAliSyncs.isEmpty() ?"成功":"失败",sqAliSyncs.size());
     }
     //每天 0:00 执行 检查 token 是否失效
     @Scheduled(cron="0 0 0 * * ? ")
-    public void checkToken(){
-        String aliyun_open = SqConfigCache.getSqConfigValue(SetConfigEnum.EXPAND_ALIYUN_OPEN);
-        if (StringUtils.isBlank(aliyun_open)){
-            return;
-        }
-        if (!aliyun_open.equals("true")){
-            return;
-        }
-        
-        log.info("=============检查阿里云盘 Token===============");
-        String token_expire_time = SqConfigCache.getSqConfigValue(SetConfigEnum.EXPAND_ALIYUN_ACCESS_TOKEN_EXPIRE_TIME);
-        
-        // 判断是否过期（忽略时分秒，只比较日期）
-        if (isTokenExpired(token_expire_time)) {
-            log.info("Token 已过期，清空配置");
-            clearAliyunConfig();
-            return;
-        }
-    
-        String aliyun_access_token = SqConfigCache.getSqConfigValue(SetConfigEnum.EXPAND_ALIYUN_ACCESS_TOKEN);
-    
-        Boolean b = aliHander.checkAccessToken(aliyun_access_token);
-        if (!b){
-            log.info("Token 验证失败，清空配置");
-            clearAliyunConfig();
+    public void excuteCheckToken(){
+        try {
+            String aliyun_open = SqConfigCache.getSqConfigValue(SetConfigEnum.EXPAND_ALIYUN_OPEN);
+            if (StringUtils.isBlank(aliyun_open)){
+                return;
+            }
+            if (!aliyun_open.equals("true")){
+                return;
+            }
+
+            log.info("=============检查阿里云盘 Token===============");
+            String token_expire_time = SqConfigCache.getSqConfigValue(SetConfigEnum.EXPAND_ALIYUN_ACCESS_TOKEN_EXPIRE_TIME);
+
+            // 判断是否过期（忽略时分秒，只比较日期）
+            if (isTokenExpired(token_expire_time)) {
+                log.info("Token 已过期，清空配置");
+                clearAliyunConfig();
+                return;
+            }
+
+            String aliyun_access_token = SqConfigCache.getSqConfigValue(SetConfigEnum.EXPAND_ALIYUN_ACCESS_TOKEN);
+
+            Boolean b = aliHander.checkAccessToken(aliyun_access_token);
+            if (!b){
+                log.info("Token 验证失败，清空配置");
+                clearAliyunConfig();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.error("检查阿里云盘 Token 失败：{}", e.getMessage());
         }
     }
         

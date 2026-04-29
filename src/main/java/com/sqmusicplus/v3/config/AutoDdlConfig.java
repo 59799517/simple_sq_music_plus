@@ -22,8 +22,9 @@ public class AutoDdlConfig   extends SimpleDdl {
     @Override
     public List<String> getSqlFiles() {
         return CollUtil.newArrayList(
-                "db/init.sql"
-                ,"db/3.1.2update.sql"
+                "db/init-h2.sql"
+                ,"db/3.1.2update-h2.sql"
+                ,"db/3.1.3update-h2.sql"
 //                ,"db/sq_config.sql"
 //                ,"db/3.0.17update.sql"
 //                ,"db/3.0.21update.sql"

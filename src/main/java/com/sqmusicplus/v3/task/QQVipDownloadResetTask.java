@@ -21,7 +21,7 @@ public class QQVipDownloadResetTask {
      * 每天凌晨0点重置QQVIP下载计数
      */
     @Scheduled(cron = "0 0 10 * * ?")
-    public void resetDailyCount() {
+    public void excute() {
         try {
             log.info("开始执行QQVIP每日下载计数重置任务");
             
@@ -30,6 +30,7 @@ public class QQVipDownloadResetTask {
             
             log.info("QQVIP每日下载计数已重置为0");
         } catch (Exception e) {
+            e.printStackTrace();
             log.error("重置QQVIP每日下载计数失败", e);
         }
     }

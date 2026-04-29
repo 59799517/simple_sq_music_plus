@@ -93,6 +93,10 @@ public class SQNeteaseCloudMusicInfo {
         String url = "/playlist/track/all";
         return DownloadUtils.postCookieToJsonObject(baseUrl + url, parameter, cookie);
     }
+    public JSONObject innerVersion(){
+        String url = "/inner/version";
+        return DownloadUtils.getToJsonObject(baseUrl + url);
+    }
 
 
 
