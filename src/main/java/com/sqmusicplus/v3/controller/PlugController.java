@@ -1,6 +1,5 @@
 package com.sqmusicplus.v3.controller;
 
-import cn.dev33.satoken.annotation.SaCheckLogin;
 import cn.hutool.core.codec.Base64;
 import com.sqmusicplus.v3.base.entity.SqConfig;
 import com.sqmusicplus.v3.base.enums.DbBooleanConvert;
@@ -45,7 +44,6 @@ public class PlugController {
      * 获取酷狗登录二维码
      * @return
      */
-    @SaCheckLogin
     @GetMapping("/kg/getQrImage")
     public AjaxResult getKgQrimage(){
         SqConfig kgopenconfigKey = SqConfigCache.getSqConfig(SetConfigEnum.PLUG_KG_OPEN.getKey());
@@ -59,7 +57,6 @@ public class PlugController {
     /**
      * 获取酷狗扫码信息
      */
-    @SaCheckLogin
     @GetMapping("/kg/checkQrCodeStatus")
     public AjaxResult  getKGcheckQrCodeStatus(){
         SqConfig kgopenconfigKey = SqConfigCache.getSqConfig(SetConfigEnum.PLUG_KG_OPEN.getKey());
@@ -71,7 +68,6 @@ public class PlugController {
     /**
      * 微信扫酷狗登录二维码生成
      */
-    @SaCheckLogin
     @GetMapping("/kg/getWxQrImage")
     public AjaxResult  getWxQrImage(){
         SqConfig kgopenconfigKey = SqConfigCache.getSqConfig(SetConfigEnum.PLUG_KG_OPEN.getKey());
@@ -85,7 +81,6 @@ public class PlugController {
     /**
      * 微信扫酷狗登录二维码检测
      */
-    @SaCheckLogin
     @GetMapping("/kg/checkWxQrCodeStatus")
     public AjaxResult  checkWxQrCodeStatus(){
         SqConfig kgopenconfigKey = SqConfigCache.getSqConfig(SetConfigEnum.PLUG_KG_OPEN.getKey());
@@ -98,7 +93,6 @@ public class PlugController {
     /**
      * 刷新酷狗token
      */
-    @SaCheckLogin
     @GetMapping("/kg/refreshToken")
     public AjaxResult refreshKGToken(){
         SqConfig kgopenconfigKey = SqConfigCache.getSqConfig(SetConfigEnum.PLUG_KG_OPEN.getKey());
@@ -113,7 +107,6 @@ public class PlugController {
      * 酷狗签到
      * @return
      */
-    @SaCheckLogin
     @GetMapping("/kg/signIn")
     public AjaxResult  kgSignIn(){
         SqConfig kgopenconfigKey = SqConfigCache.getSqConfig(SetConfigEnum.PLUG_KG_OPEN.getKey());
@@ -128,7 +121,6 @@ public class PlugController {
      * qqVIP登录相关（QQ二维码）
      * @return
      */
-    @SaCheckLogin
     @GetMapping("/qqvip/getQrImage")
     public AjaxResult  getQQvipQrimage(){
             QQMusicQr qqLoginQr = qqHander.getQQLoginQr();
@@ -140,7 +132,6 @@ public class PlugController {
      * 微信登录二维码
      * @return
      */
-    @SaCheckLogin
     @GetMapping("/qqvip/getWechatQrImage")
     public AjaxResult  getWechatQrImage(){
         QQMusicQr qqLoginQr = qqHander.getWechatLoginQr();
@@ -151,7 +142,6 @@ public class PlugController {
     /**
      * QQ二维码检测
      */
-    @SaCheckLogin
     @GetMapping("/qqvip/checkQrCodeStatus")
     public AjaxResult  getQQvipcheckQrCodeStatus() {
         SqConfig sqConfig = SqConfigCache.getSqConfig(SetConfigEnum.PLUG_QQVIP_OPEN.getKey());
@@ -173,7 +163,6 @@ public class PlugController {
     /**
      * 手动刷新QQ登录cookie
      */
-    @SaCheckLogin
     @GetMapping("/qqvip/refreshQQvipCookie")
     public AjaxResult refreshQQvipCookies(){
             QQMusicCookieInfo qqMusicCookieInfo = qqHander.refreshToken();

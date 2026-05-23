@@ -1,5 +1,6 @@
 package com.sqmusicplus.v3.controller;
 
+import com.sqmusicplus.v3.config.RequireLogin;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
@@ -13,6 +14,7 @@ import java.nio.charset.StandardCharsets;
 /**
  * API文档控制器 - Docsify
  */
+@RequireLogin(value = false)
 @Controller
 @RequestMapping("/api/doc")
 public class DocController {

@@ -1,9 +1,5 @@
 package com.sqmusicplus.v3.controller;
 
-import cn.dev33.satoken.annotation.SaCheckLogin;
-import cn.dev33.satoken.stp.SaLoginConfig;
-import cn.dev33.satoken.stp.SaTokenInfo;
-import cn.dev33.satoken.stp.StpUtil;
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -15,8 +11,7 @@ import com.sqmusicplus.v3.base.enums.PlugBrType;
 import com.sqmusicplus.v3.base.enums.SetConfigEnum;
 import com.sqmusicplus.v3.base.service.SqConfigService;
 import com.sqmusicplus.v3.base.service.SqSyncService;
-import com.sqmusicplus.v3.config.AjaxResult;
-import com.sqmusicplus.v3.config.SqConfigCache;
+import com.sqmusicplus.v3.config.*;
 import com.sqmusicplus.v3.config.exception.SQException;
 import com.sqmusicplus.v3.plug.kg.hander.KGHander;
 import com.sqmusicplus.v3.plug.netease.hander.NeteaseHander;
@@ -24,10 +19,12 @@ import com.sqmusicplus.v3.plug.qq.hander.QQHander;
 import com.sqmusicplus.v3.plug.qqvip.QQvipHander;
 import com.sqmusicplus.v3.utils.StringUtils;
 import com.sqmusicplus.v3.utils.SystemUtils;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -63,6 +60,10 @@ public class ConfigController {
 
     @Autowired
     private SqConfigService configService;
+    @Autowired
+    private AuthUtil authUtil;
+    @Value("${jwt.expiration:604800000}")
+    private Long jwtExpirationMs; // JWT 过期时间（毫秒）
 
     /**
      * 登录
@@ -70,6 +71,7 @@ public class ConfigController {
      * @param data
      * @return
      */
+    @RequireLogin(value = false)
     @PostMapping("/login")
     public AjaxResult login(@RequestBody HashMap<String, String> data) {
         String username = data.get("username");
@@ -87,34 +89,41 @@ public class ConfigController {
             return AjaxResult.error("请先设置登录用户");
         }
         if (username.equals(dbname) && password.equals(dbpwd)) {
-            StpUtil.login(9527, SaLoginConfig.setExtra("device", device).setIsLastingCookie(false));
-            SaTokenInfo tokenInfo = StpUtil.getTokenInfo();
-            return AjaxResult.success(tokenInfo);
+            // 生成 Token
+            String token = authUtil.login(9527, username);
+            
+            // 计算 Token 过期时间（秒），从配置文件读取
+            Long tokenTimeout = jwtExpirationMs / 1000; // 毫秒转秒
+            
+            // 创建登录响应
+            LoginResponse loginResponse = new LoginResponse(token, 9527, tokenTimeout, device);
+            return AjaxResult.success(loginResponse);
         } else {
             return AjaxResult.error("账号密码错误");
         }
     }
 
     /**
-     * jwt模式无需退出前段清楚token即可
+     * 登出
      *
      * @return
      */
-    @SaCheckLogin
     @PostMapping("/logout")
-    public AjaxResult logout() {
-//        StpUtil.logout(9527,device);
+    public AjaxResult logout(HttpServletRequest request) {
+        authUtil.logout();
         return AjaxResult.success();
     }
 
     /**
-     * 用户是否登上
+     * 用户是否登录
      *
      * @return
      */
     @RequestMapping(value = "isLogin")
-    public AjaxResult isLogin() {
-        return StpUtil.isLogin() ? AjaxResult.success("登录有效", true) : AjaxResult.error("过期", false);
+    public AjaxResult isLogin(Authentication authentication) {
+        boolean isLogin = authUtil.isLogin();
+//        boolean isLogin = authentication != null && authentication.isAuthenticated();
+        return isLogin ? AjaxResult.success("登录有效", true) : AjaxResult.error("过期", false);
     }
 
     /**
@@ -122,7 +131,7 @@ public class ConfigController {
      *
      * @return
      */
-    @SaCheckLogin
+    @RequireLogin(value = false)
     @GetMapping("/getConfigList")
     public AjaxResult getConfigList() {
         return AjaxResult.success(SqConfigCache.getAllConfig());
@@ -131,7 +140,6 @@ public class ConfigController {
     /**
      * 修改设置
      */
-    @SaCheckLogin
     @PostMapping("/updateConfig")
     public AjaxResult updateConfig(@RequestBody SqConfig data) {
         SqConfig sqConfig = SqConfigCache.getSqConfig(data.getConfigKey());
@@ -169,14 +177,15 @@ public class ConfigController {
     }
     //获取当前网络使用情况
 
+    @RequireLogin(value = false)
     @GetMapping("/getCurrentNetwork")
-    public static AjaxResult getCurrentNetwork() {
+    public AjaxResult getCurrentNetwork() {
         return AjaxResult.success(SystemUtils.getNetworkSpeedReport());
     }
     /**
      * 获取启动的查询件
      */
-    @SaCheckLogin
+    @RequireLogin(value = false)
     @GetMapping("/getOption")
     public AjaxResult getSelectOption() {
         return AjaxResult.success(SqConfigCache.PlugOptions);
@@ -320,6 +329,23 @@ public class ConfigController {
 
             }
         }
+
+        if (configKey.equals(SetConfigEnum.PLUG_TIDAL_OPEN.getKey())) {
+            if (configValue.equals(DbBooleanConvert.YES.getBooleanValue().toString())) {
+                HashMap<String, String> TIDALoption = new HashMap<>();
+                TIDALoption.put("value", "tidal");
+                TIDALoption.put("label","Tidal(无需登录支持真flac无损)");
+                //修改酷狗插打开插件功能
+                SqConfigCache.updatePlugOptions(TIDALoption);
+            } else {
+                SqConfigCache.removePlugOptions("tidal");
+            }
+        }
+        //修改密码后退出登录
+        if (configKey.equals(SetConfigEnum.SYSTEM_LOGIN_PASSWORD.getKey())||configKey.equals(SetConfigEnum.SYSTEM_LOGIN_ACCOUNT.getKey())) {
+            authUtil.kickout(9527);
+            authUtil.logout();
+        }
     }
 
 
@@ -343,8 +369,6 @@ public class ConfigController {
                 JSONObject jsonObject = array.getJSONObject(i);
                 String importType = jsonObject.getString("importType");
                 if (StringUtils.isBlank(importType) || importType.equalsIgnoreCase("playList")) {
-
-
                     String songlistname = jsonObject.getString("songlistname");
                     String plugTpye = jsonObject.getString("plugTpye");
                     String songlistid = jsonObject.getString("songlistid");

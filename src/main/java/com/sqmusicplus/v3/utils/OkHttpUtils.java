@@ -331,6 +331,23 @@ public class OkHttpUtils {
     }
 
     /**
+     * 同步请求（返回字节数组）
+     *
+     * @return 字节数组，失败返回 null
+     */
+    public byte[] syncBytes() {
+        setHeader(request);
+        try {
+            Response response = okHttpClient.newCall(request.build()).execute();
+            assert response.body() != null;
+            return response.body().bytes();
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    /**
      * 同步请求
      *
      * @return

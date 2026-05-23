@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tidal DASH 播放器</title>
+    <!-- 引入 dash.js -->
+    <script src="https://cdn.dashjs.org/latest/dash.all.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .info {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid #2196F3;
+        }
+        .warning {
+            background: #fff3cd;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid #ffc107;
+        }
+        audio {
+            width: 100%;
+            margin: 20px 0;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        button {
+            background: #2196F3;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #1976D2;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .code {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎵 Tidal DASH MPD 播放器</h1>
+        
+        <div class="info">
+            <strong>说明：</strong><br>
+            此播放器使用 DASH MPD Base64 Data URI + dash.js 播放 Tidal 音频。<br>
+            MPD 播放列表是离线（Base64），但分段文件需要从 Tidal CDN 在线加载。
+        </div>
+        
+        <div class="warning">
+            <strong>⚠️ 注意：</strong><br>
+            • 分段 URL 包含时效性 Token，需尽快播放<br>
+            • 需要网络连接才能加载分段<br>
+            • 某些浏览器可能有 CORS 限制
+        </div>
+        
+        <div id="status"></div>
+        
+        <audio id="audio" controls></audio>
+        
+        <div>
+            <button onclick="loadFromAPI()">从 API 加载</button>
+            <button onclick="loadFromInput()">手动输入 Data URI</button>
+            <button onclick="stopPlayback()">停止播放</button>
+        </div>
+        
+        <div style="margin-top: 20px;">
+            <label>
+                <input type="checkbox" id="useDashJs" checked>
+                使用 dash.js 播放器（原生支持 DASH/fMP4）
+            </label>
+        </div>
+        
+        <div style="margin-top: 20px;">
+            <h3>手动输入 MPD Data URI：</h3>
+            <textarea id="mpdInput" rows="5" style="width: 100%; font-family: monospace;" 
+                      placeholder="粘贴 data:application/dash+xml;base64,... 到这里"></textarea>
+        </div>
+        
+        <div style="margin-top: 20px;">
+            <h3>使用说明：</h3>
+            <div class="code">
+// 使用 dash.js
+const player = dashjs.MediaPlayer().create();
+player.initialize(audioElement, mpdDataUri, true);
+
+player.on(dashjs.MediaPlayer.events.STREAM_INITIALIZED, () => {
+    console.log('DASH 流初始化成功');
+});
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentPlayer = null;
+        const audio = document.getElementById('audio');
+        const statusDiv = document.getElementById('status');
+
+        function showStatus(message, type) {
+            statusDiv.className = `status ${type}`;
+            statusDiv.textContent = message;
+        }
+
+        function stopPlayback() {
+            if (currentPlayer) {
+                currentPlayer.reset();
+                currentPlayer = null;
+            }
+            audio.pause();
+            audio.src = '';
+            showStatus('已停止播放', 'success');
+        }
+
+        function playMpd(mpdData) {
+            stopPlayback();
+            
+            const useDashJs = document.getElementById('useDashJs').checked;
+            
+            if (useDashJs && typeof dashjs !== 'undefined') {
+                // 使用 dash.js
+                showStatus('正在使用 dash.js 加载...', 'success');
+                
+                let mpdXml;
+                
+                // 判断是 Data URI 还是原始 XML
+                if (mpdData.startsWith('data:application/dash+xml;base64,')) {
+                    // Base64 编码的 MPD（兼容旧格式）
+                    const base64Content = mpdData.replace('data:application/dash+xml;base64,', '');
+                    mpdXml = atob(base64Content);
+                } else {
+                    // 原始 XML 字符串
+                    mpdXml = mpdData;
+                }
+                                
+                console.log('===== 原始 MPD 内容（前2000字符）=====');
+                console.log(mpdXml.substring(0, 2000));
+                console.log('=====================================');
+                                
+                // 查找所有包含 URL 的属性
+                const allUrls = mpdXml.match(/(sourceURL|media|initialization)=["']([^"']+)["']/g);
+                console.log('找到的所有 URL 属性:', allUrls);
+                                
+                // 添加代理前缀到所有分段 URL（使用绝对路径）
+                // 注意：不要编码整个 URL，因为 $Number$ 需要保留给 dash.js 替换
+                const proxyPrefix = window.location.origin + '/tidal/segment/direct?url=';
+                console.log('代理前缀:', proxyPrefix);
+                                
+                // 替换所有 HTTPS URL（包括 SegmentTemplate 的 initialization 和 media）
+                let replaceCount = 0;
+                const modifiedMpd = mpdXml.replace(
+                    /(initialization|media|sourceURL)="(https?:\/\/[^"]+)"/g,
+                    (match, attr, url) => {
+                        replaceCount++;
+                        // URL 编码时保留 $Number$ 不被编码
+                        const encodedUrl = encodeURIComponent(url).replace(/%24Number%24/g, '$Number$');
+                        console.log(`替换 ${replaceCount}: ${attr}="${url.substring(0, 80)}..."`);
+                        return `${attr}="${proxyPrefix}${encodedUrl}"`;
+                    }
+                );
+                                
+                console.log(`总共替换了 ${replaceCount} 个 URL`);
+                
+                console.log('原始 MPD:', mpdXml.substring(0, 500));
+                console.log('修改后 MPD:', modifiedMpd.substring(0, 500));
+                
+                // 检查是否有 URL 被替换
+                const urlMatches = mpdXml.match(/(sourceURL|media)=\"(https?:\/\/[^\"]+)\"/g);
+                console.log('找到的 URL 数量:', urlMatches ? urlMatches.length : 0);
+                if (urlMatches) {
+                    console.log('原始 URLs:', urlMatches);
+                }
+                
+                const modifiedMatches = modifiedMpd.match(/(sourceURL|media)=\"([^\"]+)\"/g);
+                if (modifiedMatches) {
+                    console.log('修改后 URLs:', modifiedMatches);
+                }
+                
+                // 重新编码为 Data URI
+                const modifiedBase64 = btoa(modifiedMpd);
+                const modifiedDataUri = 'data:application/dash+xml;base64,' + modifiedBase64;
+                
+                currentPlayer = dashjs.MediaPlayer().create();
+                currentPlayer.initialize(audio, modifiedDataUri, true);
+                
+                currentPlayer.on(dashjs.MediaPlayer.events.STREAM_INITIALIZED, () => {
+                    showStatus('✓ DASH 流初始化成功，可以播放了', 'success');
+                });
+                
+                currentPlayer.on(dashjs.MediaPlayer.events.ERROR, (e) => {
+                    console.error('DASH 错误:', e);
+                    showStatus(`✗ 播放错误: ${e.error.message}`, 'error');
+                });
+                
+            } else {
+                showStatus('✗ dash.js 未加载', 'error');
+            }
+        }
+
+        function loadFromInput() {
+            const mpdInput = document.getElementById('mpdInput').value.trim();
+            
+            if (!mpdInput) {
+                showStatus('请输入 MPD 内容或 Data URI', 'error');
+                return;
+            }
+            
+            // 支持两种格式：Base64 Data URI 或原始 XML
+            if (!mpdInput.startsWith('data:application/dash+xml;base64,') && !mpdInput.startsWith('<?xml')) {
+                showStatus('无效的 MPD 格式（需要 Data URI 或 XML）', 'error');
+                return;
+            }
+            
+            playMpd(mpdInput);
+        }
+
+        function loadFromAPI() {
+            showStatus('正在从 API 获取...', 'success');
+            
+            fetch('http://localhost:8099/api/plug/download/url', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    musicId: '337502043',
+                    plugName: 'tidal',
+                    brType: 'LOSSLESS'
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.url) {
+                    showStatus('✓ 获取成功，正在加载...', 'success');
+                    playMpd(data.url);
+                    // 如果是 XML，显示在输入框中；如果是 Data URI，也显示
+                    document.getElementById('mpdInput').value = data.url.substring(0, 200) + '...';
+                } else {
+                    showStatus('✗ 获取失败: ' + (data.errorMsg || '未知错误'), 'error');
+                }
+            })
+            .catch(error => {
+                showStatus('✗ 网络错误: ' + error.message, 'error');
+            });
+        }
+
+        window.addEventListener('load', () => {
+            showStatus('页面已加载，请点击"从 API 加载"或手动输入 Data URI', 'success');
+        });
+    </script>
+</body>
+</html>

@@ -102,6 +102,18 @@ public class TestPositionAndDistance {
         System.out.println("歌手目录: " + result5.get(MusicUtils.KEY_ARTIST_DIR));
         System.out.println("专辑目录: " + result5.get(MusicUtils.KEY_ALBUM_DIR));
         System.out.println("歌曲目录: " + result5.get(MusicUtils.KEY_SONG_DIR)+"\\双截棍 - 周杰伦.flac");
+        String template6 = "${artists}/${musicName} - ${artists}";
+        Map<String, String> result6 = MusicUtils.parse(
+                template6,
+                fallback,
+                params,
+                File.separator
+        );
+        System.out.println("-----------------------------");
+        System.out.println("模板："+template6);
+        System.out.println("歌手目录: " + result6.get(MusicUtils.KEY_ARTIST_DIR));
+        System.out.println("专辑目录: " + result6.get(MusicUtils.KEY_ALBUM_DIR));
+        System.out.println("歌曲目录: " + result6.get(MusicUtils.KEY_SONG_DIR)+"\\双截棍 - 周杰伦.flac");
 
 
 

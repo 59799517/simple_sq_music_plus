@@ -58,7 +58,15 @@ public enum PlugBrType {
     APPLE_M4A_258("257","m4a",258,"apple","appleHander","apple_m4a_258"),
     APPLE_WAV_1500("1500","wav",1500,"apple","appleHander","apple_wav_1500"),
     APPLE_FLAC_2000("2000","flac",2000,"apple","appleHander","apple_flac_2000"),
-    APPLE_SOURCE_9999("2000","m4a",9999,"apple","appleHander","apple_source_9999");
+    APPLE_SOURCE_9999("2000","m4a",9999,"apple","appleHander","apple_source_9999"),
+
+    TIDAL_M4A_320("HIGH","mp3",320,"tidal","tidalSearchHander","tidal_m4a_320"),
+    TIDAL_FLAC_LOSSLESS("LOSSLESS","flac",1411,"tidal","tidalSearchHander","tidal_flac_lossless"),
+    TIDAL_HI_FLAC_RES_LOSSLESS("HI_RES_LOSSLESS","flac",2800,"tidal","tidalSearchHander","tidal_flac_res_lossless"),
+
+    QOBUZ_MP3_320("320","mp3",320,"qobuz","qobuzSearchHander","qobuz_mp3_320"),
+    QOBUZ_FLAC_LOSSLESS("lossless","flac",1411,"qobuz","qobuzSearchHander","qobuz_flac_lossless"),
+    QOBUZ_FLAC_HIRES("hires","flac",2800,"qobuz","qobuzSearchHander","qobuz_flac_hires");
 
 
 

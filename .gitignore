@@ -34,3 +34,7 @@ build/
 ### package-lock 在vue目录下的###
 vue/package-lock.json
 .node
+.lingma
+/.lingma/
+/.lingma/**
+.lingma/**

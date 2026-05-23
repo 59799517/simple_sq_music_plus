@@ -1,7 +1,6 @@
 package com.sqmusicplus.v3.controller;
 
 
-import cn.dev33.satoken.annotation.SaCheckLogin;
 import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
@@ -46,7 +45,6 @@ public class ExpandController {
     /**
      * 获取阿里云盘授权码url
      */
-    @SaCheckLogin
     @PostMapping("/getAuthorizationCode")
     public AjaxResult getAuthorizationCode() {
         String appid = SqConfigCache.getSqConfigValue(SetConfigEnum.EXPAND_ALIYUN_APPID);
@@ -60,7 +58,6 @@ public class ExpandController {
     /**
      * 获取确认授权码
      */
-    @SaCheckLogin
     @PostMapping("/getConfirmCode")
     public AjaxResult getConfirmCode(@RequestBody HashMap<String, String> param ) {
         String appid = SqConfigCache.getSqConfigValue(SetConfigEnum.EXPAND_ALIYUN_APPID);
@@ -91,7 +88,6 @@ public class ExpandController {
     /**
      * 校验access_token是由有效
      */
-    @SaCheckLogin
     @RequestMapping("/checkAccessToken")
     public AjaxResult checkAccessToken() {
         String access_token = SqConfigCache.getSqConfigValue(SetConfigEnum.EXPAND_ALIYUN_ACCESS_TOKEN);
@@ -104,7 +100,6 @@ public class ExpandController {
     /**
      * 获取阿里云盘用户信息以及用户信息
      */
-    @SaCheckLogin
     @RequestMapping("/getAndSetUserInfo")
     public AjaxResult getAndSetUserInfo() {
         String access_token = SqConfigCache.getSqConfigValue(SetConfigEnum.EXPAND_ALIYUN_ACCESS_TOKEN);
@@ -128,7 +123,6 @@ public class ExpandController {
     /**
      * 校验文件夹是否存在
      */
-    @SaCheckLogin
     @PostMapping("/checkFolder")
     public AjaxResult checkFolder(@RequestBody HashMap<String, String> param) {
         String path = param.get("path");
@@ -145,7 +139,6 @@ public class ExpandController {
     /**
      * 获取默认保存位置
      */
-    @SaCheckLogin
     @RequestMapping("/getDefaultSavePath")
     public AjaxResult getDefaultSavePath() {
         String path = aliHander.getDefaultFilePath();
@@ -158,7 +151,6 @@ public class ExpandController {
     /**
      * 根据路径自动创建阿里云文件夹
      */
-    @SaCheckLogin
     @PostMapping("/autoCreateFolder")
     public AjaxResult autoCreateFolder(@RequestBody HashMap<String, String> param) {
         String path = param.get("path");
@@ -171,7 +163,6 @@ public class ExpandController {
     /**
      * 手动同步一次（全量）
      */
-    @SaCheckLogin
     @RequestMapping("/syncOnce")
     public AjaxResult syncOnce() {
         new Thread(()->{
@@ -190,7 +181,6 @@ public class ExpandController {
     /**
      * 增量同步（只上传新增或修改的文件）
      */
-    @SaCheckLogin
     @RequestMapping("/incrementalSync")
     public AjaxResult incrementalSync() {
         new Thread(()->{
@@ -213,7 +203,6 @@ public class ExpandController {
     /**
      * 查询所有已经上传的的文件列表
      */
-    @SaCheckLogin
     @RequestMapping("/queryAllUploadFile")
     public AjaxResult queryAllUploadFile() {
         List<SqAliSync> sqAliSyncs = sqAliSyncService.list();
@@ -222,7 +211,6 @@ public class ExpandController {
     /**
      * 查询所有已经上传的的文件列表树状展示
      */
-    @SaCheckLogin
     @RequestMapping("/queryAllUploadFileTree")
     public AjaxResult queryAllUploadFileTree() {
         List<SqAliSync> sqAliSyncs = sqAliSyncService.list();

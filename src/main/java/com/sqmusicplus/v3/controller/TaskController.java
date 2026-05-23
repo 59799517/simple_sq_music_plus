@@ -1,11 +1,12 @@
 package com.sqmusicplus.v3.controller;
 
-import cn.dev33.satoken.annotation.SaCheckLogin;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.sqmusicplus.v3.base.entity.DownloadInfo;
+import com.sqmusicplus.v3.base.entity.SqSync;
 import com.sqmusicplus.v3.base.service.DownloadInfoService;
+import com.sqmusicplus.v3.base.service.SqSyncService;
 import com.sqmusicplus.v3.config.AjaxResult;
 import com.sqmusicplus.v3.download.DownloadStatus;
 import com.sqmusicplus.v3.download.vo.DownloadInfoSearch;
@@ -13,6 +14,9 @@ import com.sqmusicplus.v3.utils.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @Classname TaskController
@@ -27,6 +31,8 @@ import org.springframework.web.bind.annotation.*;
 public class TaskController {
     @Autowired
     private DownloadInfoService downloadInfoService;
+    @Autowired
+    private SqSyncService syncService;
 
     /**
      * 获取任务列表
@@ -60,6 +66,12 @@ public class TaskController {
             downloadInfoService.removeById(id);
             return AjaxResult.success();
         }
+        try {
+            //同时删除同步任务的数据
+            DownloadInfo byId = downloadInfoService.getById(id);
+            syncService.remove(new LambdaQueryWrapper<SqSync>().eq(SqSync::getMusicId, byId.getDownloadMusicId()));
+        } catch (Exception ignored) {
+        }
         return AjaxResult.error();
 
     }
@@ -79,6 +91,12 @@ public class TaskController {
             downloadInfoService.updateById(updownloadInfo);
             return AjaxResult.success();
         }
+        try {
+            //同时删除同步任务的数据
+            DownloadInfo byId = downloadInfoService.getById(id);
+            syncService.remove(new LambdaQueryWrapper<SqSync>().eq(SqSync::getMusicId, byId.getDownloadMusicId()));
+        } catch (Exception ignored) {
+        }
         return AjaxResult.error();
     }
 
@@ -87,13 +105,26 @@ public class TaskController {
      * 重新下载错误任务
      * @return
      */
-    @SaCheckLogin
     @GetMapping("/againTask")
     public AjaxResult againTask(){
         LambdaUpdateWrapper<DownloadInfo> downloadInfoLambdaUpdateWrapper = new LambdaUpdateWrapper<>();
         downloadInfoLambdaUpdateWrapper.eq(DownloadInfo::getDownloadStatus, DownloadStatus.error.getValue())
                 .set(DownloadInfo::getDownloadStatus, DownloadStatus.waiting.getValue());
         downloadInfoService.update(downloadInfoLambdaUpdateWrapper);
+
+        try {
+            ArrayList<String> delIds = new ArrayList<>();
+            //同时删除同步任务的数据
+            LambdaQueryWrapper<DownloadInfo> downloadInfoLambdaQueryWrapper = new LambdaQueryWrapper<>();
+            downloadInfoLambdaQueryWrapper.eq(DownloadInfo::getDownloadStatus, DownloadStatus.error.getValue());
+            List<DownloadInfo> list = downloadInfoService.list(downloadInfoLambdaQueryWrapper);
+            list.stream().forEach(downloadInfo -> {
+                delIds.add(downloadInfo.getId().toString());
+            });
+            syncService.remove(new LambdaQueryWrapper<SqSync>().in(SqSync::getMusicId, delIds));
+        } catch (Exception ignored) {
+        }
+
         return AjaxResult.success();
     }
 
@@ -101,7 +132,6 @@ public class TaskController {
      * 刷新正在下载的任务（重新下载正在下载的任务）
      * @return
      */
-    @SaCheckLogin
     @GetMapping("/refreshTask")
     public AjaxResult refreshTask(){
         LambdaUpdateWrapper<DownloadInfo> downloadInfoLambdaUpdateWrapper = new LambdaUpdateWrapper<>();
@@ -116,12 +146,24 @@ public class TaskController {
      * 删除所有错误任务
      * @return
      */
-    @SaCheckLogin
     @GetMapping("/delErrorTask")
     public AjaxResult delErrorTask(){
         LambdaQueryWrapper<DownloadInfo> downloadInfoLambdaQueryWrapper = new LambdaQueryWrapper<>();
         downloadInfoLambdaQueryWrapper.eq(DownloadInfo::getDownloadStatus, DownloadStatus.error.getValue());
+        try {
+            ArrayList<String> delIds = new ArrayList<>();
+            //同时删除同步任务的数据
+            List<DownloadInfo> list = downloadInfoService.list(downloadInfoLambdaQueryWrapper);
+            list.stream().forEach(downloadInfo -> {
+                delIds.add(downloadInfo.getId().toString());
+            });
+            syncService.remove(new LambdaQueryWrapper<SqSync>().in(SqSync::getMusicId, delIds));
+        } catch (Exception ignored) {
+        }
+
+
         downloadInfoService.remove(downloadInfoLambdaQueryWrapper);
+
         return AjaxResult.success();
     }
 
@@ -129,12 +171,22 @@ public class TaskController {
      * 删除成功任务
      * @return
      */
-    @SaCheckLogin
     @GetMapping("/delSuccessTask")
     public AjaxResult delSuccessTask(){
         LambdaQueryWrapper<DownloadInfo> downloadInfoLambdaQueryWrapper = new LambdaQueryWrapper<>();
         downloadInfoLambdaQueryWrapper.eq(DownloadInfo::getDownloadStatus, DownloadStatus.success.getValue());
+        try {
+            ArrayList<String> delIds = new ArrayList<>();
+            //同时删除同步任务的数据
+            List<DownloadInfo> list = downloadInfoService.list(downloadInfoLambdaQueryWrapper);
+            list.stream().forEach(downloadInfo -> {
+                delIds.add(downloadInfo.getId().toString());
+            });
+            syncService.remove(new LambdaQueryWrapper<SqSync>().in(SqSync::getMusicId, delIds));
+        } catch (Exception ignored) {
+        }
         downloadInfoService.remove(downloadInfoLambdaQueryWrapper);
+
         return AjaxResult.success();
     }
 
@@ -142,7 +194,6 @@ public class TaskController {
      * 删除正在等待任务
      * @return
      */
-    @SaCheckLogin
     @GetMapping("/delWaitingTask")
     public AjaxResult delWaitingTask(){
         LambdaQueryWrapper<DownloadInfo> downloadInfoLambdaQueryWrapper = new LambdaQueryWrapper<>();

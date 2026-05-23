@@ -23,11 +23,9 @@
         <hutool.version>5.8.25</hutool.version>
         <jcommander.version>1.82</jcommander.version>
         <commons.collections.version>3.2.2</commons.collections.version>
+        <javacv.version>1.5.9</javacv.version>
         <skipTests>true</skipTests>
-<!--        <frontend-src-dir>${project.basedir}/web</frontend-src-dir>-->
-<!--        <node.install.dir>${project.basedir}/.node</node.install.dir>-->
         <node.version>v22.14.0</node.version>
-<!--        <npm.version>10.8.2</npm.version>-->
     </properties>
     <dependencies>
         <dependency>
@@ -71,11 +69,6 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-cache</artifactId>
         </dependency>
-<!--        <dependency>-->
-<!--            <groupId>net.sf.ehcache</groupId>-->
-<!--            <artifactId>ehcache</artifactId>-->
-<!--            <version>2.10.9.2</version>-->
-<!--        </dependency>-->
 
         <dependency>
             <groupId>mysql</groupId>
@@ -119,19 +112,31 @@
             <version>4.12.0</version>
         </dependency>
 
-
-
+        <!-- Spring Security -->
         <dependency>
-            <groupId>cn.dev33</groupId>
-            <artifactId>sa-token-spring-boot3-starter</artifactId>
-            <version>1.45.0</version>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
 
+        <!-- JWT -->
         <dependency>
-            <groupId>cn.dev33</groupId>
-            <artifactId>sa-token-jwt</artifactId>
-            <version>1.45.0</version>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-api</artifactId>
+            <version>0.12.6</version>
         </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-impl</artifactId>
+            <version>0.12.6</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-jackson</artifactId>
+            <version>0.12.6</version>
+            <scope>runtime</scope>
+        </dependency>
+
 
         <dependency>
             <groupId>com.squareup.okio</groupId>
@@ -145,11 +150,6 @@
             <version>${commons.collections.version}</version>
         </dependency>
 
-<!--        <dependency>-->
-<!--            <groupId>commons-httpclient</groupId>-->
-<!--            <artifactId>commons-httpclient</artifactId>-->
-<!--            <version>3.1</version>-->
-<!--        </dependency>-->
 
 <!--    json    -->
         <!-- 阿里JSON解析器 -->
@@ -166,17 +166,27 @@
         </dependency>
 
         <!--音乐标签工具-->
-
-        <dependency>
-            <groupId>ws.schild</groupId>
-            <artifactId>jave-core</artifactId>
-            <version>${jave-all-deps.version}</version>
-        </dependency>
+        <!-- JAVE - 注意：jave-all-deps 的 FFmpeg 可能缺少某些编解码器 -->
         <dependency>
             <groupId>ws.schild</groupId>
             <artifactId>jave-all-deps</artifactId>
             <version>${jave-all-deps.version}</version>
         </dependency>
+        
+        <!-- JavaCV FFmpeg（完整版，包含所有编解码器） -->
+        <dependency>
+            <groupId>org.bytedeco</groupId>
+            <artifactId>javacv-platform</artifactId>
+            <version>${javacv.version}</version>
+        </dependency>
+        
+<!--        &lt;!&ndash; FFmpeg 自动管理（JavaCV） &ndash;&gt;-->
+<!--        <dependency>-->
+<!--            <groupId>org.bytedeco</groupId>-->
+<!--            <artifactId>javacv-platform</artifactId>-->
+<!--            <version>${javacv.version}</version>-->
+<!--        </dependency>-->
+<!--        -->
         <dependency>
             <groupId>org</groupId>
             <artifactId>jaudiotagger</artifactId>

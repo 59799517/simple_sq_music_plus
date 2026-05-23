@@ -243,6 +243,17 @@ public enum SetConfigEnum {
     PLUG_APPLE_ORIGIN("plug.apple.origin","apple 请求头  origin地址","plug"),
 
 
+
+
+    //--------------------------tidal--------------------
+    PLUG_TIDAL_OPEN("plug.tidal.open","是否开启tidal插件","plug"),
+    /**
+     * tidal token
+     */
+    PLUG_TIDAL_TOKEN("plug.tidal.token","tidal token","plug"),
+
+
+
     /**
      * 是否启用阿里云盘功能
      */

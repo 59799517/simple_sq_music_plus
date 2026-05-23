@@ -169,6 +169,22 @@ public class InitV3  implements ApplicationRunner {
             log.error("酷狗未开启插件！");
         }
 
+
+//        ------------------------Tidal-----------------------------
+        String  tidalsqConfigvalue = SqConfigCache.getSqConfigValue(SetConfigEnum.PLUG_TIDAL_OPEN);
+        if (Boolean.valueOf(tidalsqConfigvalue)) {
+            HashMap<String, String> Tidaloption = new HashMap<>();
+            Tidaloption.put("value","tidal");
+            Tidaloption.put("label","Tidal(无需登录支持真flac无损)");
+            SqConfigCache.addPlugOptions(Tidaloption);
+            log.info("Tidal插件开启成功！");
+        }else {
+            log.error("Tidal未开启插件！");
+        }
+
+
+
+
         //------------------------其他-----------------------------
 //        HashMap<String, String> QQoption = new HashMap<>();
 //        QQoption.put("value","qq");

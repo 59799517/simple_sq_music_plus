@@ -1,0 +1,35 @@
+qobuz:
+  id: qobuz-v1
+  # 名称
+  name: Qobuz
+  # 不需要登录（仅需要 app_id）
+  islogin: false
+  # API基础URL（第三方代理 API）
+  baseUrl: https://api.zarz.moe/v1/qbz
+  # App ID
+  appId: 798273057
+  # 搜索 Track URL
+  searchTrackUrl: ${qobuz.baseUrl}/track/search?query=#{query}&limit=#{limit}&app_id=#{appId}
+  # 搜索 Album URL
+  searchAlbumUrl: ${qobuz.baseUrl}/album/search?query=#{query}&limit=#{limit}&app_id=#{appId}
+  # 获取 Track 详情 URL
+  trackInfoUrl: ${qobuz.baseUrl}/track/get?track_id=#{trackId}&app_id=#{appId}
+  # 获取 Album 详情 URL
+  albumInfoUrl: ${qobuz.baseUrl}/album/get?album_id=#{albumId}&app_id=#{appId}
+  # 获取 Artist 详情 URL（代理 API 未提供，暂不支持）
+  artistInfoUrl: ""
+  # 下载链接 URL（代理 API 未提供，暂不支持）
+  downloadUrl: ""
+  # 歌词 URL（暂不支持）
+  lyricUrl: ""
+  # 图片 URL 前缀
+  imageUrl: https://static.qobuz.com/images/covers/
+
+# 注意：
+# 1. 使用的是第三方代理 API (api.zarz.moe)，仅需 app_id
+# 2. 当前代理 API 仅提供 Track 和 Album 相关接口
+# 3. Artist 搜索/详情、下载链接等功能暂不支持
+# 4. 音质说明：
+#    - MP3 320kbps: 标准音质
+#    - FLAC Lossless: CD 音质 (16bit/44.1kHz, ~1411kbps)
+#    - FLAC Hi-Res: 高解析度音质 (最高 24bit/192kHz, ~2800kbps)

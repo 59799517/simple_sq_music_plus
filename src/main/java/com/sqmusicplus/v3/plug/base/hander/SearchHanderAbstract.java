@@ -3,6 +3,7 @@ package com.sqmusicplus.v3.plug.base.hander;
 import cn.hutool.core.io.FileTypeUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.io.IORuntimeException;
+import cn.hutool.core.util.IdUtil;
 import com.alibaba.fastjson2.JSONObject;
 import com.sqmusicplus.v3.alidrive.entity.SqAliSync;
 import com.sqmusicplus.v3.alidrive.hander.AliHander;
@@ -19,8 +20,10 @@ import com.sqmusicplus.v3.config.SqConfigCache;
 import com.sqmusicplus.v3.download.DownloadStatus;
 import com.sqmusicplus.v3.download.vo.DownloadUrlResult;
 import com.sqmusicplus.v3.plug.entity.PlugSearchMusicResult;
+import com.sqmusicplus.v3.plug.tidal.utils.TidalProxyApiUtils;
 import com.sqmusicplus.v3.utils.*;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -200,6 +203,7 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
             }
             //获取下载链接
             DownloadUrlResult downloadUrlResult = searchHander.getDownloadUrl(downloadInfo);
+
             if (downloadUrlResult == null || StringUtils.isEmpty(downloadUrlResult.getUrl())) {
                 try {
                     throw new RuntimeException(downloadInfo.getDownloadMusicname() + "(未获取到播放链接)下载失败:" + downloadUrlResult.getErrorMsg());
@@ -207,6 +211,9 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
                     throw new RuntimeException(downloadInfo.getDownloadMusicname() + "(未获取到播放链接)下载失败:" + e.getMessage());
                 }
             }
+
+
+
             AtomicBoolean aliDriveSync  = new AtomicBoolean(false);
             try {
                 String aliyun_open = SqConfigCache.getSqConfigValue(SetConfigEnum.EXPAND_ALIYUN_OPEN);
@@ -228,7 +235,84 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
             // 创建用于等待异步下载完成的同步工具
             CountDownLatch downloadLatch = new CountDownLatch(1);
             AtomicReference<Exception> downloadException = new AtomicReference<>(null);
-            
+
+
+
+            //判断解析是不是Tidal的DASH
+            if (downloadUrlResult.getPlugBrTypeId().equals(PlugBrType.TIDAL_HI_FLAC_RES_LOSSLESS.getId())||downloadUrlResult.getPlugBrTypeId().equals(PlugBrType.TIDAL_FLAC_LOSSLESS.getId())) {
+                //再一测光xml判断
+                HashMap<String, String> otherData = downloadUrlResult.getOtherData();
+                String urlType = otherData.get("urlType");
+                if(StringUtils.isNotBlank(urlType)&&urlType.equals("DASH")){
+                    //使用TIDAL下载
+                    log.info("检测到 Tidal DASH 格式，开始分段下载...");
+                    
+                    try {
+                        // 从 MPD XML 下载 DASH 分段并合并
+                        String mpdXml = downloadUrlResult.getUrl();
+                        log.info("输出文件: {}", type);
+                        
+                        // 下载 DASH 分段并合并（直接传 MPD XML）
+                        boolean success = com.sqmusicplus.v3.plug.tidal.utils.TidalProxyApiUtils.downloadDashFromMpdXml(
+                            mpdXml,
+                            type.getAbsolutePath()
+                        );
+                        
+                        if (!success) {
+                            throw new RuntimeException("Tidal DASH 下载失败: " + music.getMusicName());
+                        }
+                        
+                        log.info("✓ Tidal DASH 下载成功: {}", type);
+                        
+                        // DASH 下载完成，直接进入后续处理流程
+                        // 注意：这里不调用 DownloadUtils.download，而是直接进入 onComplete 回调的逻辑
+                        if (aliDriveSync.get()) {
+                            SqAliSync sqAliSync = aliHander.uploadFile(type, baseMusicName, baseMusicArtistName, baseMusicAlbumName, downloadInfo.getId());
+                            if (sqAliSync != null){
+                                log.debug("歌曲：{} 同步完成",music.getMusicName());
+                            }else{
+                                log.debug("歌曲：{} 同步错误，返回结果为null",music.getMusicName());
+                            }
+                        }
+                        File artistsImageFile = saveArtisImage(downloadInfo, searchHander, artistImagePath, baseArtistsID, isAudioBook, music, aliDriveSync, baseMusicName, baseMusicArtistName, baseMusicAlbumName);
+                        saveAlbumImageAndTag(downloadInfo, searchHander, type, albumImagePath, baseAlbumID, isAudioBook, baseMusicAlbumName, artistsImageFile, music, aliDriveSync, downloadException, downloadLatch, baseMusicName, baseMusicArtistName);
+                        
+                        // 等待后续处理完成
+                        boolean completed = downloadLatch.await(5, TimeUnit.MINUTES);
+                        if (!completed) {
+                            log.error("后续处理超时: {}", baseMusicName);
+                            throw new RuntimeException("后续处理超时: " + baseMusicName);
+                        }
+                        Exception exception = downloadException.get();
+                        if (exception != null) {
+                            log.error("后续处理失败: {} - {}", baseMusicName, exception.getMessage());
+                            throw new RuntimeException("后续处理失败: " + baseMusicName + " - " + exception.getMessage(), exception);
+                        }
+                        if (!type.exists() || type.length() == 0) {
+                            log.error("下载文件不存在或为空: {}", type.getAbsolutePath());
+                            throw new RuntimeException("下载文件不存在或为空: " + type.getAbsolutePath());
+                        }
+                        log.debug("下载完成并验证成功: {}", baseMusicName);
+                        
+                        // 直接返回，不执行后续的 DownloadUtils.download
+                        return;
+                        
+                    } catch (Exception e) {
+                        log.error("Tidal DASH 下载异常", e);
+                        downloadException.set(e);
+                        downloadLatch.countDown();
+                        throw new RuntimeException("Tidal DASH 下载失败:" + music.getMusicName(), e);
+                    }
+                }
+
+            }
+
+
+
+
+
+
+
             DownloadUtils.download(downloadUrlResult.getUrl(), type, onProcess->{
 //                log.debug("歌曲：{} 进度：{} , byte信息：{}/{}",music.getMusicName(),onProcess.getProgress(),onProcess.getBytesRead(),onProcess.getTotalBytes());
             },onSuccess ->
@@ -250,213 +334,10 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
                     }
 
                 }
-                //歌手图片文件
-                 File artistsImageFile;
-                 if(StringUtils.isNotEmpty(artistImagePath)){
-                    Artists artists = searchHander.queryArtistById(baseArtistsID.get(0));
-                    //歌手图片地址
-                    String downloadurl = artists.getMusicArtistsPhoto();
-                    //人物图片
-                    artistsImageFile =  FileUtils.findFile(artistImagePath + File.separator, "cover");
-
-                    if (artistsImageFile == null || (!artistsImageFile.exists() && !isAudioBook)) {
-                        if (StringUtils.isNotEmpty(downloadurl)) {
-                            try {
-                                DownloadUtils.download(downloadurl, artistImagePath,onProcess->{
-//                            log.debug("歌曲歌手图片：{} 进度：{} , byte信息：{}/{}",music.getMusicName(),onProcess.getProgress(),onProcess.getBytesRead(),onProcess.getTotalBytes());
-                                },onSuccess ->
-                                {
-                                    log.debug("歌曲歌手图片：{} 文件下载完成处理后续步骤",music.getMusicName());
-                                },onFailure -> {
-                                    log.warn("歌曲歌手图片下载失败（非致命）：{} - {}", music.getMusicName(), onFailure.getMessage());
-                                    // 歌手图片失败不阻断流程
-                                }, onArtistsPhoto -> {
-                                    File finalArtistsFile = null;
-
-                                    try {
-                                        String suffix = FileTypeUtil.getType(onArtistsPhoto);
-                                        finalArtistsFile = FileUtils.safeRename(onArtistsPhoto, "cover." + suffix, true);
-
-                                        // 复制为其他名称
-                                        File copy1 = FileUtil.copy(finalArtistsFile, new File(finalArtistsFile.getParentFile() + File.separator + "artist." + suffix), false);
-                                        File copy2 = FileUtil.copy(finalArtistsFile, new File(finalArtistsFile.getParentFile() + File.separator + "folder." + suffix), true);
-
-                                        if (aliDriveSync.get()) {
-                                            aliHander.uploadFile(finalArtistsFile, baseMusicName, baseMusicArtistName, baseMusicAlbumName, downloadInfo.getId());
-                                            aliHander.uploadFile(copy1, baseMusicName, baseMusicArtistName, baseMusicAlbumName, downloadInfo.getId());
-                                            SqAliSync sqAliSync3 = aliHander.uploadFile(copy2, baseMusicName, baseMusicArtistName, baseMusicAlbumName, downloadInfo.getId());
-                                            if (sqAliSync3 != null){
-                                                log.debug("歌手图片：{} 同步完成",music.getMusicName());
-                                            }else{
-                                                log.debug("歌手图片：{} 同步失败",music.getMusicName());
-                                            }
-                                        }
-
-                                        log.debug("歌手图片处理成功: {}", finalArtistsFile.getName());
-
-                                    } catch (Exception e) {
-                                        log.error("歌手图片处理失败: {}", e.getMessage(), e);
-                                        finalArtistsFile = null;
-                                        SafeFileUtil.safeDelete(onArtistsPhoto);
-                                    } finally {
-                                        try {
-                                            File parentFile = onArtistsPhoto != null ? onArtistsPhoto.getParentFile() : null;
-                                            if (parentFile != null) {
-                                                SafeFileUtil.safeDelete(onArtistsPhoto);
-                                                boolean dirEmpty = FileUtil.isDirEmpty(parentFile);
-                                                if (dirEmpty) {
-                                                    SafeFileUtil.safeDelete(parentFile);
-                                                }
-                                            }
-                                        } catch (IORuntimeException ignored) {
-                                            log.debug("清理歌手图片临时目录失败: {}", ignored.getMessage());
-                                        }
-                                    }
-                                });
-                            } catch (Exception e) {
-                                log.error("歌手图片下载异常: {}", e.getMessage(), e);
-                            }
-                        }
-                    }
-                } else {
-                    artistsImageFile = null;
-                }
+                File artistsImageFile = saveArtisImage(downloadInfo, searchHander, artistImagePath, baseArtistsID, isAudioBook, music, aliDriveSync, baseMusicName, baseMusicArtistName, baseMusicAlbumName);
 
 
-                if(StringUtils.isNotEmpty(albumImagePath)){
-                    //专辑图片
-                    Album album = searchHander.queryAlbumById(baseAlbumID.toString());
-                    String albumImg = album.getAlbumImg();
-                    if (isAudioBook) {
-                        album.setAlbumName(downloadInfo.getDownloadAlbumname());
-                    }
-                    Boolean downloadalubimage = true;
-                    if (StringUtils.isEmpty(albumImg)) {
-                        downloadalubimage = false;
-                    }
-                    if (StringUtils.isEmpty(baseMusicAlbumName) && baseMusicAlbumName.equals("other")) {
-                        if (artistsImageFile != null && artistsImageFile.exists()) {
-                            String suffix = FileTypeUtil.getType(artistsImageFile);
-                            FileUtil.copy(artistsImageFile, new File(albumImagePath + File.separator + "cover." + suffix), true);
-                        }
-                    }
-                    File albumfile = FileUtils.findFile(albumImagePath + File.separator, "cover");
-                    final File[] finalAlbumFile = {albumfile};
-                    if (albumfile == null || (!albumfile.exists() && downloadalubimage)) {
-                        if (downloadalubimage && StringUtils.isNotEmpty(albumImg)) {
-                            try {
-                                DownloadUtils.download(albumImg, albumImagePath, onProcess->{
-//                            log.debug("歌曲专辑图片：{} 进度：{} , byte信息：{}/{}",music.getMusicName(),onProcess.getProgress(),onProcess.getBytesRead(),onProcess.getTotalBytes());
-                                },onSuccess ->
-                                {
-                                    log.debug("歌曲专辑图片：{} 文件下载完成处理后续步骤",music.getMusicName());
-                                },onFailure -> {
-                                    log.error("歌曲专辑图片下载失败: {} - {}", music.getMusicName(), onFailure.getMessage());
-                                    // 专辑图片下载失败，不使用封面
-                                    finalAlbumFile[0] = null;
-                                    try {
-                                        extracted(music, onComplete, null, downloadInfo, aliDriveSync);
-                                    } catch (Exception ex) {
-                                        log.error("后续处理失败: {}", ex.getMessage(), ex);
-                                        SafeFileUtil.safeDelete(onComplete);
-                                        downloadException.set(ex);
-                                        throw new RuntimeException("歌曲处理失败:" + music.getMusicName(), ex);
-                                    } finally {
-                                        downloadLatch.countDown();
-                                    }
-                                },onAlbumImg -> {
-                                    File processedAlbumFile = null;
-                                    try {
-                                        String suffix = FileTypeUtil.getType(onAlbumImg);
-                                        processedAlbumFile = FileUtils.safeRename(onAlbumImg, "cover." + suffix, true);
-                                        finalAlbumFile[0] = processedAlbumFile;
-                                        File copy = FileUtil.copy(processedAlbumFile, new File(processedAlbumFile.getParentFile() + File.separator + "album." + suffix), true);
-                                        if (isAudioBook) {
-                                            if (processedAlbumFile != null && artistsImageFile != null) {
-                                                File file1 = FileUtil.copyFile(processedAlbumFile, artistsImageFile);
-                                                if (aliDriveSync.get()){
-                                                    aliHander.uploadFile(file1, baseMusicName, baseMusicArtistName, baseMusicAlbumName, downloadInfo.getId());
-                                                }
-                                            }
-                                        }
-                                        if (aliDriveSync.get()){
-                                            aliHander.uploadFile(processedAlbumFile, baseMusicName, baseMusicArtistName, baseMusicAlbumName, downloadInfo.getId());
-                                            aliHander.uploadFile(copy, baseMusicName, baseMusicArtistName, baseMusicAlbumName, downloadInfo.getId());
-                                        }
-
-                                        log.debug("专辑图片处理成功: {}", processedAlbumFile.getName());
-
-                                    } catch (Exception e) {
-                                        log.error("专辑图片处理失败，将不使用封面: {}", e.getMessage(), e);
-                                        finalAlbumFile[0] = null;
-                                        processedAlbumFile = null;
-                                        SafeFileUtil.safeDelete(onAlbumImg);
-                                    } finally {
-                                        try {
-                                            File parentFile = onAlbumImg != null ? onAlbumImg.getParentFile() : null;
-                                            if (parentFile != null) {
-                                                boolean dirEmpty = FileUtil.isDirEmpty(parentFile);
-                                                if (dirEmpty) {
-                                                    SafeFileUtil.safeDelete(parentFile);
-                                                }
-                                            }
-                                        } catch (IORuntimeException ignored) {
-                                            // 忽略
-                                        }
-                                    }
-
-                                    try {
-                                        extracted(music, onComplete, finalAlbumFile[0], downloadInfo, aliDriveSync);
-                                    } catch (Exception ex) {
-                                        log.error("歌曲标签写入失败: {}", ex.getMessage(), ex);
-                                        SafeFileUtil.safeDelete(onComplete);
-                                        downloadException.set(ex);
-                                        throw new RuntimeException("歌曲标签写入失败:" + music.getMusicName(), ex);
-                                    } finally {
-                                        downloadLatch.countDown();
-                                    }
-                                });
-                            } catch (Exception e) {
-                                log.error("专辑图片下载异常: {}", e.getMessage(), e);
-                                try {
-                                    extracted(music, onComplete, null, downloadInfo, aliDriveSync);
-                                } catch (Exception ex) {
-                                    SafeFileUtil.safeDelete(onComplete);
-                                    downloadException.set(ex);
-                                    throw new RuntimeException("歌曲处理失败:" + music.getMusicName(), ex);
-                                } finally {
-                                    downloadLatch.countDown();
-                                }
-                            }
-                        } else {
-                            // 不需要下载专辑图片
-                            try {
-                                extracted(music, onComplete, albumfile, downloadInfo, aliDriveSync);
-                            } catch (Exception e) {
-                                SafeFileUtil.safeDelete(onComplete);
-                                downloadException.set(e);
-                                throw new RuntimeException("歌曲处理失败:" + music.getMusicName(), e);
-                            } finally {
-                                downloadLatch.countDown();
-                            }
-                        }
-                    } else {
-                        // 专辑图片已存在
-                        try {
-                            extracted(music, onComplete, albumfile, downloadInfo, aliDriveSync);
-                        } catch (Exception e) {
-                            SafeFileUtil.safeDelete(onComplete);
-                            downloadException.set(e);
-                            throw new RuntimeException("歌曲处理失败:" + music.getMusicName(), e);
-                        } finally {
-                            // 通知主线程下载完成
-                            downloadLatch.countDown();
-                        }
-                    }
-                }else{
-                    extracted(music, onComplete, null, downloadInfo, aliDriveSync);
-                }
-
+                saveAlbumImageAndTag(downloadInfo, searchHander, onComplete, albumImagePath, baseAlbumID, isAudioBook, baseMusicAlbumName, artistsImageFile, music, aliDriveSync, downloadException, downloadLatch, baseMusicName, baseMusicArtistName);
 
             });
             
@@ -494,6 +375,295 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
             log.debug("下载失败{}", downloadInfo.getDownloadMusicname());
             throw new RuntimeException(e.getMessage());
         }
+    }
+
+    /**
+     * 保存专辑图片到本地和标签
+     * @param downloadInfo
+     * @param searchHander
+     * @param onComplete
+     * @param albumImagePath
+     * @param baseAlbumID
+     * @param isAudioBook
+     * @param baseMusicAlbumName
+     * @param artistsImageFile
+     * @param music
+     * @param aliDriveSync
+     * @param downloadException
+     * @param downloadLatch
+     * @param baseMusicName
+     * @param baseMusicArtistName
+     */
+    private void saveAlbumImageAndTag(DownloadInfo downloadInfo, SearchHander searchHander, File onComplete, String albumImagePath, String baseAlbumID, boolean isAudioBook, String baseMusicAlbumName, File artistsImageFile, Music music, AtomicBoolean aliDriveSync, AtomicReference<Exception> downloadException, CountDownLatch downloadLatch, String baseMusicName, String baseMusicArtistName) {
+        if(StringUtils.isNotEmpty(albumImagePath)){
+            //专辑图片
+            Album album = searchHander.queryAlbumById(baseAlbumID.toString());
+            String albumImg = album.getAlbumImg();
+            if (isAudioBook) {
+                album.setAlbumName(downloadInfo.getDownloadAlbumname());
+            }
+            Boolean downloadalubimage = true;
+            if (StringUtils.isEmpty(albumImg)) {
+                downloadalubimage = false;
+            }
+            if (StringUtils.isEmpty(baseMusicAlbumName) && baseMusicAlbumName.equals("other")) {
+                if (artistsImageFile != null && artistsImageFile.exists()) {
+                    String suffix = FileTypeUtil.getType(artistsImageFile);
+                    FileUtil.copy(artistsImageFile, new File(albumImagePath + File.separator + "cover." + suffix), true);
+                }
+            }
+            File albumfile = FileUtils.findFile(albumImagePath + File.separator, "cover");
+            final File[] finalAlbumFile = {albumfile};
+            if (albumfile == null || (!albumfile.exists() && downloadalubimage)) {
+                if (downloadalubimage && StringUtils.isNotEmpty(albumImg)) {
+                    try {
+                        DownloadUtils.download(albumImg, albumImagePath, onProcess->{
+//                            log.debug("歌曲专辑图片：{} 进度：{} , byte信息：{}/{}",music.getMusicName(),onProcess.getProgress(),onProcess.getBytesRead(),onProcess.getTotalBytes());
+                        },onSuccess ->
+                        {
+                            log.debug("歌曲专辑图片：{} 文件下载完成处理后续步骤", music.getMusicName());
+                        },onFailure -> {
+                            log.error("歌曲专辑图片下载失败: {} - {}", music.getMusicName(), onFailure.getMessage());
+                            // 专辑图片下载失败，不使用封面
+                            finalAlbumFile[0] = null;
+                            try {
+                                extracted(music, onComplete, null, downloadInfo, aliDriveSync);
+                            } catch (Exception ex) {
+                                log.error("后续处理失败: {}", ex.getMessage(), ex);
+                                SafeFileUtil.safeDelete(onComplete);
+                                downloadException.set(ex);
+                                throw new RuntimeException("歌曲处理失败:" + music.getMusicName(), ex);
+                            } finally {
+                                downloadLatch.countDown();
+                            }
+                        },onAlbumImg -> {
+                            File processedAlbumFile = null;
+                            try {
+                                String suffix = FileTypeUtil.getType(onAlbumImg);
+                                processedAlbumFile = FileUtils.safeRename(onAlbumImg, "cover." + suffix, true);
+                                finalAlbumFile[0] = processedAlbumFile;
+                                File copy = FileUtil.copy(processedAlbumFile, new File(processedAlbumFile.getParentFile() + File.separator + "album." + suffix), true);
+                                if (isAudioBook) {
+                                    if (processedAlbumFile != null && artistsImageFile != null) {
+                                        File file1 = FileUtil.copyFile(processedAlbumFile, artistsImageFile);
+                                        if (aliDriveSync.get()){
+                                            aliHander.uploadFile(file1, baseMusicName, baseMusicArtistName, baseMusicAlbumName, downloadInfo.getId());
+                                        }
+                                    }
+                                }
+                                if (aliDriveSync.get()){
+                                    aliHander.uploadFile(processedAlbumFile, baseMusicName, baseMusicArtistName, baseMusicAlbumName, downloadInfo.getId());
+                                    aliHander.uploadFile(copy, baseMusicName, baseMusicArtistName, baseMusicAlbumName, downloadInfo.getId());
+                                }
+
+                                log.debug("专辑图片处理成功: {}", processedAlbumFile.getName());
+
+                            } catch (Exception e) {
+                                log.error("专辑图片处理失败，将不使用封面: {}", e.getMessage(), e);
+                                finalAlbumFile[0] = null;
+                                processedAlbumFile = null;
+                                SafeFileUtil.safeDelete(onAlbumImg);
+                            } finally {
+                                try {
+                                    File parentFile = onAlbumImg != null ? onAlbumImg.getParentFile() : null;
+                                    if (parentFile != null) {
+                                        boolean dirEmpty = FileUtil.isDirEmpty(parentFile);
+                                        if (dirEmpty) {
+                                            SafeFileUtil.safeDelete(parentFile);
+                                        }
+                                    }
+                                } catch (IORuntimeException ignored) {
+                                    // 忽略
+                                }
+                            }
+
+                            try {
+                                extracted(music, onComplete, finalAlbumFile[0], downloadInfo, aliDriveSync);
+                            } catch (Exception ex) {
+                                log.error("歌曲标签写入失败: {}", ex.getMessage(), ex);
+                                SafeFileUtil.safeDelete(onComplete);
+                                downloadException.set(ex);
+                                throw new RuntimeException("歌曲标签写入失败:" + music.getMusicName(), ex);
+                            } finally {
+                                downloadLatch.countDown();
+                            }
+                        });
+                    } catch (Exception e) {
+                        log.error("专辑图片下载异常: {}", e.getMessage(), e);
+                        try {
+                            extracted(music, onComplete, null, downloadInfo, aliDriveSync);
+                        } catch (Exception ex) {
+                            SafeFileUtil.safeDelete(onComplete);
+                            downloadException.set(ex);
+                            throw new RuntimeException("歌曲处理失败:" + music.getMusicName(), ex);
+                        } finally {
+                            downloadLatch.countDown();
+                        }
+                    }
+                } else {
+                    // 不需要下载专辑图片
+                    try {
+                        extracted(music, onComplete, albumfile, downloadInfo, aliDriveSync);
+                    } catch (Exception e) {
+                        SafeFileUtil.safeDelete(onComplete);
+                        downloadException.set(e);
+                        throw new RuntimeException("歌曲处理失败:" + music.getMusicName(), e);
+                    } finally {
+                        downloadLatch.countDown();
+                    }
+                }
+            } else {
+                // 专辑图片已存在
+                try {
+                    extracted(music, onComplete, albumfile, downloadInfo, aliDriveSync);
+                } catch (Exception e) {
+                    SafeFileUtil.safeDelete(onComplete);
+                    downloadException.set(e);
+                    throw new RuntimeException("歌曲处理失败:" + music.getMusicName(), e);
+                } finally {
+                    // 通知主线程下载完成
+                    downloadLatch.countDown();
+                }
+            }
+        }
+        else{
+                    try {
+                        Album album = searchHander.queryAlbumById(baseAlbumID.toString());
+                        String albumImg = album.getAlbumImg();
+                        DownloadUtils.download(albumImg, onComplete.getParent(), onProcess->{
+//                            log.debug("歌曲专辑图片：{} 进度：{} , byte信息：{}/{}",music.getMusicName(),onProcess.getProgress(),onProcess.getBytesRead(),onProcess.getTotalBytes());
+                        },onSuccess ->
+                        {
+                            log.debug("歌曲专辑图片：{} 文件下载完成处理后续步骤", music.getMusicName());
+                        },onFailure -> {
+                            log.error("歌曲专辑图片下载失败: {} - {}", music.getMusicName(), onFailure.getMessage());
+                            try {
+                                extracted(music, onComplete, null, downloadInfo, aliDriveSync);
+                            } catch (Exception ex) {
+                                log.error("后续处理失败: {}", ex.getMessage(), ex);
+                                SafeFileUtil.safeDelete(onComplete);
+                                downloadException.set(ex);
+                                throw new RuntimeException("歌曲处理失败:" + music.getMusicName(), ex);
+                            } finally {
+                                downloadLatch.countDown();
+                            }
+                        },onAlbumImg -> {
+                            try {
+                                extracted(music, onComplete, onAlbumImg, downloadInfo, aliDriveSync);
+                            } catch (Exception ex) {
+                                log.error("歌曲标签写入失败: {}", ex.getMessage(), ex);
+                                downloadException.set(ex);
+                                throw new RuntimeException("歌曲标签写入失败:" + music.getMusicName(), ex);
+                            } finally {
+                                SafeFileUtil.safeDelete(onAlbumImg);
+                                downloadLatch.countDown();
+
+                            }
+                        });
+                    } catch (Exception e) {
+                        log.error("专辑图片下载异常: {}", e.getMessage(), e);
+                        try {
+                            extracted(music, onComplete, null, downloadInfo, aliDriveSync);
+                        } catch (Exception ex) {
+                            SafeFileUtil.safeDelete(onComplete);
+                            downloadException.set(ex);
+                            throw new RuntimeException("歌曲处理失败:" + music.getMusicName(), ex);
+                        } finally {
+                            downloadLatch.countDown();
+                        }
+                    }
+
+        }
+    }
+
+    /**
+     * 保存歌手图片到本地
+     * @param downloadInfo
+     * @param searchHander
+     * @param artistImagePath
+     * @param baseArtistsID
+     * @param isAudioBook
+     * @param music
+     * @param aliDriveSync
+     * @param baseMusicName
+     * @param baseMusicArtistName
+     * @param baseMusicAlbumName
+     * @return
+     */
+    @Nullable
+    private File saveArtisImage(DownloadInfo downloadInfo, SearchHander searchHander, String artistImagePath, List<String> baseArtistsID, boolean isAudioBook, Music music, AtomicBoolean aliDriveSync, String baseMusicName, String baseMusicArtistName, String baseMusicAlbumName) {
+        //歌手图片文件
+        File artistsImageFile;
+        if(StringUtils.isNotEmpty(artistImagePath)){
+           Artists artists = searchHander.queryArtistById(baseArtistsID.get(0));
+           //歌手图片地址
+           String downloadurl = artists.getMusicArtistsPhoto();
+           //人物图片
+           artistsImageFile =  FileUtils.findFile(artistImagePath + File.separator, "cover");
+
+           if (artistsImageFile == null || (!artistsImageFile.exists() && !isAudioBook)) {
+               if (StringUtils.isNotEmpty(downloadurl)) {
+                   try {
+                       DownloadUtils.download(downloadurl, artistImagePath, onProcess->{
+//                            log.debug("歌曲歌手图片：{} 进度：{} , byte信息：{}/{}",music.getMusicName(),onProcess.getProgress(),onProcess.getBytesRead(),onProcess.getTotalBytes());
+                       },onSuccess ->
+                       {
+                           log.debug("歌曲歌手图片：{} 文件下载完成处理后续步骤", music.getMusicName());
+                       },onFailure -> {
+                           log.warn("歌曲歌手图片下载失败（非致命）：{} - {}", music.getMusicName(), onFailure.getMessage());
+                           // 歌手图片失败不阻断流程
+                       }, onArtistsPhoto -> {
+                           File finalArtistsFile = null;
+
+                           try {
+                               String suffix = FileTypeUtil.getType(onArtistsPhoto);
+                               finalArtistsFile = FileUtils.safeRename(onArtistsPhoto, "cover." + suffix, true);
+
+                               // 复制为其他名称
+                               File copy1 = FileUtil.copy(finalArtistsFile, new File(finalArtistsFile.getParentFile() + File.separator + "artist." + suffix), false);
+                               File copy2 = FileUtil.copy(finalArtistsFile, new File(finalArtistsFile.getParentFile() + File.separator + "folder." + suffix), true);
+
+                               if (aliDriveSync.get()) {
+                                   aliHander.uploadFile(finalArtistsFile, baseMusicName, baseMusicArtistName, baseMusicAlbumName, downloadInfo.getId());
+                                   aliHander.uploadFile(copy1, baseMusicName, baseMusicArtistName, baseMusicAlbumName, downloadInfo.getId());
+                                   SqAliSync sqAliSync3 = aliHander.uploadFile(copy2, baseMusicName, baseMusicArtistName, baseMusicAlbumName, downloadInfo.getId());
+                                   if (sqAliSync3 != null){
+                                       log.debug("歌手图片：{} 同步完成", music.getMusicName());
+                                   }else{
+                                       log.debug("歌手图片：{} 同步失败", music.getMusicName());
+                                   }
+                               }
+
+                               log.debug("歌手图片处理成功: {}", finalArtistsFile.getName());
+
+                           } catch (Exception e) {
+                               log.error("歌手图片处理失败: {}", e.getMessage(), e);
+                               finalArtistsFile = null;
+                               SafeFileUtil.safeDelete(onArtistsPhoto);
+                           } finally {
+                               try {
+                                   File parentFile = onArtistsPhoto != null ? onArtistsPhoto.getParentFile() : null;
+                                   if (parentFile != null) {
+                                       SafeFileUtil.safeDelete(onArtistsPhoto);
+                                       boolean dirEmpty = FileUtil.isDirEmpty(parentFile);
+                                       if (dirEmpty) {
+                                           SafeFileUtil.safeDelete(parentFile);
+                                       }
+                                   }
+                               } catch (IORuntimeException ignored) {
+                                   log.debug("清理歌手图片临时目录失败: {}", ignored.getMessage());
+                               }
+                           }
+                       });
+                   } catch (Exception e) {
+                       log.error("歌手图片下载异常: {}", e.getMessage(), e);
+                   }
+               }
+           }
+       } else {
+           artistsImageFile = null;
+       }
+        return artistsImageFile;
     }
 
     @Override
@@ -629,7 +799,7 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
         //修改文件
         try {
             if (DbBooleanConvert.findByValue(rewriteMp3tag)) {
-                MusicUtils.setMediaFileInfo(onSuccess, music.getMusicName(), music.getMusicAlbum(), String.join(";", music.getMusicArtists()), "SqMusic", music.getMusicLyric(), albumfile,music.getMusicArtists().get(0));
+                MusicUtils.setMediaFileInfo(onSuccess, music.getMusicName(), music.getMusicAlbum(), String.join(";", music.getMusicArtists()), "", music.getMusicLyric(), albumfile,music.getMusicArtists().get(0));
                 log.debug("标签写入成功{}", music.getMusicName());
             }
 

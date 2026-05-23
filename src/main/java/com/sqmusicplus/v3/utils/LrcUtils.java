@@ -284,6 +284,30 @@ public class LrcUtils {
     }
     
     /**
+     * Tidal 歌词添加元数据头部
+     * @param lrcContent LRC 歌词内容（带时间戳）
+     * @param album 专辑名称
+     * @param artist 艺术家名称
+     * @param songName 歌曲名称
+     * @return 带元数据头部的 LRC 歌词
+     */
+    public static String addTidalLrcHeader(String lrcContent, String album, String artist, String songName) {
+        if (lrcContent == null || lrcContent.isEmpty()) {
+            return lrcContent;
+        }
+        
+        StringBuffer stringBuffer = new StringBuffer();
+        stringBuffer.append("[ti:"+songName+"]\n")
+                   .append("[ar:"+artist+"]\n")
+                   .append("[al:"+album+"]\n")
+                   .append("[by: SqMusic-tidal]\n")
+                   .append("[offset:0]\n")
+                   .append(lrcContent);
+        
+        return stringBuffer.toString();
+    }
+    
+    /**
      * 将TTML格式歌词转换为LRC格式歌词 (兼容TTML和TTML2格式)
      * @param ttmlContent TTML格式歌词内容
      * @return LRC格式歌词内容

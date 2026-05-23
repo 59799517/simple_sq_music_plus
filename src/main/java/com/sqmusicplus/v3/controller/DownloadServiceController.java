@@ -1,6 +1,5 @@
 package com.sqmusicplus.v3.controller;
 
-import cn.dev33.satoken.annotation.SaCheckLogin;
 import com.sqmusicplus.v3.base.entity.DownloadInfo;
 import com.sqmusicplus.v3.base.entity.vo.ParserEntity;
 import com.sqmusicplus.v3.base.enums.PlugBrType;
@@ -55,7 +54,6 @@ public class DownloadServiceController {
      * @param downloadSongParam
      * @return
      */
-    @SaCheckLogin
     @PostMapping("/downloadSong")
    public AjaxResult downloadSong(@RequestBody PlugDownloadSongParam downloadSongParam) {
         SearchHanderAbstract plugHander = MusicUtils.getPlugHander(downloadSongParam.getPlugName(), searchHanderAbstractList);
@@ -80,7 +78,6 @@ public class DownloadServiceController {
      * @param plugDownloadArtisParam
      * @return
      */
-    @SaCheckLogin
     @PostMapping("/downloadArtistAlbum")
     public AjaxResult downloadArtistAlbum(@RequestBody PlugDownloadArtisParam plugDownloadArtisParam) {
         SearchHanderAbstract plugHander = MusicUtils.getPlugHander(plugDownloadArtisParam.getPlugName(), searchHanderAbstractList);
@@ -101,7 +98,6 @@ public class DownloadServiceController {
      * @param plugDownloadAlbumParam
      * @return
      */
-    @SaCheckLogin
     @PostMapping("/downloadAlbum")
     public AjaxResult downloadAlbum(@RequestBody PlugDownloadAlbumParam plugDownloadAlbumParam){
         SearchHanderAbstract plugHander = MusicUtils.getPlugHander(plugDownloadAlbumParam.getPlugName(), searchHanderAbstractList);
@@ -131,7 +127,6 @@ public class DownloadServiceController {
      * @param downlaodParserUrl 解析的URL
      * @return
      */
-    @SaCheckLogin
     @PostMapping("/downloadParserUrl")
     public AjaxResult downloadParserUrl(@RequestBody DownlaodParserUrl downlaodParserUrl) {
         try {
@@ -163,7 +158,6 @@ public class DownloadServiceController {
      * @param musicList
      * @return
      */
-    @SaCheckLogin
     @PostMapping("/downloadParserUrlResult")
     public AjaxResult downloadParserUrlResult(@RequestBody List<Music> musicList) {
         ArrayList<DownloadInfo> downloadInfos = new ArrayList<>();
@@ -184,7 +178,6 @@ public class DownloadServiceController {
      * @param param
      * @return
      */
-    @SaCheckLogin
     @PostMapping("/downloadParserText")
     public AjaxResult downloadParserText(@RequestBody ParserTextParam param) {
         if (StringUtils.isBlank(param.getText())) {
@@ -225,7 +218,6 @@ public class DownloadServiceController {
      * @param parserEntities
      * @return
      */
-    @SaCheckLogin
     @PostMapping("/downloadParserTextResult")
     public AjaxResult downloadParserTextResult(@RequestBody List<ParserEntity> parserEntities) {
         ArrayList<DownloadInfo> downloadInfos = new ArrayList<>();

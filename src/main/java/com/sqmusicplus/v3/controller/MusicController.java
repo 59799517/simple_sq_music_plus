@@ -1,6 +1,5 @@
 package com.sqmusicplus.v3.controller;
 
-import cn.dev33.satoken.annotation.SaCheckLogin;
 import com.sqmusicplus.v3.base.entity.DownloadInfo;
 import com.sqmusicplus.v3.base.entity.vo.DownloadMusicParam;
 import com.sqmusicplus.v3.base.entity.vo.SearchMusicByIdParam;
@@ -38,7 +37,6 @@ public class MusicController {
      * @param param
      * @return
      */
-    @SaCheckLogin
     @GetMapping("/searchTips")
     public AjaxResult searchTips(SearchMusicParam param) {
         SearchHanderAbstract plugHander = MusicUtils.getPlugHander(param.getPlugName(),searchHanderAbstractList);
@@ -52,7 +50,6 @@ public class MusicController {
      * @param param  搜索条件
      * @return
      */
-    @SaCheckLogin
     @GetMapping("/searchSong")
     public AjaxResult searchSong(SearchMusicParam param){
         SearchHanderAbstract plugHander = MusicUtils.getPlugHander(param.getPlugName(),searchHanderAbstractList);
@@ -66,7 +63,6 @@ public class MusicController {
      * @param param 搜索条件
      * @return
      */
-    @SaCheckLogin
     @GetMapping("/SongInfoById")
     public AjaxResult SongInfoById(SearchMusicByIdParam param){
         SearchHanderAbstract plugHander = MusicUtils.getPlugHander(param.getPlugName(),searchHanderAbstractList);
@@ -79,7 +75,6 @@ public class MusicController {
      * @param param 搜索条件
      * @return
      */
-    @SaCheckLogin
     @GetMapping("/searchArtist")
     public AjaxResult searchArtist(SearchMusicParam param){
         SearchHanderAbstract plugHander = MusicUtils.getPlugHander(param.getPlugName(),searchHanderAbstractList);
@@ -92,7 +87,6 @@ public class MusicController {
     /**
      * 根据歌手ID查询歌手全部专辑
      */
-    @SaCheckLogin
     @GetMapping("/artistAlbumById")
     public AjaxResult ArtistAlbumById(SearchMusicByIdParam param){
         SearchHanderAbstract plugHander = MusicUtils.getPlugHander(param.getPlugName(),searchHanderAbstractList);
@@ -108,7 +102,6 @@ public class MusicController {
      * @param param 搜索条件
      * @return
      */
-    @SaCheckLogin
     @GetMapping("/searchAlbum")
     public AjaxResult searchAlbum(SearchMusicParam param){
         SearchHanderAbstract plugHander = MusicUtils.getPlugHander(param.getPlugName(),searchHanderAbstractList);
@@ -120,7 +113,6 @@ public class MusicController {
      * 获取专辑信息 根据id
      */
 
-    @SaCheckLogin
     @GetMapping("/albumInfoById")
     public AjaxResult albumInfoById(SearchMusicByIdParam param){
         SearchHanderAbstract plugHander = MusicUtils.getPlugHander(param.getPlugName(),searchHanderAbstractList);
@@ -132,7 +124,6 @@ public class MusicController {
     /**
      *获取歌词
      */
-    @SaCheckLogin
     @PostMapping("/getLyric")
     public AjaxResult getLyric(@RequestBody SearchMusicByIdParam param){
         SearchHanderAbstract plugHander = MusicUtils.getPlugHander(param.getPlugName(),searchHanderAbstractList);
@@ -145,7 +136,6 @@ public class MusicController {
      * @param param 搜索条件
      * @return 下载信息
      */
-    @SaCheckLogin
     @PostMapping("/getDownloadUrl")
     public AjaxResult getDownloadUrl(@RequestBody PlugDownloadSongParam param){
         SearchHanderAbstract plugHander = MusicUtils.getPlugHander(param.getPlugName(),searchHanderAbstractList);

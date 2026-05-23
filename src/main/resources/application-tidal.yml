@@ -1,0 +1,28 @@
+tidal:
+  id: tidal-v1
+  # 名称
+  name: Tidal
+  # 不需要登录（使用Client Credentials）
+  islogin: false
+  # API基础URL (v1 API - 更稳定)
+  baseUrl: https://api.tidal.com/v1
+  # Token获取URL
+  tokenUrl: https://auth.tidal.com/v1/oauth2/token
+  # 搜索URL (v1 API - 分别搜索歌曲/艺术家/专辑)
+  searchUrl: https://api.tidal.com/v1/search/#{searchType}?query=#{searchKey}&offset=#{pn}&limit=#{pagesize}&countryCode=US
+  # 歌曲详情URL
+  trackUrl: https://api.tidal.com/v1/tracks/#{trackId}?countryCode=US
+  # 专辑详情URL
+  albumUrl: https://tidal.com/v1/pages/album?albumId=#{albumId}&countryCode=US&deviceType=BROWSER&locale=en_US
+  # 艺术家详情URL
+  artistUrl: https://api.tidal.com/v1/artists/#{artistId}?countryCode=US
+  # 歌曲Manifest URL（用于获取下载链接）
+  trackManifestUrl: https://api.tidal.com/v1/tracks/#{trackId}/playbackinfopostpaywall/v4
+  # 歌词URL
+  lyricsUrl: https://api.tidal.com/v1/tracks/#{trackId}/lyrics?countryCode=US&deviceType=TV
+  # 艺术家专辑列表URL
+  artistAlbumsUrl: https://api.tidal.com/v1/artists/#{artistId}/albums?limit=100&offset=0&countryCode=US
+  # 艺术家单曲列表URL
+  artistTracksUrl: https://api.tidal.com/v1/artists/#{artistId}/tracks?limit=100&offset=0&countryCode=US
+  # 歌单详情URL
+  playlistUrl: https://api.tidal.com/v1/playlists/#{playlistId}

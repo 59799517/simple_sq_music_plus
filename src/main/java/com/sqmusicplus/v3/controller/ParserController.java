@@ -1,6 +1,5 @@
 package com.sqmusicplus.v3.controller;
 
-import cn.dev33.satoken.annotation.SaCheckLogin;
 import com.sqmusicplus.v3.base.entity.vo.ParserEntity;
 import com.sqmusicplus.v3.config.AjaxResult;
 import com.sqmusicplus.v3.download.vo.DownlaodParserUrl;
@@ -43,7 +42,6 @@ public class ParserController {
      * @return
      */
     @Deprecated
-    @SaCheckLogin
     @PostMapping("/parserUrl")
     public AjaxResult parserUrl(DownlaodParserUrl  downlaodParserUrl) {
         try {
@@ -65,7 +63,6 @@ public class ParserController {
      * @return
      */
     @Deprecated
-    @SaCheckLogin
     @PostMapping("/download/parserUrl")
     public AjaxResult downlaodParserUrl(DownlaodParserUrl  downlaodParserUrl) {
         try {
@@ -89,7 +86,6 @@ public class ParserController {
      */
 
     @Deprecated
-    @SaCheckLogin
     @PostMapping("/parserText")
     public AjaxResult parserText(@RequestBody ParserTextParam param) {
         try {
@@ -115,7 +111,6 @@ public class ParserController {
      * @return 解析信息
      */
     @Deprecated
-    @SaCheckLogin
     @PostMapping("/parserUrlInfo")
     public AjaxResult parserUrlInfo(@RequestBody DownlaodParserUrl  downlaodParserUrl) {
         String url = downlaodParserUrl.getUrl();

@@ -1,5 +1,6 @@
 package com.sqmusicplus.v3.plug.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.sqmusicplus.v3.base.enums.PlugBrType;
 import lombok.Data;
 
@@ -11,6 +12,7 @@ import lombok.Data;
  * @Created by SQ
  */
 @Data
+@JsonIgnoreProperties(ignoreUnknown = true)  // 忽略未知字段（如 otherData）
 public class PlugDownloadSongParam extends PlugSearchMusicResult{
     /**
      * 手动选择码率
