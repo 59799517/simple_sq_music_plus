@@ -4,6 +4,7 @@ import cn.hutool.core.img.ImgUtil;
 import com.sqmusicplus.v3.base.enums.PlugBrType;
 import com.sqmusicplus.v3.config.exception.SQException;
 import com.sqmusicplus.v3.plug.base.hander.SearchHanderAbstract;
+import com.sqmusicplus.v3.plug.entity.Album;
 import lombok.extern.slf4j.Slf4j;
 import org.jaudiotagger.audio.AudioFile;
 import org.jaudiotagger.audio.exceptions.CannotReadException;
@@ -61,7 +62,7 @@ public class MusicUtils {
         }
     }
 
-    public static  synchronized MultimediaInfo setMediaFileInfo(File file, String title, String album, String artists, String comment, String lyrics, File image,String mainArtist) throws TagException, CannotReadException, InvalidAudioFrameException, ReadOnlyFileException, IOException, CannotWriteException {
+    public static  synchronized MultimediaInfo setMediaFileInfo(File file, String title, String albumName, String artists, String comment, String lyrics, File image, String mainArtist, String  albumYear) throws TagException, CannotReadException, InvalidAudioFrameException, ReadOnlyFileException, IOException, CannotWriteException {
         try {
             if (StringUtils.isBlank(mainArtist)){
                 mainArtist="群星";
@@ -114,10 +115,11 @@ public class MusicUtils {
                 }
             }
             tag.setField(FieldKey.TITLE, title.trim());
-            tag.setField(FieldKey.ALBUM, album.trim());
+            tag.setField(FieldKey.ALBUM, albumName.trim());
             tag.setField(FieldKey.ARTIST, artists.trim());
             tag.setField(FieldKey.COMMENT, comment.trim());
             tag.setField(FieldKey.ALBUM_ARTIST, mainArtist.trim());
+            tag.setField(FieldKey.YEAR, albumYear);
             if (StringUtils.isNotEmpty(lyrics)) {
                 try {
                     tag.setField(FieldKey.LYRICS, lyrics);

@@ -478,10 +478,6 @@ public class KGHander extends SearchHanderAbstract {
             String intro = dataDTO.getIntro();
             List<Music> musics = getAlbumSongByAlbumsId(albumId);
 
-
-
-
-
             return new Album()
                     .setMusics(musics)
                     .setAlbumTime(albumTime)

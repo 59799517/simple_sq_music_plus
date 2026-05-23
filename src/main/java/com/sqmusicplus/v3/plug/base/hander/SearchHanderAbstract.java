@@ -65,11 +65,6 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
     }
 
 
-//    @Override
-//    public List<String> searchTip(String searchKey) {
-//        //搂底使用酷我的
-//
-//    }
 
     @Override
     public void dnonloadAndSaveToFile(DownloadInfo downloadInfo, SearchHander searchHander) {
@@ -78,6 +73,12 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
             if (music == null) {
                 throw new RuntimeException("下载失败歌曲信息不完整歌曲详情转化歌曲失败:" + JSONObject.toJSONString(downloadInfo));
             }
+            String baseAlbumID = music.getAlbumId();
+            List<String> baseArtistsID = music.getArtistsIds();
+            Album album = searchHander.queryAlbumById(baseAlbumID.toString());
+
+
+
             String baseMusicName_temp = music.getMusicName().trim();
             StringJoiner joiner = new StringJoiner("&");
             long limit = 7;
@@ -121,8 +122,7 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
             final String baseMusicAlbumName = baseMusicAlbumName_temp;
             final String baseMusicMainArtistName = baseMusicMainArtistName_temp;
 
-            String baseAlbumID = music.getAlbumId();
-            List<String> baseArtistsID = music.getArtistsIds();
+
             boolean isAudioBook = DbBooleanConvert.findByValue(downloadInfo.getAudioBook());
 
             String musicPath = SqConfigCache.getSqConfigValue(SetConfigEnum.SYSTEM_DOWNLOAD_PATH);
@@ -142,6 +142,27 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
                 if (limit1-- == 0) break;
                 result.add(trim);
             }
+            //如果没查询到则给个默认时间
+            String albumTime = "1970-01-01";
+            String albumYear =  "1970";
+            String albumMonth = "01";
+            String albumDay = "01";
+
+            //写入专辑脚本信息
+            if (album != null){
+                albumTime = album.getAlbumTime();
+            }
+            try {
+                //将albumTime拆分为三个年月日
+                String[] split = albumTime.split("-");
+                if (split.length == 3){
+                    albumYear = split[0];
+                    albumMonth = split[1];
+                    albumDay = split[2];
+                }
+            } catch (Exception ignored) {
+            }
+
             String artistsId = result.toString();
             pathTemplate.put("musicName", baseMusicName);
             pathTemplate.put("artists", baseMusicArtistName);
@@ -149,12 +170,18 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
             pathTemplate.put("album", baseMusicAlbumName);
             pathTemplate.put("albumId", baseAlbumID);
             pathTemplate.put("artistsId", artistsId);
+            pathTemplate.put("albumTime", albumTime);
+            pathTemplate.put("albumYear", albumYear);
+            pathTemplate.put("albumMonth", albumMonth);
+            pathTemplate.put("albumDay", albumDay);
+
             String fileName = "";
             try {
                 fileName = SpelTemplateUtils.formatTemplateWithDollar(music_path_template, pathTemplate);
             }catch (Exception e){
                 fileName = SpelTemplateUtils.formatTemplateWithDollar("${artists}/${album}/${musicName} - ${artists}", pathTemplate);
             }
+
 
 
             //获取当前文件后缀
@@ -275,7 +302,7 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
                             }
                         }
                         File artistsImageFile = saveArtisImage(downloadInfo, searchHander, artistImagePath, baseArtistsID, isAudioBook, music, aliDriveSync, baseMusicName, baseMusicArtistName, baseMusicAlbumName);
-                        saveAlbumImageAndTag(downloadInfo, searchHander, type, albumImagePath, baseAlbumID, isAudioBook, baseMusicAlbumName, artistsImageFile, music, aliDriveSync, downloadException, downloadLatch, baseMusicName, baseMusicArtistName);
+                        saveAlbumImageAndTag(album,downloadInfo, searchHander, type, albumImagePath, baseAlbumID, isAudioBook, baseMusicAlbumName, artistsImageFile, music, aliDriveSync, downloadException, downloadLatch, baseMusicName, baseMusicArtistName,albumYear);
                         
                         // 等待后续处理完成
                         boolean completed = downloadLatch.await(5, TimeUnit.MINUTES);
@@ -307,12 +334,8 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
 
             }
 
-
-
-
-
-
-
+            //临时复制年份
+            String finalAlbumYear = albumYear;
             DownloadUtils.download(downloadUrlResult.getUrl(), type, onProcess->{
 //                log.debug("歌曲：{} 进度：{} , byte信息：{}/{}",music.getMusicName(),onProcess.getProgress(),onProcess.getBytesRead(),onProcess.getTotalBytes());
             },onSuccess ->
@@ -335,9 +358,7 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
 
                 }
                 File artistsImageFile = saveArtisImage(downloadInfo, searchHander, artistImagePath, baseArtistsID, isAudioBook, music, aliDriveSync, baseMusicName, baseMusicArtistName, baseMusicAlbumName);
-
-
-                saveAlbumImageAndTag(downloadInfo, searchHander, onComplete, albumImagePath, baseAlbumID, isAudioBook, baseMusicAlbumName, artistsImageFile, music, aliDriveSync, downloadException, downloadLatch, baseMusicName, baseMusicArtistName);
+                saveAlbumImageAndTag(album,downloadInfo, searchHander, onComplete, albumImagePath, baseAlbumID, isAudioBook, baseMusicAlbumName, artistsImageFile, music, aliDriveSync, downloadException, downloadLatch, baseMusicName, baseMusicArtistName, finalAlbumYear);
 
             });
             
@@ -394,10 +415,9 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
      * @param baseMusicName
      * @param baseMusicArtistName
      */
-    private void saveAlbumImageAndTag(DownloadInfo downloadInfo, SearchHander searchHander, File onComplete, String albumImagePath, String baseAlbumID, boolean isAudioBook, String baseMusicAlbumName, File artistsImageFile, Music music, AtomicBoolean aliDriveSync, AtomicReference<Exception> downloadException, CountDownLatch downloadLatch, String baseMusicName, String baseMusicArtistName) {
+    private void saveAlbumImageAndTag(Album album,DownloadInfo downloadInfo, SearchHander searchHander, File onComplete, String albumImagePath, String baseAlbumID, boolean isAudioBook, String baseMusicAlbumName, File artistsImageFile, Music music, AtomicBoolean aliDriveSync, AtomicReference<Exception> downloadException, CountDownLatch downloadLatch, String baseMusicName, String baseMusicArtistName,String albumYear) {
         if(StringUtils.isNotEmpty(albumImagePath)){
             //专辑图片
-            Album album = searchHander.queryAlbumById(baseAlbumID.toString());
             String albumImg = album.getAlbumImg();
             if (isAudioBook) {
                 album.setAlbumName(downloadInfo.getDownloadAlbumname());
@@ -427,7 +447,7 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
                             // 专辑图片下载失败，不使用封面
                             finalAlbumFile[0] = null;
                             try {
-                                extracted(music, onComplete, null, downloadInfo, aliDriveSync);
+                                extracted(music, onComplete, null, downloadInfo, aliDriveSync,albumYear);
                             } catch (Exception ex) {
                                 log.error("后续处理失败: {}", ex.getMessage(), ex);
                                 SafeFileUtil.safeDelete(onComplete);
@@ -478,7 +498,7 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
                             }
 
                             try {
-                                extracted(music, onComplete, finalAlbumFile[0], downloadInfo, aliDriveSync);
+                                extracted(music, onComplete, finalAlbumFile[0], downloadInfo, aliDriveSync,albumYear);
                             } catch (Exception ex) {
                                 log.error("歌曲标签写入失败: {}", ex.getMessage(), ex);
                                 SafeFileUtil.safeDelete(onComplete);
@@ -491,7 +511,7 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
                     } catch (Exception e) {
                         log.error("专辑图片下载异常: {}", e.getMessage(), e);
                         try {
-                            extracted(music, onComplete, null, downloadInfo, aliDriveSync);
+                            extracted(music, onComplete, null, downloadInfo, aliDriveSync,albumYear);
                         } catch (Exception ex) {
                             SafeFileUtil.safeDelete(onComplete);
                             downloadException.set(ex);
@@ -503,7 +523,7 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
                 } else {
                     // 不需要下载专辑图片
                     try {
-                        extracted(music, onComplete, albumfile, downloadInfo, aliDriveSync);
+                        extracted(music, onComplete, albumfile, downloadInfo, aliDriveSync,albumYear);
                     } catch (Exception e) {
                         SafeFileUtil.safeDelete(onComplete);
                         downloadException.set(e);
@@ -515,7 +535,7 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
             } else {
                 // 专辑图片已存在
                 try {
-                    extracted(music, onComplete, albumfile, downloadInfo, aliDriveSync);
+                    extracted(music, onComplete, albumfile, downloadInfo, aliDriveSync,albumYear);
                 } catch (Exception e) {
                     SafeFileUtil.safeDelete(onComplete);
                     downloadException.set(e);
@@ -528,7 +548,6 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
         }
         else{
                     try {
-                        Album album = searchHander.queryAlbumById(baseAlbumID.toString());
                         String albumImg = album.getAlbumImg();
                         DownloadUtils.download(albumImg, onComplete.getParent(), onProcess->{
 //                            log.debug("歌曲专辑图片：{} 进度：{} , byte信息：{}/{}",music.getMusicName(),onProcess.getProgress(),onProcess.getBytesRead(),onProcess.getTotalBytes());
@@ -538,7 +557,7 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
                         },onFailure -> {
                             log.error("歌曲专辑图片下载失败: {} - {}", music.getMusicName(), onFailure.getMessage());
                             try {
-                                extracted(music, onComplete, null, downloadInfo, aliDriveSync);
+                                extracted(music, onComplete, null, downloadInfo, aliDriveSync,albumYear);
                             } catch (Exception ex) {
                                 log.error("后续处理失败: {}", ex.getMessage(), ex);
                                 SafeFileUtil.safeDelete(onComplete);
@@ -549,7 +568,7 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
                             }
                         },onAlbumImg -> {
                             try {
-                                extracted(music, onComplete, onAlbumImg, downloadInfo, aliDriveSync);
+                                extracted(music, onComplete, onAlbumImg, downloadInfo, aliDriveSync,albumYear);
                             } catch (Exception ex) {
                                 log.error("歌曲标签写入失败: {}", ex.getMessage(), ex);
                                 downloadException.set(ex);
@@ -563,7 +582,7 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
                     } catch (Exception e) {
                         log.error("专辑图片下载异常: {}", e.getMessage(), e);
                         try {
-                            extracted(music, onComplete, null, downloadInfo, aliDriveSync);
+                            extracted(music, onComplete, null, downloadInfo, aliDriveSync,albumYear);
                         } catch (Exception ex) {
                             SafeFileUtil.safeDelete(onComplete);
                             downloadException.set(ex);
@@ -763,7 +782,7 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
      * @param albumfile
      * @param downloadInfo
      */
-    private void extracted(Music music, File onSuccess, File albumfile, DownloadInfo downloadInfo,AtomicBoolean aliDriveSync) {
+    private void extracted(Music music, File onSuccess, File albumfile, DownloadInfo downloadInfo,AtomicBoolean aliDriveSync,String  albumYear) {
         //是否需要标签
         Integer rewriteMp3tag = downloadInfo.getRewriteMp3tag();
         //创建歌词
@@ -799,7 +818,7 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
         //修改文件
         try {
             if (DbBooleanConvert.findByValue(rewriteMp3tag)) {
-                MusicUtils.setMediaFileInfo(onSuccess, music.getMusicName(), music.getMusicAlbum(), String.join(";", music.getMusicArtists()), "", music.getMusicLyric(), albumfile,music.getMusicArtists().get(0));
+                MusicUtils.setMediaFileInfo(onSuccess, music.getMusicName(), music.getMusicAlbum(), String.join(";", music.getMusicArtists()), "", music.getMusicLyric(), albumfile,music.getMusicArtists().get(0),albumYear);
                 log.debug("标签写入成功{}", music.getMusicName());
             }
 

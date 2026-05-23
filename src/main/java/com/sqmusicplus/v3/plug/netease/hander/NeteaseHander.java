@@ -21,8 +21,14 @@ import com.sqmusicplus.v3.utils.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.text.SimpleDateFormat;
 import java.util.stream.Collectors;
 
 
@@ -386,9 +392,12 @@ public class NeteaseHander extends SearchHanderAbstract {
                         .setArtistsIds(songsInfoDTO.getAr().stream().map(e -> e.getId().toString()).collect(Collectors.toList()));
                 collect.add(music);
             });
-
+            String string = albumDTO.getPublishTime().toString();
+            Date date = new Date(Long.parseLong(string));
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+            String albumTime = sdf.format(date);
             album.setMusics(collect)
-                     .setAlbumTime(albumDTO.getPublishTime().toString())
+                     .setAlbumTime(albumTime)
                      .setAlbumArtist(albumDTO.getArtist().getName())
                      .setAlbumName(albumDTO.getName())
                      .setAlbumDescribe(albumDTO.getDescription())
