@@ -276,43 +276,8 @@ public class TidalTest {
         
         // 先获取歌曲详情，这会触发歌词获取
         log.info("步骤1: 调用 querySongById() 获取歌曲详情（包含歌词）...");
-        Music music = tidalSearchHander.(TEST_LYRICS_TRACK_ID);
-        
-        Assertions.assertNotNull(music, "歌曲信息不应为null");
-        log.info("✓ 歌曲详情获取成功:");
-        log.info("  歌曲名称: {}", music.getMusicName());
-        log.info("  艺术家: {}", String.join(", ", music.getMusicArtists()));
-        
-        // 检查歌词
-        log.info("\n步骤2: 检查歌词...");
-        String lyrics = music.getMusicLyric();
-        
-        if (lyrics != null && !lyrics.isEmpty()) {
-            log.info("✓ 歌词获取成功！");
-            log.info("  歌词长度: {} 字符", lyrics.length());
-            log.info("  歌词预览（前200字符）: {}", 
-                lyrics.length() > 200 ? lyrics.substring(0, 200) + "..." : lyrics);
-            
-            // 验证歌词格式
-            if (lyrics.contains("[") && lyrics.contains("]")) {
-                log.info("  ✓ 歌词包含时间戳标签（LRC格式）");
-            } else {
-                log.info("  ⚠ 歌词不包含时间戳标签（纯文本格式）");
-            }
-            
-            // 统计行数
-            long lineCount = lyrics.lines().count();
-            log.info("  歌词行数: {}", lineCount);
-            
-        } else {
-            log.warn("❌ 歌词为空！");
-            log.warn("  可能原因:");
-            log.warn("    1. 该歌曲没有歌词");
-            log.warn("    2. 歌词 API 返回空");
-            log.warn("    3. 网络连接问题");
-            log.warn("    4. Token 权限不足");
-        }
-        
+        String s = tidalSearchHander.queryLyric(TEST_LYRICS_TRACK_ID);
+        log.info("歌词: {}", s);
         log.info("========== 测试5.5完成: 获取歌词 ==========\n");
     }
 
