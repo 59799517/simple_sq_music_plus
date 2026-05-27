@@ -2,6 +2,7 @@ package com.sqmusicplus.v3.task;
 
 import com.sqmusicplus.v3.base.enums.SetConfigEnum;
 import com.sqmusicplus.v3.config.SqConfigCache;
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -17,6 +18,11 @@ import org.springframework.stereotype.Component;
 @Component
 public class QQVipDownloadResetTask {
 
+    @PostConstruct
+    public void init() {
+        log.info("QQVipDownloadResetTask 已注册, cron=0 0 10 * * ? (每天10:00)");
+    }
+
     /**
      * 每天凌晨0点重置QQVIP下载计数
      */
@@ -29,9 +35,8 @@ public class QQVipDownloadResetTask {
             SqConfigCache.updateConfigToDb(SetConfigEnum.PLUG_QQVIP_DOWNLOAD_TODAY, "0");
             
             log.info("QQVIP每日下载计数已重置为0");
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error("重置QQVIP每日下载计数失败", e);
+        } catch (Throwable t) {
+            log.error("重置QQVIP每日下载计数失败", t);
         }
     }
 }

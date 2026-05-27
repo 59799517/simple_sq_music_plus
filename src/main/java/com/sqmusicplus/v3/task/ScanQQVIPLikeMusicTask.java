@@ -21,6 +21,7 @@ import com.sqmusicplus.v3.plug.qq.entity.getfollowsingerlist.GetFollowSingerList
 import com.sqmusicplus.v3.plug.qq.entity.getfollowsingerlist.ListVDTO;
 import com.sqmusicplus.v3.plug.qqvip.QQvipHander;
 import com.sqmusicplus.v3.utils.StringUtils;
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -50,6 +51,11 @@ public class ScanQQVIPLikeMusicTask {
     @Autowired
     private DownloadInfoService downloadInfoService;
 
+    @PostConstruct
+    public void init() {
+        log.info("ScanQQVIPLikeMusicTask QQVIP喜好扫描已注册, cron=0 */10 * * * ? (每10分钟)");
+    }
+
     @Scheduled(cron = "0 */10 * * * ? ")
     public void excute() {
         try {
@@ -77,9 +83,8 @@ public class ScanQQVIPLikeMusicTask {
                     syncArtist();
                 }
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error("扫描QQVIP同步我喜欢单曲异常",e);
+        } catch (Throwable t) {
+            log.error("扫描QQVIP同步我喜欢单曲异常", t);
         }
     }
     private void syncArtist() {

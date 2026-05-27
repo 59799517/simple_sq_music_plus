@@ -19,6 +19,7 @@ import com.sqmusicplus.v3.plug.entity.Music;
 import com.sqmusicplus.v3.plug.netease.entity.PlaylistTrackAllResult;
 import com.sqmusicplus.v3.plug.netease.hander.NeteaseHander;
 import com.sqmusicplus.v3.utils.StringUtils;
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,6 +52,10 @@ public class ScanNeteasePlayList {
     @Autowired
     private SqSyncService syncService;
 
+    @PostConstruct
+    public void init() {
+        log.info("ScanNeteasePlayList 网易云歌单扫描已注册, cron=10 */1 * * * ? (每1分钟)");
+    }
 
     @Scheduled(cron = "10 */1 * * * ? ")
     public void excute() {
@@ -60,9 +65,8 @@ public class ScanNeteasePlayList {
                 log.info("开始扫描网易云歌单");
                 queryAndDownloadPlayList();
             }
-        } catch (Exception e) { // 必须捕获 Throwable，避免OOM等严重异常也漏抓
-            e.printStackTrace();
-            log.error("网易云歌单扫描定时任务执行异常，等待重试！", e);
+        } catch (Throwable t) {
+            log.error("网易云歌单扫描定时任务执行异常，等待重试！", t);
         }
     }
     //查询需要扫描的歌单

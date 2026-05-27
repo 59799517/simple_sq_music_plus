@@ -14,6 +14,7 @@ import com.sqmusicplus.v3.plug.kg.entity.PlayListInfoResult.*;
 import com.sqmusicplus.v3.plug.kg.entity.UserPlayListResult;
 import com.sqmusicplus.v3.plug.kg.hander.KGHander;
 import com.sqmusicplus.v3.utils.StringUtils;
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -37,6 +38,11 @@ public class KGPlayListTask {
     private KGHander kgHander;
     @Autowired
     private SqSyncService syncService;
+
+    @PostConstruct
+    public void init() {
+        log.info("KGPlayListTask 酷狗歌单任务已注册, cron=15 */1 * * * ? (每1分钟)");
+    }
 
     @Scheduled(cron = "15 */1 * * * ? ")
     public void excute()
@@ -149,11 +155,8 @@ public class KGPlayListTask {
 
 
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error("扫描酷狗歌单失败: {}", e.getMessage());
-
-
+        } catch (Throwable t) {
+            log.error("扫描酷狗歌单失败", t);
         }
 
 

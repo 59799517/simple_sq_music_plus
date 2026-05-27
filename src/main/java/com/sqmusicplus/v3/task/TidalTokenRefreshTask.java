@@ -1,6 +1,7 @@
 package com.sqmusicplus.v3.task;
 
 import com.sqmusicplus.v3.plug.tidal.utils.TidalTokenUtils;
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -15,6 +16,11 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 public class TidalTokenRefreshTask {
+
+    @PostConstruct
+    public void init() {
+        log.info("TidalTokenRefreshTask 已注册, fixedRate=1800000ms (每30分钟)");
+    }
 
     /**
      * 每30分钟检查并刷新Tidal Token
@@ -37,8 +43,8 @@ public class TidalTokenRefreshTask {
             }
             
             log.info("========== Tidal Token定时刷新任务完成 ==========");
-        } catch (Exception e) {
-            log.error("Tidal Token定时刷新任务执行失败", e);
+        } catch (Throwable t) {
+            log.error("Tidal Token定时刷新任务执行失败", t);
         }
     }
 
@@ -52,8 +58,8 @@ public class TidalTokenRefreshTask {
             log.info("========== Tidal Token初始化开始 ==========");
             TidalTokenUtils.forceRefreshToken();
             log.info("========== Tidal Token初始化完成 ==========");
-        } catch (Exception e) {
-            log.error("Tidal Token初始化失败", e);
+        } catch (Throwable t) {
+            log.error("Tidal Token初始化失败", t);
         }
     }
 }

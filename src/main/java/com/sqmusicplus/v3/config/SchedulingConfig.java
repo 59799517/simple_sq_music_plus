@@ -18,7 +18,7 @@ public class SchedulingConfig {
     public ThreadPoolTaskScheduler taskScheduler() {
         ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
         // ScheduledThreadPoolExecutor 内部基于平台线程池，不能用虚拟线程
-        scheduler.setPoolSize(30);
+        scheduler.setPoolSize(50);
         scheduler.setThreadNamePrefix("scheduled-");
         scheduler.setAwaitTerminationSeconds(60);
         scheduler.setWaitForTasksToCompleteOnShutdown(true);

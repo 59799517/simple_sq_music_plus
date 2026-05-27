@@ -6,6 +6,7 @@ import com.sqmusicplus.v3.alidrive.service.SqAliSyncService;
 import com.sqmusicplus.v3.base.enums.SetConfigEnum;
 import com.sqmusicplus.v3.config.SqConfigCache;
 import com.sqmusicplus.v3.utils.StringUtils;
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -26,6 +27,12 @@ public class AliDriceSyncTask {
 
     @Autowired
     private AliHander aliHander;
+
+    @PostConstruct
+    public void init() {
+        log.info("AliDriceSyncTask 已注册, cron=0 0 0/1 * * ? (每1分钟同步)、cron=0 0 0 * * ? (每天00:00检查Token)");
+    }
+
     @Scheduled(cron="0 0 0/1 * * ? ")
     public void excute(){
         try {
@@ -39,9 +46,8 @@ public class AliDriceSyncTask {
             log.info("=============开始同步阿里云盘===============");
             List<SqAliSync> sqAliSyncs = aliHander.uploadFile(true,true);
             log.info("=============同步阿里云盘{}共计：{}首歌曲===============", !sqAliSyncs.isEmpty() ?"成功":"失败",sqAliSyncs.size());
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error("同步阿里云盘失败：{}", e.getMessage());
+        } catch (Throwable t) {
+            log.error("同步阿里云盘失败", t);
         }
     }
     //每天 0:00 执行 检查 token 是否失效
@@ -73,9 +79,8 @@ public class AliDriceSyncTask {
                 log.info("Token 验证失败，清空配置");
                 clearAliyunConfig();
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error("检查阿里云盘 Token 失败：{}", e.getMessage());
+        } catch (Throwable t) {
+            log.error("检查阿里云盘 Token 失败", t);
         }
     }
         

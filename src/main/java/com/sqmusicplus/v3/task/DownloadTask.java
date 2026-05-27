@@ -33,8 +33,8 @@ public class DownloadTask {
         try {
             log.info("=============开始检测下载===============");
             downloadExcute.getDownloadInfo();
-        } catch (Exception e) {
-            log.error("=============下载任务执行失败===============", e);
+        } catch (Throwable t) {
+            log.error("=============下载任务执行失败(严重异常)===============", t);
         }
     }
 

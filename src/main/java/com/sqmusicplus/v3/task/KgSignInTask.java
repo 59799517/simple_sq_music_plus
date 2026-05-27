@@ -4,6 +4,7 @@ import com.sqmusicplus.v3.base.enums.SetConfigEnum;
 import com.sqmusicplus.v3.config.SqConfigCache;
 import com.sqmusicplus.v3.plug.kg.hander.KGHander;
 import com.sqmusicplus.v3.utils.StringUtils;
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -23,6 +24,12 @@ public class KgSignInTask {
 
     @Autowired
     private KGHander kgHander;
+
+    @PostConstruct
+    public void init() {
+        log.info("KgSignInTask 酷狗签到任务已注册, cron=1 0 3,6,9,12,15,18,21 * * ? (每天各时段)");
+    }
+
     @Scheduled(cron="1 0 3,6,9,12,15,18,21 * * ? ")
     public void excute() {
         String kgopenconfigKey = SqConfigCache.getSqConfigValue(SetConfigEnum.PLUG_KG_OPEN);
@@ -41,9 +48,8 @@ public class KgSignInTask {
                 return;
             }
             kgHander.signIn();
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error("酷狗签到失败！",e);
+        } catch (Throwable t) {
+            log.error("酷狗签到失败！", t);
         }
     }
 }
