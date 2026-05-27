@@ -1,6 +1,7 @@
 package com.sqmusicplus.v3.task;
 
 import com.sqmusicplus.v3.download.DownloadExcute;
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -22,16 +23,18 @@ public class DownloadTask {
     @Autowired
     private DownloadExcute downloadExcute;
     
-
+    @PostConstruct
+    public void init() {
+        log.info("DownloadTask 下载定时任务已注册, cron=*/10 * * * * ? (每10秒执行)");
+    }
 
     @Scheduled(cron="*/10 * * * * ? ")
     public void excute(){
         try {
-            log.debug("=============开始检测下载===============");
+            log.info("=============开始检测下载===============");
             downloadExcute.getDownloadInfo();
         } catch (Exception e) {
-            e.printStackTrace();
-            log.debug("=============下载任务执行失败===============");
+            log.error("=============下载任务执行失败===============", e);
         }
     }
 

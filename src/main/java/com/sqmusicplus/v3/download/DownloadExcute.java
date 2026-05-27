@@ -60,6 +60,7 @@ public class DownloadExcute {
             //有限额
             if (StringUtils.isBlank(plug_qqvip_download_today)){
                 SqConfigCache.updateConfigToDb(SetConfigEnum.PLUG_QQVIP_DOWNLOAD_TODAY, "0");
+                plug_qqvip_download_today = "0";
             }
             long QQtoday = Long.parseLong(plug_qqvip_download_today);
             long QQlimit = Long.parseLong(plug_qqvip_download_daily_limit);
@@ -80,16 +81,20 @@ public class DownloadExcute {
         List<DownloadInfo> records = null;
         if (waitsize>0) {
             String init_download = SqConfigCache.getSqConfigValue(SetConfigEnum.SYSTEM_DOWNLOAD_NUM);
+            if (StringUtils.isBlank(init_download)) {
+                log.warn("SYSTEM_DOWNLOAD_NUM 未配置，默认使用 5");
+                init_download = "5";
+            }
             Long downloadsize = Long.valueOf(init_download);
             LambdaQueryWrapper<DownloadInfo> downloadInfoQueryWrapper = new LambdaQueryWrapper<>();
             downloadInfoQueryWrapper.eq(DownloadInfo::getDownloadStatus, DownloadStatus.loading.value);
             long count = downloadInfoService.count(downloadInfoQueryWrapper);
-            log.debug("正在下载任务--->{}个",count);
+            log.info("正在下载任务--->{}个",count);
             if (count-downloadsize<0){
                 long l = downloadsize - count;
                 Page<DownloadInfo> page = downloadInfoService.page(new Page<>(0, l), objectLambdaQueryWrapper);
                 records = page.getRecords();
-                log.debug("本次补充--->{}个",records.size());
+                log.info("本次补充--->{}个",records.size());
             }
         }
         if (records != null && records.size() > 0) {
