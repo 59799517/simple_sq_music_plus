@@ -1,0 +1,22 @@
+musicbrainz:
+  id: musicbrainz-v1
+  #  名称
+  name: MusicBrainz
+  #  不需要登录
+  islogin: false
+  #  MusicBrainz API 基础URL
+  baseUrl: https://musicbrainz.org/ws/2
+  #  搜索歌曲 (recording)
+  searchUrl: ${musicbrainz.baseUrl}/recording?query=#{query}&fmt=json&offset=#{offset}&limit=#{limit}
+  #  搜索艺术家
+  artistSearchUrl: ${musicbrainz.baseUrl}/artist?query=#{query}&fmt=json&offset=#{offset}&limit=#{limit}
+  #  搜索专辑 (release)
+  albumSearchUrl: ${musicbrainz.baseUrl}/release?query=#{query}&fmt=json&offset=#{offset}&limit=#{limit}
+  #  查询录音详情
+  recordingUrl: ${musicbrainz.baseUrl}/recording/#{recordingId}?inc=artists+releases+isrcs&fmt=json
+  #  查询艺术家详情
+  artistUrl: ${musicbrainz.baseUrl}/artist/#{artistId}?fmt=json
+  #  查询专辑(Release)详情
+  releaseUrl: ${musicbrainz.baseUrl}/release/#{releaseId}?inc=artists+recordings+media&fmt=json
+  #  通过 ISRC 搜索录音
+  isrcSearchUrl: ${musicbrainz.baseUrl}/isrc/#{isrc}?inc=artists+releases&fmt=json
