@@ -789,7 +789,7 @@ public class QQSearchEntity {
 
         JSONObject track_info = jsonObject.getJSONObject("songinfo").getJSONObject("data").getJSONObject("track_info");
 
-        String name = track_info.getString("name");
+        String name = track_info.getString("title");
         String mid = track_info.getString("mid");
         String albumid = track_info.getJSONObject("album").getString("mid");
         String albumname = track_info.getJSONObject("album").getString("name");
@@ -872,7 +872,7 @@ public class QQSearchEntity {
 
             }
             String musicID = e.getJSONObject("songInfo").getString("mid");
-            String string = e.getJSONObject("songInfo").getString("name");
+            String string = e.getJSONObject("songInfo").getString("title");
             String albumname =  e.getJSONObject("songInfo").getJSONObject("album").getString("name");
             Long l = e.getJSONObject("songInfo").getLong("interval") * 1000;
             String albumImageconfig = qqConfig.getAlbumImage();
@@ -944,7 +944,7 @@ public class QQSearchEntity {
         ArrayList<Music> collect = new ArrayList<>();
         jsonArray.forEach(jdata->{
             JSONObject e = JSONObject.parseObject(JSONObject.toJSONString(jdata));
-            String string = e.getJSONObject("songInfo").getString("name");
+            String string = e.getJSONObject("songInfo").getString("title");
             String mid = e.getJSONObject("songInfo").getString("mid");
             String albumname =  e.getJSONObject("songInfo").getJSONObject("album").getString("name");
             JSONArray singer = e.getJSONObject("songInfo").getJSONArray("singer");

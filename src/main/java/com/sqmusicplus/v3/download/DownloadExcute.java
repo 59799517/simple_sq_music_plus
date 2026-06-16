@@ -21,7 +21,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @Classname DownloadExcute
@@ -42,32 +41,25 @@ public class DownloadExcute {
     @Qualifier("threadPoolTaskExecutor")
     private ExecutorService executorService;
 
-    /**
-     * 本次执行中QQVIP下载成功计数(线程安全)
-     */
-    private final AtomicInteger qqVipSuccessCount = new AtomicInteger(0);
-
 
     public void getDownloadInfo() {
-        // 重置本次计数
-        qqVipSuccessCount.set(0);
-        
         boolean qqdownload = false;
         //限额数量
         String plug_qqvip_download_daily_limit = SqConfigCache.getSqConfigValue(SetConfigEnum.PLUG_QQVIP_DOWNLOAD_DAILY_LIMIT);
-        String plug_qqvip_download_today = SqConfigCache.getSqConfigValue(SetConfigEnum.PLUG_QQVIP_DOWNLOAD_TODAY);
         if (StringUtils.isNotBlank(plug_qqvip_download_daily_limit)){
-            //有限额
-            if (StringUtils.isBlank(plug_qqvip_download_today)){
-                SqConfigCache.updateConfigToDb(SetConfigEnum.PLUG_QQVIP_DOWNLOAD_TODAY, "0");
-                plug_qqvip_download_today = "0";
-            }
-            long QQtoday = Long.parseLong(plug_qqvip_download_today);
-            long QQlimit = Long.parseLong(plug_qqvip_download_daily_limit);
-            if (QQtoday>=QQlimit){
-                //超出限制
-                log.debug("QQvip今日下载数量已超出限制,明日在下载！");
-                qqdownload=true;
+            try {
+                long QQlimit = Long.parseLong(plug_qqvip_download_daily_limit);
+                // 0或小于0表示不限制下载数量
+                if (QQlimit > 0) {
+                    long QQtoday = getQQVipTodayCountFromDb();
+                    if (QQtoday >= QQlimit) {
+                        //超出限制
+                        log.debug("QQvip今日下载数量已超出限制{},明日在下载！", QQlimit);
+                        qqdownload = true;
+                    }
+                }
+            } catch (NumberFormatException e) {
+                log.warn("解析QQVIP每日下载限额失败: {}", plug_qqvip_download_daily_limit, e);
             }
         }
 
@@ -114,16 +106,15 @@ public class DownloadExcute {
                                 record.setDownloadStatus(DownloadStatus.success.getValue());
                                 downloadInfoService.updateById(record);
                                 log.debug("修改完成状态--->{}",record);
-                                // 如果是QQVIP下载，递增内存计数
+                                // QQVIP下载成功后立即更新今日下载计数到DB
                                 if (PlugBrType.QQVIP_Flac_2000.getPlugName().equals(record.getDownloadPlugName())) {
-                                    qqVipSuccessCount.incrementAndGet();
+                                    incrementQQVipDownloadCount();
                                 }
                             } catch (IgnoreDownloadException e) {
                                 //一般是酷我的歌曲信息获取失败导致的需要从新下载
                                 record.setDownloadStatus(DownloadStatus.waiting.getValue());
                                 record.setDownloadMsg(e.getMessage());
                                 downloadInfoService.updateById(record);
-                                return;
                             }catch (Exception e){
                                 e.printStackTrace();
                                 record.setDownloadStatus(DownloadStatus.error.getValue());
@@ -137,16 +128,15 @@ public class DownloadExcute {
                                 record.setDownloadStatus(DownloadStatus.success.getValue());
                                 downloadInfoService.updateById(record);
                                 log.debug("修改完成状态--->{}",record);
-                                // 如果是QQVIP下载，递增内存计数
+                                // QQVIP下载成功后立即更新今日下载计数到DB
                                 if (PlugBrType.QQVIP_Flac_2000.getPlugName().equals(record.getDownloadPlugName())) {
-                                    qqVipSuccessCount.incrementAndGet();
+                                    incrementQQVipDownloadCount();
                                 }
                             } catch (IgnoreDownloadException e) {
                                 //一般是酷我的歌曲信息获取失败导致的需要从新下载
                                 record.setDownloadStatus(DownloadStatus.waiting.getValue());
                                 record.setDownloadMsg(e.getMessage());
                                 downloadInfoService.updateById(record);
-                                return;
                             }catch (Exception e){
                                 e.printStackTrace();
                                 record.setDownloadStatus(DownloadStatus.error.getValue());
@@ -166,42 +156,35 @@ public class DownloadExcute {
             }
         }
         
-        // 本次执行结束后，统一更新QQVIP下载计数到数据库
-        flushQQVipDownloadCount();
     }
 
     /**
-     * 将内存中的QQVIP下载计数刷新到数据库
-     * 在每次getDownloadInfo()执行结束时调用，避免频繁IO
+     * 从DB读取今日下载计数
      */
-    private void flushQQVipDownloadCount() {
-        int successCount = qqVipSuccessCount.get();
-        if (successCount == 0) {
-            return;
-        }
-        
+    private long getQQVipTodayCountFromDb() {
         try {
-            // 获取当前计数
-            String todayCountStr = SqConfigCache.getSqConfigValue(SetConfigEnum.PLUG_QQVIP_DOWNLOAD_TODAY);
-            long todayCount = 0;
-            if (StringUtils.isNotBlank(todayCountStr)) {
-                try {
-                    todayCount = Long.parseLong(todayCountStr);
-                } catch (NumberFormatException e) {
-                    log.warn("解析QQVIP今日下载计数失败，重置为0", e);
-                    todayCount = 0;
-                }
+            String currentCountStr = SqConfigCache.getSqConfigValue(SetConfigEnum.PLUG_QQVIP_DOWNLOAD_TODAY);
+            if (StringUtils.isNotBlank(currentCountStr)) {
+                return Long.parseLong(currentCountStr);
             }
-            
-            // 累加本次成功的数量
-            todayCount += successCount;
-            
-            // 一次性更新到数据库和缓存
-            SqConfigCache.updateConfigToDb(SetConfigEnum.PLUG_QQVIP_DOWNLOAD_TODAY, String.valueOf(todayCount));
-            log.info("本次批量更新QQVIP下载计数: +{}, 总计: {}", successCount, todayCount);
-            
+        } catch (NumberFormatException e) {
+            log.warn("解析QQVIP今日下载计数失败", e);
+        }
+        return 0;
+    }
+
+    /**
+     * QQVIP下载成功后立即更新今日下载计数到DB
+     * 从DB读取当前值，加1后更新回去
+     */
+    private void incrementQQVipDownloadCount() {
+        try {
+            long currentCount = getQQVipTodayCountFromDb();
+            long newCount = currentCount + 1;
+            SqConfigCache.updateConfigToDb(SetConfigEnum.PLUG_QQVIP_DOWNLOAD_TODAY, String.valueOf(newCount));
+            log.debug("QQVIP今日下载计数更新: {} -> {}", currentCount, newCount);
         } catch (Exception e) {
-            log.error("批量更新QQVIP下载计数失败", e);
+            log.error("更新QQVIP下载计数失败", e);
         }
     }
 

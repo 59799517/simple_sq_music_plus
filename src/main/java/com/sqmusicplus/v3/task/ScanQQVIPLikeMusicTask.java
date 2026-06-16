@@ -405,7 +405,6 @@ public class ScanQQVIPLikeMusicTask {
                         brType = PlugBrType.QQVIP_MP3_128;
                     }
                     Music music = qQvipHander.querySongById(songmid);
-
                     Music music1 = qQvipHander.musicIgnoreCheck(music);
                     if (music1 == null){
                         log.info("{}:忽略下载",music.getMusicName());
