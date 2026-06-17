@@ -88,4 +88,10 @@ public class SqMonitor implements Serializable {
     @TableField(value = "target_cover")
     private String targetCover;
 
+    /**
+     * 歌单更新时间戳（网易云trackUpdateTime）
+     */
+    @TableField(value = "target_update_time")
+    private Long targetUpdateTime;
+
 }

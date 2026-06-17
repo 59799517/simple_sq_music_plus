@@ -217,7 +217,7 @@ public class ConfigController {
                     throw new RuntimeException("请输入数字");
                 }
                 return true;
-            case "input", "path" ,"password":
+            case "input", "path", "password":
                 return true;
             case "boolean":
                 if (!configValue.equals("true") && !configValue.equals("false")) {

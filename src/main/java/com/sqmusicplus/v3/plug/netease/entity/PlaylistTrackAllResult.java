@@ -337,5 +337,22 @@ public class PlaylistTrackAllResult {
         private Long trackCount;
         @JsonProperty("description")
         private String description;
+        @JsonProperty("updateTime")
+        private Long updateTime;
+        @JsonProperty("trackUpdateTime")
+        private Long trackUpdateTime;
+        @JsonProperty("trackNumberUpdateTime")
+        private Long trackNumberUpdateTime;
+        @JsonProperty("trackIds")
+        private List<TrackIdDTO> trackIds;
+    }
+
+    @NoArgsConstructor
+    @Data
+    public static class TrackIdDTO {
+        @JsonProperty("id")
+        private Long id;
+        @JsonProperty("v")
+        private Long v;
     }
 }

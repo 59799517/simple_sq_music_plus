@@ -149,6 +149,9 @@ ${album}/${musicName} - ${artists}  ------------专辑/歌曲名称 - 歌手名�
 
 感谢：
 https://github.com/MakcRe/KuGouMusicApi  酷狗API
+https://zmusic.zhenxin.me/ 网易API
+
+
 
 
 

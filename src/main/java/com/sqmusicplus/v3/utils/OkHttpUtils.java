@@ -216,10 +216,14 @@ public class OkHttpUtils {
      * @return
      */
     public OkHttpUtils addHeader(Map<String, String> headerMap) {
-        if (headerMap == null) {
+        if (headerMap == null||headerMap.isEmpty()) {
             return this;
         }
-        headerMap.putAll(headerMap);
+        if (this.headerMap== null){
+            this.headerMap = new LinkedHashMap<>(16);
+        }
+        this.headerMap.putAll(headerMap);
+
         return this;
     }
 

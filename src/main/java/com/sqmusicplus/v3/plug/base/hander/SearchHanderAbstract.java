@@ -346,7 +346,8 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
                 log.debug("下载失败(文件写入异常){}", music.getMusicName());
                 downloadException.set(onFailure);
                 downloadLatch.countDown();
-                throw new RuntimeException("下载失败:" + music.getMusicName(), onFailure);
+                // 注意：不在此处抛出异常，错误已通过 downloadException 和 Latch 机制传递
+                // 如果抛出异常会导致 DownloadUtils 的 onComplete 被跳过
             },onComplete -> {
                 if (aliDriveSync.get()) {
                     SqAliSync sqAliSync = aliHander.uploadFile(onComplete, baseMusicName, baseMusicArtistName, baseMusicAlbumName, downloadInfo.getId());

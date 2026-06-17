@@ -106,7 +106,13 @@ public class DownloadUtils {
             @Override
             public void onFailure(Call call, IOException e) {
                 // 下载失败
-                onFailure.accept(e);
+                try {
+                    if (onFailure != null) {
+                        onFailure.accept(e);
+                    }
+                } catch (Exception callbackEx) {
+                    log.error("onFailure回调执行失败: {}", callbackEx.getMessage(), callbackEx);
+                }
             }
             @Override
             public void onResponse(Call call, Response response) throws IOException {
@@ -139,7 +145,13 @@ public class DownloadUtils {
                         file = new File(filteredPath);
                         file.getParentFile().mkdirs();
                     } else {
-                        onFailure.accept(e);
+                        try {
+                            if (onFailure != null) {
+                                onFailure.accept(e);
+                            }
+                        } catch (Exception callbackEx) {
+                            log.error("onFailure回调执行失败: {}", callbackEx.getMessage(), callbackEx);
+                        }
                         return;
                     }
                 }
@@ -147,7 +159,6 @@ public class DownloadUtils {
                 // ✅ 使用 try-with-resources 自动管理资源
                 long total = response.body().contentLength();
                 boolean downloadSuccess = false;
-                Exception downloadException = null;
                 
                 try (InputStream is = response.body().byteStream();
                      FileOutputStream fos = new FileOutputStream(file)) {
@@ -164,25 +175,37 @@ public class DownloadUtils {
                         onProcess.accept(new DownloadProgress(sum, total, progress));
                     }
                     fos.flush();
-                    // 确保文件完全写入磁盘
-                    fos.getFD().sync();
+                    // 注意：不调用 fos.getFD().sync()，该操作在 Windows 上会导致磁盘 I/O 异常
+                    // 且对于音乐下载场景，flush 已足够保证数据完整写入
                     downloadSuccess = true;
                 } catch (Exception e) {
-                    downloadException = e;
-                    onFailure.accept(e);
-                }
-                
-                // ✅ 文件流已完全关闭后，再调用回调
-                if (downloadSuccess) {
+                    // ✅ onFailure 回调不应抛出异常，否则会继续传播到 OkHttp
                     try {
-                        onSuccess.accept(file);
-                    } catch (Exception e) {
-                        log.error("onSuccess回调执行失败: {}", e.getMessage(), e);
+                        if (onFailure != null) {
+                            onFailure.accept(e);
+                        }
+                    } catch (Exception callbackEx) {
+                        log.error("onFailure回调执行失败: {}", callbackEx.getMessage(), callbackEx);
                     }
+                    // 下载失败，不执行 onSuccess 和 onComplete
+                    // onComplete 可能执行文件操作（如标签写入），不应在失败文件上执行
+                    return;
                 }
                 
+                // ✅ 文件写入成功，执行后续回调
                 try {
-                    onComplete.accept(file);
+                    if (onSuccess != null) {
+                        onSuccess.accept(file);
+                    }
+                } catch (Exception e) {
+                    log.error("onSuccess回调执行失败: {}", e.getMessage(), e);
+                }
+                
+                // ✅ onComplete 仅在下载成功时执行，确保文件完整可用
+                try {
+                    if (onComplete != null) {
+                        onComplete.accept(file);
+                    }
                 } catch (Exception e) {
                     log.error("onComplete回调执行失败: {}", e.getMessage(), e);
                 }
@@ -276,8 +299,7 @@ public class DownloadUtils {
                     os.write(buffer, 0, len);
                 }
                 os.flush();
-                // 确保文件完全写入磁盘
-                ((FileOutputStream) os).getFD().sync();
+                // 注意：不调用 getFD().sync()，避免不必要的磁盘 I/O 压力
             }
             
             result = true;
@@ -409,28 +431,41 @@ public class DownloadUtils {
     }
 
 
-    public static JSONObject postToJsonObject(String url,String body){
+    public static JSONObject postToJsonObject(String url,String body,Map<String,String>  headers){
         OkHttpUtils builder = OkHttpUtils.builder().url(url);
         String sync =builder
                 .post(true,body)
+                .addHeader(headers)
                 .sync();
                 return JSONObject.parseObject(sync);
 
     }
-    public static JSONObject postToJsonObject(String url,JSONObject body){
+    public static JSONObject postToJsonObject(String url,JSONObject body,Map<String,String>  headers){
         OkHttpUtils builder = OkHttpUtils.builder().url(url);
         String sync =builder
                 .post(true,body)
+                .addHeader(headers)
                 .sync();
         return JSONObject.parseObject(sync);
     }
     public static JSONObject postCookieToJsonObject(String url,JSONObject body,String  cookie){
         if (StringUtils.isBlank(cookie)){
-            return  postToJsonObject(url, body);
+            return  postToJsonObject(url, body, null);
         }
         OkHttpUtils builder = OkHttpUtils.builder().url(url).addCookie(cookie);
         String sync =builder
                 .post(true,body)
+                .sync();
+        return JSONObject.parseObject(sync);
+    }
+    public static JSONObject postCookieToJsonObject(String url,JSONObject body,String  cookie,Map<String,String>  headers){
+        if (StringUtils.isBlank(cookie)){
+            return  postToJsonObject(url, body,headers);
+        }
+        OkHttpUtils builder = OkHttpUtils.builder().url(url).addCookie(cookie);
+        String sync =builder
+                .post(true,body)
+                .addHeader( headers)
                 .sync();
         return JSONObject.parseObject(sync);
     }

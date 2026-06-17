@@ -63,8 +63,8 @@ public class NeteaseHander extends SearchHanderAbstract {
                     JSONObject cloudsearch = neteaseCloudMusicInfo.innerVersion();
                     if (cloudsearch.getInteger("code")==200) {
                         log.info("当前接口版本：{}",cloudsearch.getJSONObject("data").toJSONString());
-                        String anonCookie = NeteaseAnonCookieUtil.getAnonCookie();
-                        neteaseCloudMusicInfo.setCookie(anonCookie);
+//                        String anonCookie = NeteaseAnonCookieUtil.getAnonCookie();
+//                        neteaseCloudMusicInfo.setCookie(anonCookie);
                         isOpen=true;
                         log.info("netease访问成功：{}",s);
                         break;
@@ -728,6 +728,89 @@ public class NeteaseHander extends SearchHanderAbstract {
         JSONObject jsonObject1 = neteaseCloudMusicInfo.playlistDetail(parameter);
         PlaylistTrackAllResult javaObject = jsonObject1.toJavaObject(PlaylistTrackAllResult.class);
         return javaObject;
+    }
+
+    /**
+     * 获取歌单中所有歌曲的ID列表（轻量级，不获取歌曲详情）
+     * 用于增量同步判断
+     * @param playlistId 歌单ID
+     * @return 歌曲ID列表
+     */
+    public List<Long> getPlayListTrackIds(String playlistId) {
+        PlaylistTrackAllResult detail = getPlayListInfo(playlistId);
+        if (detail == null || detail.getPlaylist() == null || detail.getPlaylist().getTrackIds() == null) {
+            return new ArrayList<>();
+        }
+        return detail.getPlaylist().getTrackIds().stream()
+                .map(PlaylistTrackAllResult.TrackIdDTO::getId)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 根据歌曲ID列表批量获取歌曲详情
+     * 网易云API单次最多请求1000首，超过时自动分批
+     * @param songIds 歌曲ID列表
+     * @return 歌曲详情列表
+     */
+    public ArrayList<Music> getPlayListByIds(List<Long> songIds) {
+        ArrayList<Music> musics = new ArrayList<>();
+        if (songIds == null || songIds.isEmpty()) {
+            return musics;
+        }
+        int batchSize = 1000;
+        for (int i = 0; i < songIds.size(); i += batchSize) {
+            List<Long> batch = songIds.subList(i, Math.min(i + batchSize, songIds.size()));
+            JSONObject parameter = new JSONObject();
+            parameter.put("ids", batch.stream().map(String::valueOf).collect(Collectors.joining(",")));
+            JSONObject jsonObject = neteaseCloudMusicInfo.songDetail(parameter);
+            PlaylistTrackAllResult result = jsonObject.toJavaObject(PlaylistTrackAllResult.class);
+            if (result != null && result.getSongs() != null) {
+                for (PlaylistTrackAllResult.SongsDTO songsInfoDTO : result.getSongs()) {
+                    musics.add(convertSongToMusic(songsInfoDTO));
+                }
+            }
+        }
+        return musics;
+    }
+
+    /**
+     * 将歌曲DTO转换为Music对象
+     */
+    private Music convertSongToMusic(PlaylistTrackAllResult.SongsDTO songsInfoDTO) {
+        PlaylistTrackAllResult.SongsDTO.HDTO h = songsInfoDTO.getH();
+        PlaylistTrackAllResult.SongsDTO.MDTO m = songsInfoDTO.getM();
+        PlaylistTrackAllResult.SongsDTO.LDTO l = songsInfoDTO.getL();
+        PlaylistTrackAllResult.SongsDTO.SqDTO sq = songsInfoDTO.getSq();
+        PlaylistTrackAllResult.SongsDTO.SqDTO hr = songsInfoDTO.getHr();
+        ArrayList<PlugBrType> plugBrTypes = new ArrayList<>();
+        if (h != null && h.getBr() != null) {
+            plugBrTypes.add(PlugBrType.NETEASE_MP3_320);
+        }
+        if (m != null && m.getBr() != null) {
+            plugBrTypes.add(PlugBrType.NETEASE_MP3_192);
+        }
+        if (l != null && l.getBr() != null) {
+            plugBrTypes.add(PlugBrType.NETEASE_MP3_128);
+        }
+        if (sq != null && sq.getBr() != null) {
+            plugBrTypes.add(PlugBrType.NETEASE_FLAC_2000);
+        }
+        if (hr != null && hr.getBr() != null) {
+            plugBrTypes.add(PlugBrType.NETEASE_FLAC_3000);
+        }
+        Music music = new Music();
+        music.setId(songsInfoDTO.getId().toString())
+                .setMusicName(songsInfoDTO.getName())
+                .setMusicDuration(songsInfoDTO.getDt())
+                .setMusicAlbum(songsInfoDTO.getAl().getName())
+                .setMusicArtists(songsInfoDTO.getAr().stream().map(e -> e.getName()).collect(Collectors.toList()))
+                .setMusicImage(songsInfoDTO.getAl().getPicUrl())
+                .setAlbumId(songsInfoDTO.getAl().getId().toString())
+                .setPlugName(getPlugName())
+                .setDataInfo(JSONObject.parseObject(JSONObject.toJSONString(songsInfoDTO)))
+                .setArtistsIds(songsInfoDTO.getAr().stream().map(e -> e.getId().toString()).collect(Collectors.toList()))
+                .setBits(plugBrTypes);
+        return music;
     }
 
 
