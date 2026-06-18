@@ -142,7 +142,8 @@ public class SQNeteaseCloudMusicInfo {
 
 
     public JSONObject songDetail(JSONObject parameter) {
-        String url = "/song/detail";
+        // 加时间戳绕过代理缓存，确保每次拿到真实数据
+        String url = "/song/detail?_t=" + System.currentTimeMillis();
         return DownloadUtils.postCookieToJsonObject(baseUrl + url, parameter, cookie,header);
     }
 
