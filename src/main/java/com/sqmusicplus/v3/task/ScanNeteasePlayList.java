@@ -233,8 +233,8 @@ public class ScanNeteasePlayList {
                         }
                     }
                 }
-            }
-            log.info("歌单增量同步完成: targetId={}, 新增{}首", targetId, downloadInfos.size());
+                log.info("歌单增量同步完成: targetId={}, 新增{}首", targetId, downloadInfos.size());
+                    }
         }
     }
 
