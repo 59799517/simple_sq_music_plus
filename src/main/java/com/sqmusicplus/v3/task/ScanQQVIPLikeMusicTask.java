@@ -53,7 +53,7 @@ public class ScanQQVIPLikeMusicTask {
 
     @PostConstruct
     public void init() {
-        log.info("ScanQQVIPLikeMusicTask QQVIP喜好扫描已注册, cron=0 */10 * * * ? (每10分钟)");
+        log.debug("ScanQQVIPLikeMusicTask QQVIP喜好扫描已注册, cron=0 */10 * * * ? (每10分钟)");
     }
 
     @Scheduled(cron = "0 */10 * * * ? ")

@@ -16,6 +16,7 @@ import com.sqmusicplus.v3.base.enums.PlugBrType;
 import com.sqmusicplus.v3.download.vo.DownloadUrlResult;
 import com.sqmusicplus.v3.plug.base.hander.SearchHanderAbstract;
 import com.sqmusicplus.v3.plug.entity.*;
+import com.sqmusicplus.v3.plug.kg.entity.SongInfoResult;
 import com.sqmusicplus.v3.plug.kw.config.KwConfig;
 import com.sqmusicplus.v3.plug.kw.entity.*;
 import com.sqmusicplus.v3.plug.kw.enums.KwSearchType;
@@ -216,9 +217,7 @@ public class NKwSearchHander extends SearchHanderAbstract {
         String s = pic;
         String songName = songinfo.getName();
         String duration = "0";
-        //获取年份
-
-
+        //可恶返回的name和搜索的不一样坑人呢 同一个接口歌曲名称还呢个变 我就贼 没办法解决 67764396 54388807
         try {
             duration = songinfo.getDuration()+"";
             BigDecimal bigDecimal = new BigDecimal(duration);

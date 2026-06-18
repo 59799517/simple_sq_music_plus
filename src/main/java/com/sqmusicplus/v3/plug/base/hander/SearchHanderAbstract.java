@@ -209,17 +209,7 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
             } else {
                 albumImagePath = null;
             }
-
-
-            //过滤掉不下载的格式歌曲
-            String downloadFormat = SqConfigCache.getSqConfigValue(SetConfigEnum.SYSTEM_DOWNLOAD_FILE_AUDIO_FORMAT);
-            if (!downloadFormat.equals("auto")){
-                if (downloadFormat.equals(byId.getType())){
-                    log.info("歌曲{}---->因为设置忽略下载此格式音乐{}", baseMusicName, byId.getType());
-                    throw new RuntimeException("歌曲"+baseMusicName+"---->因为设置忽略下载此格式音乐("+byId.getType()+"):" + JSONObject.toJSONString(downloadInfo));
-                }
-            }
-            log.debug("开始下载---->{}", baseMusicName);
+            log.info("开始下载---->{}", baseMusicName);
             //创建任务
             String sqConfigValue = SqConfigCache.getSqConfigValue(SetConfigEnum.SYSTEM_FILE_EXIST_NOT_DOWNLOAD);
             if (Boolean.valueOf(sqConfigValue)) {
@@ -296,7 +286,7 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
                         if (aliDriveSync.get()) {
                             SqAliSync sqAliSync = aliHander.uploadFile(type, baseMusicName, baseMusicArtistName, baseMusicAlbumName, downloadInfo.getId());
                             if (sqAliSync != null){
-                                log.debug("歌曲：{} 同步完成",music.getMusicName());
+                                log.info("歌曲：{} 同步完成",music.getMusicName());
                             }else{
                                 log.debug("歌曲：{} 同步错误，返回结果为null",music.getMusicName());
                             }
@@ -319,7 +309,7 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
                             log.error("下载文件不存在或为空: {}", type.getAbsolutePath());
                             throw new RuntimeException("下载文件不存在或为空: " + type.getAbsolutePath());
                         }
-                        log.debug("下载完成并验证成功: {}", baseMusicName);
+                        log.info("下载完成并验证成功: {}", baseMusicName);
                         
                         // 直接返回，不执行后续的 DownloadUtils.download
                         return;
@@ -340,10 +330,10 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
 //                log.debug("歌曲：{} 进度：{} , byte信息：{}/{}",music.getMusicName(),onProcess.getProgress(),onProcess.getBytesRead(),onProcess.getTotalBytes());
             },onSuccess ->
             {
-                log.debug("歌曲：{} 文件下载完成处理后续步骤",music.getMusicName());
+                log.info("歌曲：{} 文件下载完成处理后续步骤",music.getMusicName());
             }, onFailure -> {
                 onFailure.printStackTrace();
-                log.debug("下载失败(文件写入异常){}", music.getMusicName());
+                log.error("下载失败(文件写入异常){}", music.getMusicName());
                 downloadException.set(onFailure);
                 downloadLatch.countDown();
                 // 注意：不在此处抛出异常，错误已通过 downloadException 和 Latch 机制传递
@@ -352,7 +342,7 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
                 if (aliDriveSync.get()) {
                     SqAliSync sqAliSync = aliHander.uploadFile(onComplete, baseMusicName, baseMusicArtistName, baseMusicAlbumName, downloadInfo.getId());
                     if (sqAliSync != null){
-                        log.debug("歌曲：{} 同步完成",music.getMusicName());
+                        log.info("歌曲：{} 同步完成",music.getMusicName());
                     }else{
                         log.debug("歌曲：{} 同步错误，返回结果为null",music.getMusicName());
                     }
@@ -394,7 +384,7 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
 
         } catch (Exception e) {
             e.printStackTrace();
-            log.debug("下载失败{}", downloadInfo.getDownloadMusicname());
+            log.error("下载失败{}", downloadInfo.getDownloadMusicname());
             throw new RuntimeException(e.getMessage());
         }
     }
@@ -442,7 +432,7 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
 //                            log.debug("歌曲专辑图片：{} 进度：{} , byte信息：{}/{}",music.getMusicName(),onProcess.getProgress(),onProcess.getBytesRead(),onProcess.getTotalBytes());
                         },onSuccess ->
                         {
-                            log.debug("歌曲专辑图片：{} 文件下载完成处理后续步骤", music.getMusicName());
+                            log.info("歌曲专辑图片：{} 文件下载完成处理后续步骤", music.getMusicName());
                         },onFailure -> {
                             log.error("歌曲专辑图片下载失败: {} - {}", music.getMusicName(), onFailure.getMessage());
                             // 专辑图片下载失败，不使用封面
@@ -554,7 +544,7 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
 //                            log.debug("歌曲专辑图片：{} 进度：{} , byte信息：{}/{}",music.getMusicName(),onProcess.getProgress(),onProcess.getBytesRead(),onProcess.getTotalBytes());
                         },onSuccess ->
                         {
-                            log.debug("歌曲专辑图片：{} 文件下载完成处理后续步骤", music.getMusicName());
+                            log.info("歌曲专辑图片：{} 文件下载完成处理后续步骤", music.getMusicName());
                         },onFailure -> {
                             log.error("歌曲专辑图片下载失败: {} - {}", music.getMusicName(), onFailure.getMessage());
                             try {
@@ -628,7 +618,7 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
 //                            log.debug("歌曲歌手图片：{} 进度：{} , byte信息：{}/{}",music.getMusicName(),onProcess.getProgress(),onProcess.getBytesRead(),onProcess.getTotalBytes());
                        },onSuccess ->
                        {
-                           log.debug("歌曲歌手图片：{} 文件下载完成处理后续步骤", music.getMusicName());
+                           log.info("歌曲歌手图片：{} 文件下载完成处理后续步骤", music.getMusicName());
                        },onFailure -> {
                            log.warn("歌曲歌手图片下载失败（非致命）：{} - {}", music.getMusicName(), onFailure.getMessage());
                            // 歌手图片失败不阻断流程
@@ -650,11 +640,11 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
                                    if (sqAliSync3 != null){
                                        log.debug("歌手图片：{} 同步完成", music.getMusicName());
                                    }else{
-                                       log.debug("歌手图片：{} 同步失败", music.getMusicName());
+                                       log.error("歌手图片：{} 同步失败", music.getMusicName());
                                    }
                                }
 
-                               log.debug("歌手图片处理成功: {}", finalArtistsFile.getName());
+                               log.info("歌手图片处理成功: {}", finalArtistsFile.getName());
 
                            } catch (Exception e) {
                                log.error("歌手图片处理失败: {}", e.getMessage(), e);
@@ -671,7 +661,7 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
                                        }
                                    }
                                } catch (IORuntimeException ignored) {
-                                   log.debug("清理歌手图片临时目录失败: {}", ignored.getMessage());
+                                   log.error("清理歌手图片临时目录失败: {}", ignored.getMessage());
                                }
                            }
                        });
@@ -820,11 +810,11 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
         try {
             if (DbBooleanConvert.findByValue(rewriteMp3tag)) {
                 MusicUtils.setMediaFileInfo(onSuccess, music.getMusicName(), music.getMusicAlbum(), String.join(";", music.getMusicArtists()), "", music.getMusicLyric(), albumfile,music.getMusicArtists().get(0),albumYear);
-                log.debug("标签写入成功{}", music.getMusicName());
+                log.info("标签写入成功{}", music.getMusicName());
             }
 
         } catch (Exception e) {
-            log.debug("下载错误（标签写入错误）{}  ----------> {}", music.getMusicName(), e.getMessage());
+            log.error("下载错误（标签写入错误）{}  ----------> {}", music.getMusicName(), e.getMessage());
             log.error(e.getMessage());
             e.printStackTrace();
             throw new RuntimeException("下载失败（标签写入错误）:" + downloadInfo.getDownloadMusicname() + "------->" + e.getMessage());

@@ -25,6 +25,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 /**
@@ -50,13 +51,23 @@ public class ScanNeteasePlayList {
     @Autowired
     private SqSyncService syncService;
 
+    /**
+     * 防止定时任务并发执行导致重复插入
+     */
+    private final AtomicBoolean running = new AtomicBoolean(false);
+
     @PostConstruct
-    public void init() {
-        log.info("ScanNeteasePlayList 网易云歌单扫描已注册, cron=10 */1 * * * ? (每1分钟)");
+    public void debug() {
+        log.debug("ScanNeteasePlayList 网易云歌单扫描已注册, cron=10 */1 * * * ? (每1分钟)");
     }
 
     @Scheduled(cron = "10 */1 * * * ? ")
     public void excute() {
+        // 防止上一次执行未完成时重复执行（@Scheduled + synchronized 在代理下不可靠）
+        if (!running.compareAndSet(false, true)) {
+            log.warn("上一次网易云歌单扫描尚未完成，跳过本次执行");
+            return;
+        }
         try {
             String netopen = SqConfigCache.getSqConfigValue(SetConfigEnum.PLUG_NETEASE_OPEN);
             if (StringUtils.isNotBlank(netopen)) {
@@ -65,6 +76,8 @@ public class ScanNeteasePlayList {
             }
         } catch (Throwable t) {
             log.error("网易云歌单扫描定时任务执行异常，等待重试！", t);
+        } finally {
+            running.set(false);
         }
     }
 
@@ -161,6 +174,9 @@ public class ScanNeteasePlayList {
 
         // 第四步：只获取新增歌曲的详情（按1000首分批，1次或少量请求）
         ArrayList<Music> newMusics = neteaseHander.getPlayListByIds(newSongIds);
+        // 去重：只保留请求过的 ID，多余的过滤掉
+        Set<Long> newSongIdSet = new HashSet<>(newSongIds);
+        newMusics.removeIf(m -> m == null || m.getId() == null || !newSongIdSet.contains(Long.valueOf(m.getId())));
 
         // 第五步：处理新增歌曲
         ArrayList<SqSync> sqSyncs = new ArrayList<>();
@@ -191,7 +207,33 @@ public class ScanNeteasePlayList {
 
         if (!downloadInfos.isEmpty()) {
             downloadInfoService.add(downloadInfos);
-            syncService.saveBatch(sqSyncs);
+            // 批量查询当前歌单已存在的 SqSync（基于最新数据库状态，防止并发重复）
+            Set<String> existingIds = syncService.lambdaQuery()
+                    .eq(SqSync::getPlugName, neteaseHander.getPlugName())
+                    .eq(SqSync::getPlayListId, targetId)
+                    .list()
+                    .stream()
+                    .map(SqSync::getMusicId)
+                    .collect(Collectors.toSet());
+            // 过滤出真正需要新增的，批量保存
+            List<SqSync> newSyncs = sqSyncs.stream()
+                    .filter(s -> !existingIds.contains(s.getMusicId()))
+                    .collect(Collectors.toList());
+            if (!newSyncs.isEmpty()) {
+                try {
+                    syncService.saveBatch(newSyncs);
+                } catch (Exception e) {
+                    // 唯一约束冲突时逐条保存并忽略重复（兜底保护）
+                    log.warn("批量保存SqSync冲突，逐条尝试: {}", e.getMessage());
+                    for (SqSync sync : newSyncs) {
+                        try {
+                            syncService.save(sync);
+                        } catch (Exception ignored) {
+                            // 唯一约束冲突，跳过已存在的记录
+                        }
+                    }
+                }
+            }
             log.info("歌单增量同步完成: targetId={}, 新增{}首", targetId, downloadInfos.size());
         }
     }

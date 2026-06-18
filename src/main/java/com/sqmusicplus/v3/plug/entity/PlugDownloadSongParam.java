@@ -18,4 +18,8 @@ public class PlugDownloadSongParam extends PlugSearchMusicResult{
      * 手动选择码率
      */
     private PlugBrType brType;
+    /**
+     * 下载音质格式  mp3，flac，ape,m4a，wav
+     */
+    private String downloadFormat;
 }

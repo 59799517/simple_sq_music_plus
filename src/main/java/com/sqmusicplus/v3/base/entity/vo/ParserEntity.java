@@ -25,4 +25,8 @@ public class ParserEntity {
     private Boolean isDetection;
 //  歌曲信息
     private PlugSearchMusicResult plugSearchMusicResult;
+    /**
+     * 下载音质格式  mp3，flac，ape,m4a，wav
+     */
+    private String downloadFormat;
 }

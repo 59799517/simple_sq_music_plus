@@ -66,7 +66,7 @@ public class SecurityConfig {
         
         String[] publicPathArray = allPublicPaths.toArray(new String[0]);
         
-        log.info("🔒 Spring Security 配置的公开路径共 {} 个: {}", publicPathArray.length, Arrays.toString(publicPathArray));
+        log.debug("🔒 Spring Security 配置的公开路径共 {} 个: {}", publicPathArray.length, Arrays.toString(publicPathArray));
         
         http
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))

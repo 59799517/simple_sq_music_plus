@@ -94,6 +94,8 @@ public class DownloadInfoServiceImpl extends ServiceImpl<DownloadInfoMapper, Dow
 
     @Override
     public synchronized boolean updateById(DownloadInfo entity) {
+        // 截断过长的字符串，避免数据库报错（download_msg 等字段可能在外部被设置过长内容）
+        truncateStringField(entity);
         entity.setDownloadUpdateTime(DateUtils.getNowDate());
         return super.updateById(entity);
     }

@@ -26,8 +26,8 @@ public class QQSigninTask {
     private QQHander qqHander;
 
     @PostConstruct
-    public void init() {
-        log.info("QQSigninTask QQ签到任务已注册, cron=1 0 0,4,8,12,16,20,23 * * ? (每4小时)");
+    public void debug() {
+        log.debug("QQSigninTask QQ签到任务已注册, cron=1 0 0,4,8,12,16,20,23 * * ? (每4小时)");
     }
 
     @Scheduled(cron="1 0 0,4,8,12,16,20,23 * * ? ")

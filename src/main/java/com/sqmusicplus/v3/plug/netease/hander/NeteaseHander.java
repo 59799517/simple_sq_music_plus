@@ -25,9 +25,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.text.SimpleDateFormat;
 import java.util.stream.Collectors;
 
@@ -537,11 +535,42 @@ public class NeteaseHander extends SearchHanderAbstract {
                 url+="br="+bit.toString();
             }
 
-            String data = OkHttpUtils.builder()
-                    .url(url)
-                    .addHeader("User-Agent","QQ%E9%9F%B3%E4%B9%90/73222 CFNetwork/1406.0.3 Darwin/22.4.0")
-                    .get()
-                    .sync();
+            String data = null;
+            // 获取下载链接失败时重试3次，间隔2秒
+            int retryCount = 0;
+            int maxRetries = 3;
+            Exception lastException = null;
+            while (retryCount < maxRetries) {
+                try {
+                    data = OkHttpUtils.builder()
+                            .url(url)
+                            .addHeader("User-Agent","QQ%E9%9F%B3%E4%B9%90/73222 CFNetwork/1406.0.3 Darwin/22.4.0")
+                            .get()
+                            .sync();
+                    // 检查返回内容是否为 HTML（非 JSON），是则认为请求失败
+                    if (data != null && !data.trim().startsWith("{")) {
+                        throw new RuntimeException("获取下载链接失败，返回非JSON内容: " + (data.length() > 100 ? data.substring(0, 100) : data));
+                    }
+                    // 成功获取到 JSON 内容，跳出重试循环
+                    break;
+                } catch (Exception e) {
+                    lastException = e;
+                    data = null; // 重置 data，确保重试全部失败后能被 null 检测捕获
+                    retryCount++;
+                    if (retryCount < maxRetries) {
+                        log.warn("获取网易下载链接失败，{}秒后重试({}/{})", 2, retryCount, maxRetries);
+                        try {
+                            Thread.sleep(2000);
+                        } catch (InterruptedException ie) {
+                            Thread.currentThread().interrupt();
+                            throw new RuntimeException("获取下载链接被中断", ie);
+                        }
+                    }
+                }
+            }
+            if (data == null) {
+                throw new RuntimeException("获取下载链接失败(已重试" + maxRetries + "次): " + lastException.getMessage());
+            }
             JSONObject jsonObject = JSONObject.parseObject(data);
 
 
@@ -757,20 +786,38 @@ public class NeteaseHander extends SearchHanderAbstract {
         if (songIds == null || songIds.isEmpty()) {
             return musics;
         }
-        int batchSize = 1000;
+        // 转换为 HashSet，后续 contains 查找从 O(n) 降为 O(1)
+        Set<Long> songIdSet = new HashSet<>(songIds);
+        int batchSize = 10;
         for (int i = 0; i < songIds.size(); i += batchSize) {
-            List<Long> batch = songIds.subList(i, Math.min(i + batchSize, songIds.size()));
+            // 复制一份，避免 subList 视图可能带来的问题
+            List<Long> batch = new ArrayList<>(songIds.subList(i, Math.min(i + batchSize, songIds.size())));
             JSONObject parameter = new JSONObject();
             parameter.put("ids", batch.stream().map(String::valueOf).collect(Collectors.joining(",")));
             JSONObject jsonObject = neteaseCloudMusicInfo.songDetail(parameter);
+            if (jsonObject == null) {
+                log.warn("songDetail 返回为空, batch=[{}-{}]", i, i + batch.size());
+                continue;
+            }
             PlaylistTrackAllResult result = jsonObject.toJavaObject(PlaylistTrackAllResult.class);
             if (result != null && result.getSongs() != null) {
                 for (PlaylistTrackAllResult.SongsDTO songsInfoDTO : result.getSongs()) {
-                    musics.add(convertSongToMusic(songsInfoDTO));
+                    if (songsInfoDTO != null && songIdSet.contains(songsInfoDTO.getId())) {
+                        musics.add(convertSongToMusic(songsInfoDTO));
+                    }
                 }
+            } else {
+                log.warn("songDetail 返回结果中无 songs 字段, batch=[{}-{}]", i, i + batch.size());
             }
         }
-        return musics;
+        // 根据 id 去重（保持首次出现的顺序）
+        List<Music> distinctList = musics.stream()
+                .collect(Collectors.groupingBy(Music::getId))
+                .values().stream()
+                .map(group -> group.get(0))
+                .collect(Collectors.toList());
+
+        return new ArrayList<>(distinctList);
     }
 
     /**

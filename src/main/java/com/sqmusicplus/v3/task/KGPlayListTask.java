@@ -41,7 +41,7 @@ public class KGPlayListTask {
 
     @PostConstruct
     public void init() {
-        log.info("KGPlayListTask 酷狗歌单任务已注册, cron=15 */1 * * * ? (每1分钟)");
+        log.debug("KGPlayListTask 酷狗歌单任务已注册, cron=15 */1 * * * ? (每1分钟)");
     }
 
     @Scheduled(cron = "15 */1 * * * ? ")

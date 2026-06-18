@@ -1,3 +1,8 @@
+DB_IP: 192.168.31.70
+DB_PORT: 3306
+DB_NAME: sqmusicv3test
+DB_USERNAME: root
+DB_PASSWORD: sqmusicv3password
 server:
   port: 8099
   tomcat:
@@ -72,7 +77,7 @@ logging:
     org.springframework: warn
     org.jaudiotagger: warn
 
-version: 3.1.8
+version: 3.1.9
 webversion: 3.1.2
 
 # JWT 配置

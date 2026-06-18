@@ -27,7 +27,7 @@ public class KgSignInTask {
 
     @PostConstruct
     public void init() {
-        log.info("KgSignInTask 酷狗签到任务已注册, cron=1 0 3,6,9,12,15,18,21 * * ? (每天各时段)");
+        log.debug("KgSignInTask 酷狗签到任务已注册, cron=1 0 3,6,9,12,15,18,21 * * ? (每天各时段)");
     }
 
     @Scheduled(cron="1 0 3,6,9,12,15,18,21 * * ? ")

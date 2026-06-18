@@ -38,3 +38,6 @@ vue/package-lock.json
 /.lingma/
 /.lingma/**
 .lingma/**
+/.reasonix/
+.reasonix/**
+AGENTS.md

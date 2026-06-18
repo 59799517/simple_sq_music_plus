@@ -40,4 +40,9 @@ public class DownlaodParserUrl {
      */
     String plugType;
 
+    /**
+     * 下载音质格式  mp3，flac，ape,m4a，wav
+     */
+    private String downloadFormat;
+
 }

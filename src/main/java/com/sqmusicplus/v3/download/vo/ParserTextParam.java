@@ -18,5 +18,9 @@ public class ParserTextParam {
      * 需要识别的文本信息
      */
     String text;
+    /**
+     * 下载音质格式  mp3，flac，ape,m4a，wav
+     */
+    private String downloadFormat;
 
 }

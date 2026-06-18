@@ -25,7 +25,7 @@ public class DownloadTask {
     
     @PostConstruct
     public void init() {
-        log.info("DownloadTask 下载定时任务已注册, cron=*/10 * * * * ? (每10秒执行)");
+        log.debug("DownloadTask 下载定时任务已注册, cron=*/10 * * * * ? (每10秒执行)");
     }
 
     @Scheduled(cron="*/10 * * * * ? ")

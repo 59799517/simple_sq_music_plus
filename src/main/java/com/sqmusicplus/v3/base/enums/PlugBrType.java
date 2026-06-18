@@ -140,5 +140,26 @@ public enum PlugBrType {
         return List.of(APPLE_MP3_320,APPLE_AAC_256,APPLE_OGG_257,APPLE_M4A_258,APPLE_WAV_1500,APPLE_FLAC_2000,APPLE_SOURCE_9999);
     }
 
+    /**
+     * 根据 type（文件格式如 flac/mp3）和 plugName 找出该类型中 bit 最大的枚举
+     * 当 type 为 "auto" 时，不区分格式，取该 plugName 下所有类型中 bit 最大的枚举
+     * @param type 文件格式，例如 "flac"、"mp3"、"ape"、"m4a"、"wav"，或 "auto" 表示不区分类型
+     * @param plugName 插件名称，例如 "kw"、"qq"、"netease"
+     * @return bit 最大的 PlugBrType，如果没有匹配的则返回 null
+     */
+    public static PlugBrType findMaxByTypeAndPlugName(String type, String plugName) {
+        PlugBrType result = null;
+        boolean isAuto = "auto".equals(type);
+        for (PlugBrType value : PlugBrType.values()) {
+            if (value.getPlugName().equals(plugName) && (isAuto || value.getType().equals(type))) {
+                if (result == null || value.getBit() > result.getBit()) {
+                    result = value;
+                }
+            }
+        }
+        return result;
+    }
+
+
 
 }

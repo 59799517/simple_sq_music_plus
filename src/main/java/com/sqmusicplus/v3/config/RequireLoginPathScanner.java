@@ -79,7 +79,7 @@ public class RequireLoginPathScanner {
                     for (String pattern : patterns) {
                         String path = normalizePath(pattern);
                         publicPaths.add(path);
-                        log.info("✅ 发现公开接口: {} -> {}", beanName + "." + methodName, path);
+                        log.debug("✅ 发现公开接口: {} -> {}", beanName + "." + methodName, path);
                     }
                     
                     // 如果还是没有路径，记录警告
@@ -89,7 +89,7 @@ public class RequireLoginPathScanner {
                 }
             }
 
-            log.info("🎯 共扫描到 {} 个公开接口（无需登录）: {}", publicPaths.size(), publicPaths);
+            log.debug("🎯 共扫描到 {} 个公开接口（无需登录）: {}", publicPaths.size(), publicPaths);
         } catch (Exception e) {
             log.error("❌ 扫描 @RequireLogin 注解失败", e);
         }

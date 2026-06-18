@@ -4,7 +4,9 @@ import com.sqmusicplus.v3.base.entity.DownloadInfo;
 import com.sqmusicplus.v3.base.entity.vo.ParserEntity;
 import com.sqmusicplus.v3.base.enums.PlugBrType;
 import com.sqmusicplus.v3.base.service.DownloadInfoService;
+import com.sqmusicplus.v3.base.enums.SetConfigEnum;
 import com.sqmusicplus.v3.config.AjaxResult;
+import com.sqmusicplus.v3.config.SqConfigCache;
 import com.sqmusicplus.v3.config.exception.SQException;
 import com.sqmusicplus.v3.download.vo.DownlaodParserUrl;
 import com.sqmusicplus.v3.download.vo.ParserTextParam;
@@ -51,6 +53,12 @@ public class DownloadServiceController {
 
     /**
      * 下载单曲
+     * <p>
+     * 音质选择优先级：<br>
+     * 1. brType（手动指定码率）<br>
+     * 2. downloadFormat（参数中指定格式，取该格式最大音质）<br>
+     * 3. SYSTEM_DOWNLOAD_FILE_AUDIO_FORMAT（全局配置的格式，取该格式最大音质）<br>
+     * 4. brTypes 列表中取最大音质（原有逻辑）
      * @param downloadSongParam
      * @return
      */
@@ -58,14 +66,34 @@ public class DownloadServiceController {
    public AjaxResult downloadSong(@RequestBody PlugDownloadSongParam downloadSongParam) {
         SearchHanderAbstract plugHander = MusicUtils.getPlugHander(downloadSongParam.getPlugName(), searchHanderAbstractList);
         List<PlugBrType> brTypes = downloadSongParam.getBrTypes();
-        if (brTypes==null|| brTypes.isEmpty()){
-            throw new SQException("未找到可供下载的bit");
+
+        PlugBrType targetBr = null;
+
+        // 优先级1: 手动指定码率
+        if (downloadSongParam.getBrType() != null) {
+            targetBr = downloadSongParam.getBrType();
         }
-        PlugBrType maxBr = MusicUtils.getMaxBr(brTypes);
-        if (downloadSongParam.getBrType()!=null){
-            maxBr = downloadSongParam.getBrType();
+        // 优先级2: 参数中指定下载格式
+        else if (StringUtils.isNotBlank(downloadSongParam.getDownloadFormat())) {
+            targetBr = PlugBrType.findMaxByTypeAndPlugName(downloadSongParam.getDownloadFormat(), downloadSongParam.getPlugName());
         }
-        DownloadInfo downloadInfo = plugHander.musicToDownloadInfo(downloadSongParam, maxBr, false);
+        // 优先级3: 全局配置的下载格式（含 "auto" 由方法内部处理）
+        else {
+            String configFormat = SqConfigCache.getSqConfigValue(SetConfigEnum.SYSTEM_DOWNLOAD_FILE_AUDIO_FORMAT);
+            if (StringUtils.isNotBlank(configFormat)) {
+                targetBr = PlugBrType.findMaxByTypeAndPlugName(configFormat, downloadSongParam.getPlugName());
+            }
+        }
+
+        // 优先级4: 从 brTypes 列表中取最大音质（原有逻辑兜底）
+        if (targetBr == null) {
+            if (brTypes == null || brTypes.isEmpty()) {
+                throw new SQException("未找到可供下载的bit");
+            }
+            targetBr = MusicUtils.getMaxBr(brTypes);
+        }
+
+        DownloadInfo downloadInfo = plugHander.musicToDownloadInfo(downloadSongParam, targetBr, false);
         Boolean add = downloadInfoService.add(downloadInfo);
         if (add){
             return AjaxResult.success("下载成功",downloadInfo);
@@ -75,6 +103,12 @@ public class DownloadServiceController {
 
     /**
      * 下载歌手的全部专辑
+     * <p>
+     * 音质选择优先级：<br>
+     * 1. bit（手动指定码率）<br>
+     * 2. downloadFormat（参数中指定格式，取该格式最大音质）<br>
+     * 3. SYSTEM_DOWNLOAD_FILE_AUDIO_FORMAT（全局配置的格式，取该格式最大音质）<br>
+     * 4. 不指定（由插件内部兜底）
      * @param plugDownloadArtisParam
      * @return
      */
@@ -84,6 +118,8 @@ public class DownloadServiceController {
         PlugBrType maxBr= null;
         if (plugDownloadArtisParam.getBit()!=null){
             maxBr = PlugBrType.findByPlugNameAndBit(plugDownloadArtisParam.getPlugName(), plugDownloadArtisParam.getBit());
+        } else {
+            maxBr = resolveBrByFormat(plugDownloadArtisParam.getPlugName(), plugDownloadArtisParam.getDownloadFormat());
         }
         List<DownloadInfo> downloadInfos = plugHander.downloadArtistAllAlbum(plugDownloadArtisParam.getArtistid(), maxBr);
         Boolean add = downloadInfoService.add(downloadInfos);
@@ -95,6 +131,12 @@ public class DownloadServiceController {
 
     /**
      * 下载专辑
+     * <p>
+     * 音质选择优先级：<br>
+     * 1. bit（手动指定码率）<br>
+     * 2. downloadFormat（参数中指定格式，取该格式最大音质）<br>
+     * 3. SYSTEM_DOWNLOAD_FILE_AUDIO_FORMAT（全局配置的格式，取该格式最大音质）<br>
+     * 4. 不指定（由插件内部兜底）
      * @param plugDownloadAlbumParam
      * @return
      */
@@ -104,6 +146,8 @@ public class DownloadServiceController {
         PlugBrType maxBr= null;
         if (plugDownloadAlbumParam.getBit()!=null){
             maxBr = PlugBrType.findByPlugNameAndBit(plugDownloadAlbumParam.getPlugName(), plugDownloadAlbumParam.getBit());
+        } else {
+            maxBr = resolveBrByFormat(plugDownloadAlbumParam.getPlugName(), plugDownloadAlbumParam.getDownloadFormat());
         }
         List<String> artistNameList = null;
         String albumid = plugDownloadAlbumParam.getAlbumid();
@@ -124,6 +168,8 @@ public class DownloadServiceController {
 
     /**
      * 下载解析的URL歌曲
+     * <p>
+     * 音质选择：使用 DownlaodParserUrl.downloadFormat 或全局配置
      * @param downlaodParserUrl 解析的URL
      * @return
      */
@@ -137,7 +183,8 @@ public class DownloadServiceController {
             ArrayList<DownloadInfo> downloadInfos = new ArrayList<>();
             for (Music music : parser) {
                 SearchHanderAbstract plugHander = MusicUtils.getPlugHander(music.getPlugName(), searchHanderAbstractList);
-                DownloadInfo downloadInfo = plugHander.musicToDownloadInfo(music, null, false);
+                PlugBrType brType = resolveBrByFormat(music.getPlugName(), downlaodParserUrl.getDownloadFormat());
+                DownloadInfo downloadInfo = plugHander.musicToDownloadInfo(music, brType, false);
                 downloadInfos.add(downloadInfo);
             }
             Boolean add = downloadInfoService.add(downloadInfos);
@@ -155,6 +202,8 @@ public class DownloadServiceController {
 
     /**
      * 下载解析的URL歌曲（替代解析方法）
+     * <p>
+     * 音质选择：使用全局配置 SYSTEM_DOWNLOAD_FILE_AUDIO_FORMAT
      * @param musicList
      * @return
      */
@@ -163,7 +212,8 @@ public class DownloadServiceController {
         ArrayList<DownloadInfo> downloadInfos = new ArrayList<>();
         for (Music music : musicList) {
             SearchHanderAbstract plugHander = MusicUtils.getPlugHander(music.getPlugName(), searchHanderAbstractList);
-            DownloadInfo downloadInfo = plugHander.musicToDownloadInfo(music, null, false);
+            PlugBrType brType = resolveBrByFormat(music.getPlugName(), null);
+            DownloadInfo downloadInfo = plugHander.musicToDownloadInfo(music, brType, false);
             downloadInfos.add(downloadInfo);
         }
         Boolean add = downloadInfoService.add(downloadInfos);
@@ -175,6 +225,8 @@ public class DownloadServiceController {
 
     /**
      * 下载解析的文本歌曲(替代解析方法)
+     * <p>
+     * 音质选择：使用 ParserTextParam.downloadFormat 或全局配置
      * @param param
      * @return
      */
@@ -197,7 +249,8 @@ public class DownloadServiceController {
                                 continue;
                             }
                             SearchHanderAbstract plugHander = MusicUtils.getPlugHander(plugSearchMusicResult.getPlugName(), searchHanderAbstractList);
-                            DownloadInfo downloadInfo = plugHander.musicToDownloadInfo(plugSearchMusicResult, null, false);
+                            PlugBrType brType = resolveBrByFormat(plugSearchMusicResult.getPlugName(), param.getDownloadFormat());
+                            DownloadInfo downloadInfo = plugHander.musicToDownloadInfo(plugSearchMusicResult, brType, false);
                             downloadInfos.add(downloadInfo);
                         }
                         downloadInfoService.add(downloadInfos);
@@ -215,6 +268,8 @@ public class DownloadServiceController {
 
     /**
      * 批量下载解析的文本歌曲 替代解析方法
+     * <p>
+     * 音质选择：使用全局配置 SYSTEM_DOWNLOAD_FILE_AUDIO_FORMAT
      * @param parserEntities
      * @return
      */
@@ -224,7 +279,8 @@ public class DownloadServiceController {
         for (ParserEntity parserEntity : parserEntities) {
             PlugSearchMusicResult plugSearchMusicResult = parserEntity.getPlugSearchMusicResult();
             SearchHanderAbstract plugHander = MusicUtils.getPlugHander(plugSearchMusicResult.getPlugName(), searchHanderAbstractList);
-            DownloadInfo downloadInfo = plugHander.musicToDownloadInfo(plugSearchMusicResult, null, false);
+            PlugBrType brType = resolveBrByFormat(plugSearchMusicResult.getPlugName(), null);
+            DownloadInfo downloadInfo = plugHander.musicToDownloadInfo(plugSearchMusicResult, brType, false);
             downloadInfos.add(downloadInfo);
         }
         Boolean add = downloadInfoService.add(downloadInfos);
@@ -234,10 +290,25 @@ public class DownloadServiceController {
         return AjaxResult.error("下载失败");
     }
 
-
-
-
-
+    /**
+     * 根据下载格式参数和全局配置，解析目标音质
+     * @param plugName       插件名称（如 kw/qq/netease）
+     * @param downloadFormat 请求参数中的格式（可为 null）
+     * @return 匹配到的最大音质 PlugBrType，无匹配则 null
+     */
+    private PlugBrType resolveBrByFormat(String plugName, String downloadFormat) {
+        // 1. 参数中指定的 downloadFormat
+        if (StringUtils.isNotBlank(downloadFormat)) {
+            PlugBrType found = PlugBrType.findMaxByTypeAndPlugName(downloadFormat, plugName);
+            if (found != null) return found;
+        }
+        // 2. 全局配置 SYSTEM_DOWNLOAD_FILE_AUDIO_FORMAT（含 "auto" 由方法内部处理）
+        String configFormat = SqConfigCache.getSqConfigValue(SetConfigEnum.SYSTEM_DOWNLOAD_FILE_AUDIO_FORMAT);
+        if (StringUtils.isNotBlank(configFormat)) {
+            return PlugBrType.findMaxByTypeAndPlugName(configFormat, plugName);
+        }
+        return null;
+    }
 
 
 }

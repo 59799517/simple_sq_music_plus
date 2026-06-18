@@ -30,7 +30,7 @@ public class AliDriceSyncTask {
 
     @PostConstruct
     public void init() {
-        log.info("AliDriceSyncTask 已注册, cron=0 0 0/1 * * ? (每1分钟同步)、cron=0 0 0 * * ? (每天00:00检查Token)");
+        log.debug("AliDriceSyncTask 已注册, cron=0 0 0/1 * * ? (每1分钟同步)、cron=0 0 0 * * ? (每天00:00检查Token)");
     }
 
     @Scheduled(cron="0 0 0/1 * * ? ")

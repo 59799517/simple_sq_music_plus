@@ -19,7 +19,7 @@ public class TidalTokenRefreshTask {
 
     @PostConstruct
     public void init() {
-        log.info("TidalTokenRefreshTask 已注册, fixedRate=1800000ms (每30分钟)");
+        log.debug("TidalTokenRefreshTask 已注册, fixedRate=1800000ms (每30分钟)");
     }
 
     /**

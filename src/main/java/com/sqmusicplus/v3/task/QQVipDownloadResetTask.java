@@ -19,8 +19,8 @@ import org.springframework.stereotype.Component;
 public class QQVipDownloadResetTask {
 
     @PostConstruct
-    public void init() {
-        log.info("QQVipDownloadResetTask 已注册, cron=0 0 10 * * ? (每天10:00)");
+    public void debug() {
+        log.debug("QQVipDownloadResetTask 已注册, cron=0 0 10 * * ? (每天10:00)");
     }
 
     /**
