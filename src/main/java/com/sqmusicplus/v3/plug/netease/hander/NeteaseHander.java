@@ -810,14 +810,15 @@ public class NeteaseHander extends SearchHanderAbstract {
                 log.warn("songDetail 返回结果中无 songs 字段, batch=[{}-{}]", i, i + batch.size());
             }
         }
-        // 根据 id 去重（保持首次出现的顺序）
-        List<Music> distinctList = musics.stream()
-                .collect(Collectors.groupingBy(Music::getId))
-                .values().stream()
-                .map(group -> group.get(0))
-                .collect(Collectors.toList());
-
-        return new ArrayList<>(distinctList);
+        // 根据 ID 去重（保留首次出现的顺序）
+        Set<String> seenIds = new HashSet<>();
+        List<Music> distinctList = new ArrayList<>();
+        for (Music music : musics) {
+            if (music != null && music.getId() != null && seenIds.add(music.getId())) {
+                distinctList.add(music);
+            }
+        }
+        return distinctList;
     }
 
     /**
