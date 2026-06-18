@@ -280,13 +280,13 @@ public class OkHttpUtils {
         }
         request = new Request.Builder().post(requestBody)
                 .url(url)  .cacheControl(new CacheControl.Builder()
-                        .maxAge(10, TimeUnit.MINUTES) // 新增：缓存有效期10分钟
+                        .noCache()
                         .build());
         return this;
     }
     public OkHttpUtils post(RequestBody requestBody) {
         request = new Request.Builder().post(requestBody).url(url).cacheControl(new CacheControl.Builder()
-                .maxAge(10, TimeUnit.MINUTES) // 新增：缓存有效期10分钟
+                .noCache()
                 .build());
         return this;
     }
@@ -309,7 +309,7 @@ public class OkHttpUtils {
 
         }
         request = new Request.Builder().post(requestBody).url(url).cacheControl(new CacheControl.Builder()
-                .maxAge(10, TimeUnit.MINUTES) // 新增：缓存有效期10分钟
+                .noCache()
                 .build());
         return this;
     }

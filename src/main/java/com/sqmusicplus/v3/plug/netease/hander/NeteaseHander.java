@@ -788,7 +788,7 @@ public class NeteaseHander extends SearchHanderAbstract {
         }
         // 转换为 HashSet，后续 contains 查找从 O(n) 降为 O(1)
         Set<Long> songIdSet = new HashSet<>(songIds);
-        int batchSize = 10;
+        int batchSize = 500;
         for (int i = 0; i < songIds.size(); i += batchSize) {
             // 复制一份，避免 subList 视图可能带来的问题
             List<Long> batch = new ArrayList<>(songIds.subList(i, Math.min(i + batchSize, songIds.size())));
@@ -812,7 +812,18 @@ public class NeteaseHander extends SearchHanderAbstract {
         }
         // 根据 ID 去重（保留首次出现的顺序）
         Set<String> seenIds = new HashSet<>();
-        return musics.stream().filter(m -> seenIds.add(m.getId())).collect(Collectors.toList());
+        ArrayList<Music> resmusic = new ArrayList<>();
+
+        for (Music music : musics) {
+            if (music!=null&&StringUtils.isNotBlank(music.getId())){
+                if (seenIds.contains(music.getId())){
+                    continue;
+                }
+                seenIds.add(music.getId());
+                resmusic.add(music);
+            }
+        }
+        return resmusic;
     }
 
     /**
