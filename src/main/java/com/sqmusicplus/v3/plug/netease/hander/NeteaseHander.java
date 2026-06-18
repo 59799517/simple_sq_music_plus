@@ -812,13 +812,7 @@ public class NeteaseHander extends SearchHanderAbstract {
         }
         // 根据 ID 去重（保留首次出现的顺序）
         Set<String> seenIds = new HashSet<>();
-        List<Music> distinctList = new ArrayList<>();
-        for (Music music : musics) {
-            if (music != null && music.getId() != null && seenIds.add(music.getId())) {
-                distinctList.add(music);
-            }
-        }
-        return distinctList;
+        return musics.stream().filter(m -> seenIds.add(m.getId())).collect(Collectors.toList());
     }
 
     /**
