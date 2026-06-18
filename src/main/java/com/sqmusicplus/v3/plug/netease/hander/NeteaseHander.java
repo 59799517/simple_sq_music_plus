@@ -791,17 +791,13 @@ public class NeteaseHander extends SearchHanderAbstract {
         int batchSize = 500;
         // 记录所有已返回的歌曲 ID，用于检测不同批次间是否重复返回
         Set<Long> allReturnedIds = new HashSet<>();
-        int batchIndex = 0;
         for (int i = 0; i < songIds.size(); i += batchSize) {
-            batchIndex++;
             // 复制一份，避免 subList 视图可能带来的问题
             List<Long> batch = new ArrayList<>(songIds.subList(i, Math.min(i + batchSize, songIds.size())));
-            log.info("第{}批请求 {} 个ID: {}", batchIndex, batch.size(), batch);
             JSONObject parameter = new JSONObject();
             parameter.put("ids", batch.stream().map(String::valueOf).collect(Collectors.joining(",")));
             JSONObject jsonObject = neteaseCloudMusicInfo.songDetail(parameter);
             if (jsonObject == null) {
-                log.warn("第{}批 songDetail 返回为空, batch=[{}-{}]", batchIndex, i, i + batch.size());
                 continue;
             }
             PlaylistTrackAllResult result = jsonObject.toJavaObject(PlaylistTrackAllResult.class);
@@ -813,16 +809,11 @@ public class NeteaseHander extends SearchHanderAbstract {
                         returnedIds.add(songsInfoDTO.getId());
                     }
                 }
-                log.info("第{}批返回 {} 个歌曲, ID: {}", batchIndex, returnedIds.size(), returnedIds);
                 // 检测本次返回的 ID 是否与之前批次重复（缓存问题排查）
                 Set<Long> currentReturnedSet = new HashSet<>(returnedIds);
                 currentReturnedSet.retainAll(allReturnedIds);
-                if (!currentReturnedSet.isEmpty()) {
-                    log.warn("第{}批返回的ID与之前批次重复, 重复ID: {}", batchIndex, currentReturnedSet);
-                }
+
                 allReturnedIds.addAll(returnedIds);
-            } else {
-                log.warn("第{}批 songDetail 返回结果中无 songs 字段, batch=[{}-{}]", batchIndex, i, i + batch.size());
             }
         }
         // 根据 ID 去重（保留首次出现的顺序）
