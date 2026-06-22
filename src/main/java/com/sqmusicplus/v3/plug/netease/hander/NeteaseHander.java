@@ -708,41 +708,49 @@ public class NeteaseHander extends SearchHanderAbstract {
         }
         //处理歌曲
         songs.forEach(songsInfoDTO -> {
-            PlaylistTrackAllResult.SongsDTO songsDTO = songsInfoDTO;
-            PlaylistTrackAllResult.SongsDTO.HDTO h = songsDTO.getH();
-            PlaylistTrackAllResult.SongsDTO.MDTO m = songsDTO.getM();
-            PlaylistTrackAllResult.SongsDTO.LDTO l = songsDTO.getL();
-            PlaylistTrackAllResult.SongsDTO.SqDTO sq = songsDTO.getSq();
-            PlaylistTrackAllResult.SongsDTO.SqDTO hr = songsDTO.getHr();
-            ArrayList<PlugBrType> plugBrTypes = new ArrayList<>();
-            if (h!=null&&h.getBr()!=null){
-                plugBrTypes.add(PlugBrType.NETEASE_MP3_320);
+            try {
+                PlaylistTrackAllResult.SongsDTO songsDTO = songsInfoDTO;
+                PlaylistTrackAllResult.SongsDTO.HDTO h = songsDTO.getH();
+                PlaylistTrackAllResult.SongsDTO.MDTO m = songsDTO.getM();
+                PlaylistTrackAllResult.SongsDTO.LDTO l = songsDTO.getL();
+                PlaylistTrackAllResult.SongsDTO.SqDTO sq = songsDTO.getSq();
+                PlaylistTrackAllResult.SongsDTO.SqDTO hr = songsDTO.getHr();
+                ArrayList<PlugBrType> plugBrTypes = new ArrayList<>();
+                if (h!=null&&h.getBr()!=null){
+                    plugBrTypes.add(PlugBrType.NETEASE_MP3_320);
+                }
+                if (m!=null&&m.getBr()!=null){
+                    plugBrTypes.add(PlugBrType.NETEASE_MP3_192);
+                }
+                if (l!=null&&l.getBr()!=null){
+                    plugBrTypes.add(PlugBrType.NETEASE_MP3_128);
+                }
+                if (sq!=null&&sq.getBr()!=null){
+                    plugBrTypes.add(PlugBrType.NETEASE_FLAC_2000);
+                }
+                if (hr!=null&&hr.getBr()!=null){
+                    plugBrTypes.add(PlugBrType.NETEASE_FLAC_3000);
+                }
+                Music music = new Music();
+                music.setId(songsInfoDTO.getId().toString())
+                        .setMusicName(songsInfoDTO.getName())
+                        .setMusicDuration(songsInfoDTO.getDt())
+                        .setMusicAlbum(songsInfoDTO.getAl().getName())
+                        .setMusicArtists(songsInfoDTO.getAr().stream().map(e -> e.getName()).collect(Collectors.toList()))
+                        .setMusicImage(songsInfoDTO.getAl().getPicUrl())
+                        .setAlbumId(songsInfoDTO.getAl().getId().toString())
+                        .setPlugName(getPlugName())
+                        .setDataInfo(JSONObject.parseObject(JSONObject.toJSONString(songsInfoDTO)))
+                        .setArtistsIds(songsInfoDTO.getAr().stream().map(e -> e.getId().toString()).collect(Collectors.toList()))
+                                .setBits(plugBrTypes);
+                musics.add(music);
+            } catch (Exception e) {
+                //单首歌曲信息不完整（如无音源、缺少专辑或歌手信息）时跳过该曲，避免整个歌单解析中断
+                log.warn("网易歌单解析跳过歌曲 id={} name={}，原因：{}",
+                        songsInfoDTO != null ? songsInfoDTO.getId() : null,
+                        songsInfoDTO != null ? songsInfoDTO.getName() : null,
+                        e.getMessage());
             }
-            if (m!=null&&m.getBr()!=null){
-                plugBrTypes.add(PlugBrType.NETEASE_MP3_192);
-            }
-            if (l!=null&&l.getBr()!=null){
-                plugBrTypes.add(PlugBrType.NETEASE_MP3_128);
-            }
-            if (sq!=null&&sq.getBr()!=null){
-                plugBrTypes.add(PlugBrType.NETEASE_FLAC_2000);
-            }
-            if (hr!=null&&hr.getBr()!=null){
-                plugBrTypes.add(PlugBrType.NETEASE_FLAC_3000);
-            }
-            Music music = new Music();
-            music.setId(songsInfoDTO.getId().toString())
-                    .setMusicName(songsInfoDTO.getName())
-                    .setMusicDuration(songsInfoDTO.getDt())
-                    .setMusicAlbum(songsInfoDTO.getAl().getName())
-                    .setMusicArtists(songsInfoDTO.getAr().stream().map(e -> e.getName()).collect(Collectors.toList()))
-                    .setMusicImage(songsInfoDTO.getAl().getPicUrl())
-                    .setAlbumId(songsInfoDTO.getAl().getId().toString())
-                    .setPlugName(getPlugName())
-                    .setDataInfo(JSONObject.parseObject(JSONObject.toJSONString(songsInfoDTO)))
-                    .setArtistsIds(songsInfoDTO.getAr().stream().map(e -> e.getId().toString()).collect(Collectors.toList()))
-                            .setBits(plugBrTypes);
-            musics.add(music);
         });
         return musics;
     }
