@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 
 /**
@@ -31,6 +32,11 @@ public class AliHander {
     private SqAliSyncService sqAliSyncService;
 
     String DEFAULT_FOLDER_NAME = "SqMusic";
+
+    /** 全量同步运行标志，防止重复执行 */
+    private final AtomicBoolean fullSyncRunning = new AtomicBoolean(false);
+    /** 增量同步运行标志，防止重复执行 */
+    private final AtomicBoolean incrementalSyncRunning = new AtomicBoolean(false);
     /**
      * 获取阿里云盘授权码url
      */
@@ -413,7 +419,14 @@ public class AliHander {
      * @param incremental 是否增量上传（只上传新增或修改的文件）
      */
     public List<SqAliSync> uploadFile(boolean verify, boolean incremental) {
-        String access_token = SqConfigCache.getSqConfigValue(SetConfigEnum.EXPAND_ALIYUN_ACCESS_TOKEN);
+        // 根据增量/全量选择对应的运行标志
+        AtomicBoolean runningFlag = incremental ? incrementalSyncRunning : fullSyncRunning;
+        if (!runningFlag.compareAndSet(false, true)) {
+            log.warn("{}同步任务正在执行中，跳过本次请求", incremental ? "增量" : "全量");
+            return new ArrayList<>();
+        }
+        try {
+            String access_token = SqConfigCache.getSqConfigValue(SetConfigEnum.EXPAND_ALIYUN_ACCESS_TOKEN);
         if (StringUtils.isBlank(access_token)){
             throw new SQException("无阿里云授权token");
         }
@@ -529,8 +542,18 @@ public class AliHander {
                 log.debug("详细错误堆栈：", e);
                 // 不抛出异常，继续处理下一个文件
             }
+            // 每上传一个文件后等待2秒，避免接口速度过快
+            try {
+                Thread.sleep(2000);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                log.warn("上传延迟被中断", e);
+            }
         }
         return sqAliSyncs;
+        } finally {
+            runningFlag.set(false);
+        }
     }
 
 
