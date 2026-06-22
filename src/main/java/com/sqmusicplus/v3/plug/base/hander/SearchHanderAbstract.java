@@ -70,6 +70,19 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
     public void dnonloadAndSaveToFile(DownloadInfo downloadInfo, SearchHander searchHander) {
         try {
             Music music = searchHander.querySongById(downloadInfo);
+            try {
+                music.setMusicName(downloadInfo.getDownloadMusicname());
+            } catch (Exception ignored) {
+            }
+            try {
+                music.setMusicAlbum(downloadInfo.getDownloadAlbumname());
+            } catch (Exception ignored) {
+            }
+            try {
+                String[] split1 = downloadInfo.getDownloadArtistname().split("&");
+                music.setMusicArtists(Arrays.asList(split1));
+            } catch (Exception ignored) {
+            }
             if (music == null) {
                 throw new RuntimeException("下载失败歌曲信息不完整歌曲详情转化歌曲失败:" + JSONObject.toJSONString(downloadInfo));
             }
