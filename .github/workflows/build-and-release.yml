@@ -151,7 +151,7 @@ jobs:
       
       - name: Build with Maven
         run: |
-          mvn -B package --file pom.xml -DskipTests
+          mvn -B package -T 4 --file pom.xml -DskipTests
       
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
@@ -230,7 +230,8 @@ jobs:
             org.opencontainers.image.version=v${{ env.APP_VERSION }}
             org.opencontainers.image.architecture=${{ matrix.platform }}
           provenance: false
-          no-cache: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
       
       - name: Build and Push Docker Image to GitHub Packages
         uses: docker/build-push-action@v5
@@ -250,7 +251,8 @@ jobs:
             org.opencontainers.image.version=v${{ env.APP_VERSION }}
             org.opencontainers.image.architecture=${{ matrix.platform }}
           provenance: false
-          no-cache: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
   create-manifest-list:
     name: Create Manifest Lists
@@ -456,5 +458,5 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./target/simple_sq_music_plus.jar
-          asset_name: simple_sq_music_plus${{ steps.app_version.outputs.version }}.jar
+          asset_name: simple_sq_music_plus-${{ steps.app_version.outputs.version }}.jar
           asset_content_type: application/octet-stream

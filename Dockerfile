@@ -1,26 +1,17 @@
-FROM maven:3.9.15-amazoncorretto-21 AS builder
-LABEL maintainer="SQ"
-
-WORKDIR /build/
-
-# 复制 pom.xml 并下载依赖（利用 Docker 缓存）
-COPY pom.xml /build/
-RUN mvn dependency:go-offline -B
-
-# 复制源代码
-COPY src /build/src/
-
-# 构建 Java 项目（跳过测试）
-RUN mvn clean package -DskipTests -B
-
-# 第二阶段：提取分层 JAR
+# 第一阶段：提取分层 JAR（直接使用预构建 JAR，避免在 Docker 内重复编译）
 FROM amazoncorretto:21-alpine AS extractor
+LABEL maintainer="SQ"
 WORKDIR /extractor
-COPY --from=builder /build/target/*.jar app.jar
+
+# 声明构建参数（默认值兼容本地开发：先 mvn package 再 docker build）
+ARG JAR_FILE=target/simple_sq_music_plus.jar
+# 复制预构建 JAR（CI 中由 build job 产出并通过 artifact 传入）
+COPY ${JAR_FILE} app.jar
+
 # 使用 Spring Boot 的分层工具提取 JAR
 RUN java -Djarmode=layertools -jar app.jar extract --destination /extractor/layers
 
-# 第三阶段：运行环境
+# 第二阶段：运行环境
 FROM amazoncorretto:21-alpine
 
 # 设置工作目录
