@@ -428,9 +428,10 @@ jobs:
           ASSET_PATH="./target/simple_sq_music_plus.jar"
           ASSET_NAME="simple_sq_music_plus-$TAG.jar"
           
-          # 清理已存在的 release 和 tag，避免 already_exists 错误
-          echo "Cleaning up existing release/tag: $TAG"
+          # 清理已存在的 release 和 tag，实现"覆盖"效果
+          echo "Removing existing release/tag: $TAG (to overwrite)"
           gh release view "$TAG" --repo ${{ github.repository }} 2>/dev/null && gh release delete "$TAG" --yes --repo ${{ github.repository }} 2>/dev/null || true
+          # gh release delete 默认删除本地 tag，但确保远程 tag 也清理
           git push origin ":refs/tags/$TAG" 2>/dev/null || true
           
           # 将 Release Notes 写入临时文件
