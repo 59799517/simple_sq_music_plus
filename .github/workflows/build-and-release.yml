@@ -434,28 +434,28 @@ jobs:
           # gh release delete 默认删除本地 tag，但确保远程 tag 也清理
           git push origin ":refs/tags/$TAG" 2>/dev/null || true
           
-          # 将 Release Notes 写入临时文件
-          cat > /tmp/release-notes.md << 'EOF'
-          ## Release ${{ steps.app_version.outputs.version }} - Multi-Architecture Support
-          
-          This release includes Docker images for multiple architectures:
-          
-          ### Docker Images Available:
-          
-          **阿里云镜像仓库:**
-          - `registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:v${{ steps.app_version.outputs.version }}` (Multi-arch manifest)
-          - `registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:v${{ steps.app_version.outputs.version }}-amd64`
-          - `registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:v${{ steps.app_version.outputs.version }}-arm64`
-          
-          **GitHub Packages:**
-          - `ghcr.io/${{ github.actor }}/simple_sq_music_plus:v${{ steps.app_version.outputs.version }}` (Multi-arch manifest)
-          - `ghcr.io/${{ github.actor }}/simple_sq_music_plus:v${{ steps.app_version.outputs.version }}-amd64`
-          - `ghcr.io/${{ github.actor }}/simple_sq_music_plus:v${{ steps.app_version.outputs.version }}-arm64`
-          
-          ### Supported Architectures:
-          - **AMD64**: Intel/AMD x86-64 processors
-          - **ARM64**: Raspberry Pi 4, AWS Graviton, Apple Silicon
-EOF
+          # 将 Release Notes 写入临时文件（使用分组 echo 避免 heredoc 的 YAML 缩进问题）
+          {
+            echo "## Release ${{ steps.app_version.outputs.version }} - Multi-Architecture Support"
+            echo ""
+            echo "This release includes Docker images for multiple architectures:"
+            echo ""
+            echo "### Docker Images Available:"
+            echo ""
+            echo "**阿里云镜像仓库:**"
+            echo "- \`registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:v${{ steps.app_version.outputs.version }}\` (Multi-arch manifest)"
+            echo "- \`registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:v${{ steps.app_version.outputs.version }}-amd64\`"
+            echo "- \`registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:v${{ steps.app_version.outputs.version }}-arm64\`"
+            echo ""
+            echo "**GitHub Packages:**"
+            echo "- \`ghcr.io/${{ github.actor }}/simple_sq_music_plus:v${{ steps.app_version.outputs.version }}\` (Multi-arch manifest)"
+            echo "- \`ghcr.io/${{ github.actor }}/simple_sq_music_plus:v${{ steps.app_version.outputs.version }}-amd64\`"
+            echo "- \`ghcr.io/${{ github.actor }}/simple_sq_music_plus:v${{ steps.app_version.outputs.version }}-arm64\`"
+            echo ""
+            echo "### Supported Architectures:"
+            echo "- **AMD64**: Intel/AMD x86-64 processors"
+            echo "- **ARM64**: Raspberry Pi 4, AWS Graviton, Apple Silicon"
+          } > /tmp/release-notes.md
           
           # 创建 Release 并上传附件（一步完成）
           echo "Creating release: $TAG"
