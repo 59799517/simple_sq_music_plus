@@ -420,43 +420,46 @@ jobs:
           echo "APP_VERSION: $VERSION"
           echo "WEB_VERSION: $WEBVERSION"
       
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
+      - name: Create Release and Upload Asset
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ steps.app_version.outputs.version }}
-          release_name: Release ${{ steps.app_version.outputs.version }} (Multi-Arch)
-          draft: false
-          prerelease: false
-          body: |
-            ## Release ${{ steps.app_version.outputs.version }} - Multi-Architecture Support
-            
-            This release includes Docker images for multiple architectures:
-            
-            ### Docker Images Available:
-            
-            **阿里云镜像仓库:**
-            - `registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:v${{ steps.app_version.outputs.version }}` (Multi-arch manifest)
-            - `registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:v${{ steps.app_version.outputs.version }}-amd64`
-            - `registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:v${{ steps.app_version.outputs.version }}-arm64`
-            
-            **GitHub Packages:**
-            - `ghcr.io/${{ github.actor }}/simple_sq_music_plus:v${{ steps.app_version.outputs.version }}` (Multi-arch manifest)
-            - `ghcr.io/${{ github.actor }}/simple_sq_music_plus:v${{ steps.app_version.outputs.version }}-amd64`
-            - `ghcr.io/${{ github.actor }}/simple_sq_music_plus:v${{ steps.app_version.outputs.version }}-arm64`
-            
-            ### Supported Architectures:
-            - **AMD64**: Intel/AMD x86-64 processors
-            - **ARM64**: Raspberry Pi 4, AWS Graviton, Apple Silicon
-
-      - name: Upload Release Asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./target/simple_sq_music_plus.jar
-          asset_name: simple_sq_music_plus-${{ steps.app_version.outputs.version }}.jar
-          asset_content_type: application/octet-stream
+        run: |
+          TAG="${{ steps.app_version.outputs.version }}"
+          ASSET_PATH="./target/simple_sq_music_plus.jar"
+          ASSET_NAME="simple_sq_music_plus-$TAG.jar"
+          
+          # 清理已存在的 release 和 tag，避免 already_exists 错误
+          echo "Cleaning up existing release/tag: $TAG"
+          gh release view "$TAG" --repo ${{ github.repository }} 2>/dev/null && gh release delete "$TAG" --yes --repo ${{ github.repository }} 2>/dev/null || true
+          git push origin ":refs/tags/$TAG" 2>/dev/null || true
+          
+          # 将 Release Notes 写入临时文件
+          cat > /tmp/release-notes.md << 'EOF'
+          ## Release ${{ steps.app_version.outputs.version }} - Multi-Architecture Support
+          
+          This release includes Docker images for multiple architectures:
+          
+          ### Docker Images Available:
+          
+          **阿里云镜像仓库:**
+          - `registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:v${{ steps.app_version.outputs.version }}` (Multi-arch manifest)
+          - `registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:v${{ steps.app_version.outputs.version }}-amd64`
+          - `registry.cn-hangzhou.aliyuncs.com/sqdockler/simple_sq_music_plus:v${{ steps.app_version.outputs.version }}-arm64`
+          
+          **GitHub Packages:**
+          - `ghcr.io/${{ github.actor }}/simple_sq_music_plus:v${{ steps.app_version.outputs.version }}` (Multi-arch manifest)
+          - `ghcr.io/${{ github.actor }}/simple_sq_music_plus:v${{ steps.app_version.outputs.version }}-amd64`
+          - `ghcr.io/${{ github.actor }}/simple_sq_music_plus:v${{ steps.app_version.outputs.version }}-arm64`
+          
+          ### Supported Architectures:
+          - **AMD64**: Intel/AMD x86-64 processors
+          - **ARM64**: Raspberry Pi 4, AWS Graviton, Apple Silicon
+EOF
+          
+          # 创建 Release 并上传附件（一步完成）
+          echo "Creating release: $TAG"
+          gh release create "$TAG" \
+            "$ASSET_PATH#$ASSET_NAME" \
+            --title "Release $TAG (Multi-Arch)" \
+            --notes-file /tmp/release-notes.md \
+            --repo ${{ github.repository }}
