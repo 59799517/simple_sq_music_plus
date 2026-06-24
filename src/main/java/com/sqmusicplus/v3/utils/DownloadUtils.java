@@ -122,6 +122,20 @@ public class DownloadUtils {
                     throw new IOException("Empty response body");
                 }
 
+                // ✅ 检查HTTP响应状态码，非2xx直接走onFailure
+                if (!response.isSuccessful()) {
+                    String errorMsg = "HTTP响应异常: " + response.code() + " " + response.message();
+                    log.error("下载失败: {} - {}", url, errorMsg);
+                    try {
+                        if (onFailure != null) {
+                            onFailure.accept(new IOException(errorMsg));
+                        }
+                    } catch (Exception callbackEx) {
+                        log.error("onFailure回调执行失败: {}", callbackEx.getMessage(), callbackEx);
+                    }
+                    return;
+                }
+
                 // ✅ 如果是文件夹，则生成目标文件（提前处理路径）
                 File file;
                 if (target.isDirectory()) {
@@ -189,6 +203,19 @@ public class DownloadUtils {
                     }
                     // 下载失败，不执行 onSuccess 和 onComplete
                     // onComplete 可能执行文件操作（如标签写入），不应在失败文件上执行
+                    return;
+                }
+                
+                // ✅ 文件写入成功，但检查文件是否为空（0字节）
+                if (file.length() == 0) {
+                    log.error("下载文件为空: {}", file.getAbsolutePath());
+                    try {
+                        if (onFailure != null) {
+                            onFailure.accept(new IOException("下载文件为空: " + file.getAbsolutePath()));
+                        }
+                    } catch (Exception callbackEx) {
+                        log.error("onFailure回调执行失败: {}", callbackEx.getMessage(), callbackEx);
+                    }
                     return;
                 }
                 

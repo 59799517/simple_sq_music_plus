@@ -62,7 +62,7 @@ public class MusicUtils {
         }
     }
 
-    public static  synchronized MultimediaInfo setMediaFileInfo(File file, String title, String albumName, String artists, String comment, String lyrics, File image, String mainArtist, String  albumYear) throws TagException, CannotReadException, InvalidAudioFrameException, ReadOnlyFileException, IOException, CannotWriteException {
+    public static  synchronized MultimediaInfo setMediaFileInfo(File file, String title, String albumName, String artists, String comment, String lyrics, File image, String mainArtist, String  albumYear) {
         try {
             if (StringUtils.isBlank(mainArtist)){
                 mainArtist="群星";
@@ -148,8 +148,8 @@ public class MusicUtils {
             }
             return null;
         } catch (Exception e) {
-            e.printStackTrace();
-            return null;
+            log.error("设置音频标签失败: {}", e.getMessage(), e);
+            throw new RuntimeException("设置音频标签失败: " + file.getAbsolutePath(), e);
         }
     }
 
