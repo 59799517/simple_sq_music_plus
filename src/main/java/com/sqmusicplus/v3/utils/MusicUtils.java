@@ -4,13 +4,12 @@ import cn.hutool.core.img.ImgUtil;
 import com.sqmusicplus.v3.base.enums.PlugBrType;
 import com.sqmusicplus.v3.config.exception.SQException;
 import com.sqmusicplus.v3.plug.base.hander.SearchHanderAbstract;
-import com.sqmusicplus.v3.plug.entity.Album;
+
 import lombok.extern.slf4j.Slf4j;
 import org.jaudiotagger.audio.AudioFile;
 import org.jaudiotagger.audio.exceptions.CannotReadException;
 import org.jaudiotagger.audio.exceptions.CannotWriteException;
-import org.jaudiotagger.audio.exceptions.InvalidAudioFrameException;
-import org.jaudiotagger.audio.exceptions.ReadOnlyFileException;
+
 import org.jaudiotagger.audio.flac.FlacFileReader;
 import org.jaudiotagger.audio.flac.FlacFileWriter;
 import org.jaudiotagger.audio.mp3.MP3FileReader;
@@ -18,7 +17,8 @@ import org.jaudiotagger.audio.mp3.MP3FileWriter;
 import org.jaudiotagger.audio.ogg.OggFileReader;
 import org.jaudiotagger.audio.ogg.OggFileWriter;
 import org.jaudiotagger.tag.*;
-import org.jaudiotagger.tag.datatype.Artwork;
+import org.jaudiotagger.tag.images.Artwork;
+import org.jaudiotagger.tag.images.ArtworkFactory;
 import ws.schild.jave.EncoderException;
 import ws.schild.jave.MultimediaObject;
 import ws.schild.jave.info.MultimediaInfo;
@@ -27,6 +27,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -69,18 +70,30 @@ public class MusicUtils {
             }
             AudioFile af =null;
             String s = FileTypeUtils.checkType(file);
+            log.debug("文件类型检测结果: {}, 文件大小: {} bytes", s, file.length());
+            if (s == null) {
+                log.warn("无法检测文件类型，跳过标签写入: {}", file.getAbsolutePath());
+                return null;
+            }
             if (s.contains("flac")){
                 FlacFileReader flacFileReader = new FlacFileReader();
+                log.debug("开始读取FLAC文件: {}", file.getName());
                 af = flacFileReader.read(file);
+                log.debug("FLAC文件读取成功: {}", file.getName());
             }else if (s.contains("wma")||s.contains("wav")||s.contains("ape")){
+                log.debug("不支持写入标签的格式: {}，跳过", s);
                 return null;
             }else if (s.contains("ogg")){
                 OggFileReader oggFileReader = new OggFileReader();
+                log.debug("开始读取OGG文件: {}", file.getName());
                 af = oggFileReader.read(file);
+                log.debug("OGG文件读取成功: {}", file.getName());
 
             }else {
                 MP3FileReader mp3FileReader = new MP3FileReader();
+                log.debug("开始读取MP3文件: {}", file.getName());
                 af = mp3FileReader.read(file);
+                log.debug("MP3文件读取成功: {}", file.getName());
             }
 
 //            AudioFile af = AudioFileIO.read(file);
@@ -89,30 +102,7 @@ public class MusicUtils {
 //                tag = new ID3v24Tag();
 //            }
             if (image != null && image.exists()) {
-                try {
-                    BufferedImage bufferedImage = ImageIOUtils.read(image);
-                    if (bufferedImage == null){
-                        return null;
-                    }
-                    ImgUtil.write(bufferedImage, image);
-                    Artwork firstArtwork = Artwork.createArtworkFromFile(image);
-                    tag.setField(firstArtwork);
-                } catch (Exception e) {
-                    try {
-                        Artwork firstArtwork = Artwork.createArtworkFromFile(image);
-                        tag.setField(firstArtwork);
-                    }  catch (Exception fex) {
-                        BufferedImage bufferedImage = ImageIOUtils.read(image);
-                        if (bufferedImage == null){
-                            return null;
-                        }
-                        ImgUtil.write(bufferedImage, image);
-                        Artwork firstArtwork = Artwork.createArtworkFromFile(image);
-                        tag.setField(firstArtwork);
-                    }catch (Error exc) {
-                        System.out.println("Caught an error: " + e.getMessage());
-                    }
-                }
+                trySetArtwork(image, tag);
             }
             tag.setField(FieldKey.TITLE, title.trim());
             tag.setField(FieldKey.ALBUM, albumName.trim());
@@ -137,18 +127,48 @@ public class MusicUtils {
 
             if (s.contains("flac")){
                 FlacFileWriter flacFileWriter = new FlacFileWriter();
+                long beforeSize = file.length();
+                log.debug("开始写入FLAC标签: {}, 文件大小: {} bytes", file.getName(), beforeSize);
                 flacFileWriter.write(af);
+                // JAudiotagger写入FLAC时会：创建.tmp→写入→删除原文件→重命名.tmp
+                // 如果重命名失败，原文件会丢失，这里做验证
+                if (!file.exists()) {
+                    log.error("FLAC标签写入后文件丢失! 原始大小: {} bytes, 路径: {}", beforeSize, file.getAbsolutePath());
+                    recoverFromTempFile(file);
+                    throw new IOException("标签写入后文件丢失: " + file.getAbsolutePath());
+                }
+                long afterSize = file.length();
+                log.debug("FLAC标签写入完成: {}, 写入后大小: {} bytes, 文件存在: {}", file.getName(), afterSize, file.exists());
             }else if (s.contains("ogg")){
                 OggFileWriter oggFileWriter = new OggFileWriter();
+                log.debug("开始写入OGG标签: {}", file.getName());
                 oggFileWriter.write(af);
+                if (!file.exists()) {
+                    log.error("OGG标签写入后文件丢失! 路径: {}", file.getAbsolutePath());
+                    throw new IOException("标签写入后文件丢失: " + file.getAbsolutePath());
+                }
+                log.debug("OGG标签写入完成: {}", file.getName());
 
             }else {
                 MP3FileWriter mp3FileWriter = new MP3FileWriter();
+                log.debug("开始写入MP3标签: {}", file.getName());
                 mp3FileWriter.write(af);
+                if (!file.exists()) {
+                    log.error("MP3标签写入后文件丢失! 路径: {}", file.getAbsolutePath());
+                    throw new IOException("标签写入后文件丢失: " + file.getAbsolutePath());
+                }
+                log.debug("MP3标签写入完成: {}", file.getName());
             }
             return null;
+        } catch (CannotReadException e) {
+            log.error("读取音频文件失败（文件可能已损坏或为空）: {} - {}", file.getName(), e.getMessage());
+            throw new RuntimeException("读取音频文件失败: " + file.getAbsolutePath() + " - " + e.getMessage(), e);
+        } catch (CannotWriteException e) {
+            log.error("写入音频标签失败（JAudiotagger写入过程异常，可能导致文件丢失）: {} - {}", file.getName(), e.getMessage());
+            recoverFromTempFile(file);
+            throw new RuntimeException("写入音频标签失败: " + file.getAbsolutePath() + " - " + e.getMessage(), e);
         } catch (Exception e) {
-            log.error("设置音频标签失败: {}", e.getMessage(), e);
+            log.error("设置音频标签失败: {} - {}", file.getName(), e.getMessage());
             throw new RuntimeException("设置音频标签失败: " + file.getAbsolutePath(), e);
         }
     }
@@ -160,16 +180,12 @@ public class MusicUtils {
      * @return
      */
     public static SearchHanderAbstract getPlugHander(String plugName,List<SearchHanderAbstract> searchHanderAbstractList){
-        SearchHanderAbstract searchHanderAbstract = null;
         for (SearchHanderAbstract item : searchHanderAbstractList) {
             if(item.getPlugName().equals(plugName)){
-                searchHanderAbstract = item;
+                return item;
             }
         }
-        if (searchHanderAbstract==null){
-            throw  new SQException("未知的搜索类型");
-        }
-        return searchHanderAbstract;
+        throw  new SQException("未知的搜索类型");
     }
 
 
@@ -179,7 +195,8 @@ public class MusicUtils {
      * @return
      */
     public static PlugBrType getMaxBr(List<PlugBrType> brTypes) {
-        return brTypes.stream().max(Comparator.comparing(PlugBrType::getBit)).get();
+        return brTypes.stream().max(Comparator.comparing(PlugBrType::getBit))
+                .orElseThrow(() -> new SQException("brTypes 列表为空，无法获取最大比特率"));
     }
 
 
@@ -203,9 +220,6 @@ public class MusicUtils {
                                             Map<String, Object> pathTemplate, String separator) {
 
         Map<String, String> result = new HashMap<>();
-        result.put(KEY_ARTIST_DIR, null);
-        result.put(KEY_ALBUM_DIR, null);
-        result.put(KEY_SONG_DIR, null);
 
         if (template == null || template.isEmpty()) return result;
 
@@ -271,7 +285,7 @@ public class MusicUtils {
     }
 
     private static String normalizeSeparator(String path, String sep) {
-        return path.replace("/", sep).replace("\\", sep);
+        return path.replaceAll("[/\\\\]", Matcher.quoteReplacement(sep));
     }
 
     private static String selectWorkingTemplate(String main, String fallback, Map<String, Object> ctx) {
@@ -285,6 +299,7 @@ public class MusicUtils {
             SpelTemplateUtils.formatTemplateWithDollar(tpl, ctx);
             return true;
         } catch (Exception e) {
+            log.debug("模板渲染失败: {} - {}", tpl, e.getMessage());
             return false;
         }
     }
@@ -294,8 +309,17 @@ public class MusicUtils {
         return (lastIdx != -1) ? template.substring(0, lastIdx) : "";
     }
 
+    // 缓存 Pattern 避免每次 splitAndClean 调用时重新编译
+    private static final Map<String, Pattern> SPLIT_PATTERN_CACHE = new HashMap<>();
+
     private static List<String> splitAndClean(String dirTemplate, String sep) {
-        return Arrays.stream(dirTemplate.split(Pattern.quote(sep)))
+        String quoted = Pattern.quote(sep);
+        Pattern pattern = SPLIT_PATTERN_CACHE.get(quoted);
+        if (pattern == null) {
+            pattern = Pattern.compile(quoted);
+            SPLIT_PATTERN_CACHE.put(quoted, pattern);
+        }
+        return Arrays.stream(pattern.split(dirTemplate))
                 .filter(s -> s != null && !s.trim().isEmpty())
                 .collect(Collectors.toList());
     }
@@ -316,6 +340,40 @@ public class MusicUtils {
         } catch (Exception e) {
             return null;
         }
+    }
+
+    /**
+     * 尝试设置封面图片，优雅处理各种异常，不影响标签文字写入
+     */
+    private static void trySetArtwork(File image, Tag tag) {
+        try {
+            BufferedImage bufferedImage = ImageIOUtils.read(image);
+            if (bufferedImage == null) {
+                log.warn("图片不可读，尝试直接设置封面: {}", image.getAbsolutePath());
+            } else {
+                ImgUtil.write(bufferedImage, image);
+            }
+            Artwork artwork = ArtworkFactory.createArtworkFromFile(image);
+            tag.setField(artwork);
+        } catch (Exception e) {
+            log.warn("设置封面图片失败，跳过封面（不影响标签文字）: {} - {}", image.getName(), e.getMessage());
+        }
+    }
+
+    /**
+     * JAudiotagger 写入失败时可能已删除原文件并在原地留下 .tmp 文件，尝试恢复
+     * @return 是否成功恢复
+     */
+    private static boolean recoverFromTempFile(File file) {
+        File tmpFile = new File(file.getAbsolutePath() + ".tmp");
+        if (!file.exists() && tmpFile.exists()) {
+            log.warn("检测到.tmp残留文件，尝试恢复: {} (大小: {} bytes)", tmpFile.getAbsolutePath(), tmpFile.length());
+            if (tmpFile.renameTo(file)) {
+                log.info("文件已从.tmp恢复: {}", file.getAbsolutePath());
+                return true;
+            }
+        }
+        return false;
     }
 }
 
