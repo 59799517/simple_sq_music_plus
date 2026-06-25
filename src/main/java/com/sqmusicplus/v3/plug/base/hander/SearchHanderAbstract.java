@@ -280,16 +280,28 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
                     try {
                         // 从 MPD XML 下载 DASH 分段并合并
                         String mpdXml = downloadUrlResult.getUrl();
-                        log.info("输出文件: {}", type);
                         
-                        // 下载 DASH 分段并合并（直接传 MPD XML）
+                        // 使用临时文件下载，完成后移动到目标路径
+                        File tempFile = File.createTempFile("tidal_dash_", ".mp4", DownloadUtils.getProgramTempDir());
+                        log.info("输出文件: {} (临时: {})", type, tempFile);
+                        
+                        // 下载 DASH 分段并合并到临时文件
                         boolean success = com.sqmusicplus.v3.plug.tidal.utils.TidalProxyApiUtils.downloadDashFromMpdXml(
                             mpdXml,
-                            type.getAbsolutePath()
+                            tempFile.getAbsolutePath()
                         );
                         
                         if (!success) {
+                            SafeFileUtil.safeDelete(tempFile);
                             throw new RuntimeException("Tidal DASH 下载失败: " + music.getMusicName());
+                        }
+                        
+                        // 下载完成，将临时文件移动到目标路径
+                        try {
+                            DownloadUtils.moveToTarget(tempFile, type);
+                        } catch (IOException e) {
+                            SafeFileUtil.safeDelete(tempFile);
+                            throw new RuntimeException("Tidal DASH 文件移动失败: " + music.getMusicName(), e);
                         }
                         
                         log.info("✓ Tidal DASH 下载成功: {}", type);

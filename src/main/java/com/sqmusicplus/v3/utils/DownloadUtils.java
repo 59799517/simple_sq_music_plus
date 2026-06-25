@@ -8,6 +8,8 @@ import org.apache.hc.core5.util.TextUtils;
 
 import javax.net.ssl.*;
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
@@ -31,6 +33,40 @@ public class DownloadUtils {
 
     private static OkHttpClient okHttpClient;
 
+    /** 程序二级临时文件夹名称（位于系统临时目录下） */
+    private static final String PROGRAM_TEMP_DIR_NAME = "sq-music-plus-download";
+
+    /**
+     * 获取程序专用的二级临时文件夹路径，位于系统临时目录下
+     * 目录不存在时会自动创建
+     */
+    public static File getProgramTempDir() {
+        String tmpDir = System.getProperty("java.io.tmpdir");
+        File programTempDir = new File(tmpDir, PROGRAM_TEMP_DIR_NAME);
+        if (!programTempDir.exists()) {
+            programTempDir.mkdirs();
+        }
+        return programTempDir;
+    }
+
+    /**
+     * 将临时文件移动到目标路径
+     * 支持跨文件系统移动（同一文件系统为原子重命名，不同文件系统自动 copy+delete）
+     *
+     * @param tempFile  临时文件
+     * @param targetFile 目标文件
+     * @throws IOException 移动失败时抛出
+     */
+    public static void moveToTarget(File tempFile, File targetFile) throws IOException {
+        // 确保目标父目录存在
+        File parentDir = targetFile.getParentFile();
+        if (parentDir != null && !parentDir.exists()) {
+            parentDir.mkdirs();
+        }
+        // 移动文件（REPLACE_EXISTING：跨文件系统时复制+删除源，同文件系统直接重命名）
+        Files.move(tempFile.toPath(), targetFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        log.debug("临时文件移动到目标路径成功: {} -> {}", tempFile.getAbsolutePath(), targetFile.getAbsolutePath());
+    }
 
     //下载其他的
    public static void download(String url, String path, String fileName, Consumer<DownloadProgress> onProcess, Consumer<File> onSuccess) {
@@ -170,12 +206,15 @@ public class DownloadUtils {
                     }
                 }
 
+                // ✅ 创建临时文件用于下载，完成后移动到目标路径
+                File tempFile = File.createTempFile("download_", ".tmp", getProgramTempDir());
+
                 // ✅ 使用 try-with-resources 自动管理资源
                 long total = response.body().contentLength();
                 boolean downloadSuccess = false;
                 
                 try (InputStream is = response.body().byteStream();
-                     FileOutputStream fos = new FileOutputStream(file)) {
+                     FileOutputStream fos = new FileOutputStream(tempFile)) {
                     
                     byte[] buf = new byte[8192]; // 优化：从 2KB 提升到 8KB，提高 I/O 效率
                     int len = 0;
@@ -193,6 +232,7 @@ public class DownloadUtils {
                     // 且对于音乐下载场景，flush 已足够保证数据完整写入
                     downloadSuccess = true;
                 } catch (Exception e) {
+                    SafeFileUtil.safeDelete(tempFile);
                     // ✅ onFailure 回调不应抛出异常，否则会继续传播到 OkHttp
                     try {
                         if (onFailure != null) {
@@ -207,18 +247,35 @@ public class DownloadUtils {
                 }
                 
                 // ✅ 文件写入成功，但检查文件是否为空（0字节）
-                if (file.length() == 0) {
-                    log.error("下载文件为空: {}", file.getAbsolutePath());
+                if (tempFile.length() == 0) {
+                    log.error("下载文件为空: {}", tempFile.getAbsolutePath());
+                    SafeFileUtil.safeDelete(tempFile);
                     try {
                         if (onFailure != null) {
-                            onFailure.accept(new IOException("下载文件为空: " + file.getAbsolutePath()));
+                            onFailure.accept(new IOException("下载文件为空: " + tempFile.getAbsolutePath()));
                         }
                     } catch (Exception callbackEx) {
                         log.error("onFailure回调执行失败: {}", callbackEx.getMessage(), callbackEx);
                     }
                     return;
                 }
-                
+
+                // ✅ 将临时文件移动到目标路径
+                try {
+                    moveToTarget(tempFile, file);
+                } catch (IOException e) {
+                    log.error("临时文件移动到目标路径失败: {}", e.getMessage());
+                    SafeFileUtil.safeDelete(tempFile);
+                    try {
+                        if (onFailure != null) {
+                            onFailure.accept(e);
+                        }
+                    } catch (Exception callbackEx) {
+                        log.error("onFailure回调执行失败: {}", callbackEx.getMessage(), callbackEx);
+                    }
+                    return;
+                }
+
                 // ✅ 文件写入成功，执行后续回调
                 try {
                     if (onSuccess != null) {
