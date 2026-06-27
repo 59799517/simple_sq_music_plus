@@ -15,7 +15,10 @@ public enum DownloadStatus {
     
     success("成功","success"),
 
-    error("错误","error");
+    error("错误","error"),
+//   补充下载
+    supplement("补充下载","supplement"),
+    supplement_success("补充成功","supplement_success");
 
     String name;
     String value;

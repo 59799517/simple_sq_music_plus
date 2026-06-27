@@ -9,6 +9,7 @@ import com.sqmusicplus.v3.base.enums.SetConfigEnum;
 import com.sqmusicplus.v3.base.service.DownloadInfoService;
 import com.sqmusicplus.v3.config.SqConfigCache;
 import com.sqmusicplus.v3.config.exception.IgnoreDownloadException;
+import com.sqmusicplus.v3.download.DownloadRetryService;
 import com.sqmusicplus.v3.plug.base.hander.SearchHander;
 import com.sqmusicplus.v3.utils.SpringContextUtil;
 import com.sqmusicplus.v3.utils.StringUtils;
@@ -40,6 +41,9 @@ public class DownloadExcute {
     @Autowired
     @Qualifier("threadPoolTaskExecutor")
     private ExecutorService executorService;
+
+    @Autowired
+    private DownloadRetryService downloadRetryService;
 
 
     public void getDownloadInfo() {
@@ -117,10 +121,16 @@ public class DownloadExcute {
                                 downloadInfoService.updateById(record);
                             }catch (Exception e){
                                 e.printStackTrace();
-                                record.setDownloadStatus(DownloadStatus.error.getValue());
-                                record.setDownloadMsg(e.getMessage());
-                                downloadInfoService.updateById(record);
-                                log.debug("修改错误状态--->{}",record);
+                                // 下载失败，尝试使用其他插件重试
+                                boolean b = downloadRetryService.retryWithOtherPlugin(record);
+                                if(!b){
+                                    // 原记录始终标记为 error 避免阻塞下载队列
+                                    record.setDownloadStatus(DownloadStatus.error.getValue());
+                                    record.setDownloadMsg(e.getMessage());
+                                    downloadInfoService.updateById(record);
+                                    log.debug("修改错误状态--->{}",record);
+                                }
+
                             }
                         }else{
                             try {
@@ -139,6 +149,9 @@ public class DownloadExcute {
                                 downloadInfoService.updateById(record);
                             }catch (Exception e){
                                 e.printStackTrace();
+                                // 下载失败，尝试使用其他插件重试
+                                downloadRetryService.retryWithOtherPlugin(record);
+                                // 原记录始终标记为 error 避免阻塞下载队列
                                 record.setDownloadStatus(DownloadStatus.error.getValue());
                                 record.setDownloadMsg(e.getMessage());
                                 downloadInfoService.updateById(record);
@@ -187,6 +200,8 @@ public class DownloadExcute {
             log.error("更新QQVIP下载计数失败", e);
         }
     }
+
+
 
 
 //    public DownloadEntity addSubsonicPlayList(DownloadEntity downloadEntity) {

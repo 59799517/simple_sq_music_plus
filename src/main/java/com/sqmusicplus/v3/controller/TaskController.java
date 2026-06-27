@@ -49,6 +49,8 @@ public class TaskController {
         downloadInfoLambdaQueryWrapper.like(StringUtils.isNotEmpty(downloadInfo.getDownloadAlbumname()),DownloadInfo::getDownloadAlbumname, downloadInfo.getDownloadAlbumname());
         downloadInfoLambdaQueryWrapper.eq(StringUtils.isNotEmpty(downloadInfo.getDownloadPlugName()),DownloadInfo::getDownloadPlugName, downloadInfo.getDownloadPlugName());
         downloadInfoLambdaQueryWrapper.eq(downloadInfo.getAudioBook()!=null,DownloadInfo::getAudioBook, downloadInfo.getAudioBook());
+        downloadInfoLambdaQueryWrapper.ne(DownloadInfo::getDownloadMusicId, "0");
+        downloadInfoLambdaQueryWrapper.isNotNull(DownloadInfo::getDownloadPlugName);
         downloadInfoLambdaQueryWrapper.orderByDesc(DownloadInfo::getDownloadTime);
         Page<DownloadInfo> page = downloadInfoService.page(new Page<>(downloadInfo.getPageIndex(), downloadInfo.getPageSize()),downloadInfoLambdaQueryWrapper);
         return AjaxResult.success(page);
@@ -63,7 +65,10 @@ public class TaskController {
     public AjaxResult deleteDownloadInfo(@RequestBody DownloadInfo downloadInfo){
         Integer id = downloadInfo.getId();
         if (id!=null){
-            downloadInfoService.removeById(id);
+            LambdaQueryWrapper<DownloadInfo> eq = new LambdaQueryWrapper<DownloadInfo>()
+                    .eq(DownloadInfo::getId, id)
+                    .or().eq(DownloadInfo::getParentDownloadId, id);
+            downloadInfoService.remove(eq);
             return AjaxResult.success();
         }
         try {
@@ -72,6 +77,7 @@ public class TaskController {
             syncService.remove(new LambdaQueryWrapper<SqSync>().eq(SqSync::getMusicId, byId.getDownloadMusicId()));
         } catch (Exception ignored) {
         }
+
         return AjaxResult.error();
 
     }
@@ -109,6 +115,8 @@ public class TaskController {
     public AjaxResult againTask(){
         LambdaUpdateWrapper<DownloadInfo> downloadInfoLambdaUpdateWrapper = new LambdaUpdateWrapper<>();
         downloadInfoLambdaUpdateWrapper.eq(DownloadInfo::getDownloadStatus, DownloadStatus.error.getValue())
+                .ne(DownloadInfo::getDownloadMusicId, "0")
+                .isNotNull(DownloadInfo::getDownloadPlugName)
                 .set(DownloadInfo::getDownloadStatus, DownloadStatus.waiting.getValue());
         downloadInfoService.update(downloadInfoLambdaUpdateWrapper);
 
@@ -200,6 +208,20 @@ public class TaskController {
         downloadInfoLambdaQueryWrapper.eq(DownloadInfo::getDownloadStatus, DownloadStatus.waiting.getValue());
         downloadInfoService.remove(downloadInfoLambdaQueryWrapper);
         return AjaxResult.success();
+    }
+
+    /**
+     * 查看下载错误的任务的重新下载子任务信息
+     */
+    @PostMapping("/errorTaskRetry")
+    public AjaxResult errorTaskRetry(@RequestBody DownloadInfo downloadInfo){
+        if (downloadInfo.getId()==null){
+            return AjaxResult.error("这次下载无自动下载任务或者下载任务是空!");
+        }
+        LambdaQueryWrapper<DownloadInfo> downloadInfoLambdaQueryWrapper = new LambdaQueryWrapper<>();
+        downloadInfoLambdaQueryWrapper.eq(DownloadInfo::getParentDownloadId, downloadInfo.getId());
+        List<DownloadInfo> list = downloadInfoService.list(downloadInfoLambdaQueryWrapper);
+        return AjaxResult.success(list);
     }
 
 

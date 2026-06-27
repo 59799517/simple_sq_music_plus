@@ -96,6 +96,10 @@ public class DownloadInfo implements Serializable {
     @TableField("download_br_types")
     private String downloadBrTypes;
 
+//    父级下载ID（由其他插件重试时产生的新记录的来源下载ID）
+    @TableField("parent_download_id")
+    private Integer parentDownloadId;
+
 
 
 

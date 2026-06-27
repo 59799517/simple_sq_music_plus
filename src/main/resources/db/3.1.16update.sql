@@ -1,0 +1,1 @@
+INSERT INTO `sq_config` ( `config_name`, `config_value`, `config_key`, `config_type`, `config_options`, `config_show`, `config_remark`, `config_null_check`, `config_disabled`) VALUES ( '流量监控显示', 'true', 'system.show.traffic.monitoring', 'boolean', '流量监控显示', 1, '控制左上角实时流量是否展示', 1, 1);

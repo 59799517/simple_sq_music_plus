@@ -76,9 +76,31 @@ public enum SetConfigEnum {
      * 下载音频格式
      */
     SYSTEM_DOWNLOAD_FILE_AUDIO_FORMAT("system.download.file.audio.format","下载文件音频格式","system"),
-
-
-
+    /**
+     * 流量监控显示
+     */
+    SYSTEM_SHOW_TRAFFIC_MONITORING("system.show.traffic.monitoring","流量监控显示","system"),
+    /**
+     * 是否启用下载失败歌曲使用其他插件代替下载
+     */
+    SYSTEM_DOWNLOAD_FAILED_USE_OTHER_PLUGIN("system.download.failed.use.other.plugin","是否启用下载失败歌曲使用其他插件代替下载","system"),
+    /**
+     * 下载失败时使用其他插件的顺序（逗号分隔的插件名称）
+     */
+    SYSTEM_DOWNLOAD_FAILED_USE_OTHER_PLUGIN_ORDER("system.download.failed.use.other.plugin.order","下载失败时使用其他插件的顺序","system"),
+    /**
+     * 下载失败时使用其他插件搜索歌曲的匹配模式
+     * strict — 严格匹配：名称+歌手+专辑完全一致
+     * name_artist_alubm_like — 名称+歌手+专辑名称包含即可
+     * name_artist_fuzzy — 名称+歌手包含匹配（推荐默认值）
+     * name_fuzzy — 仅名称包含匹配（最宽松，不建议）
+     */
+    SYSTEM_DOWNLOAD_FAILED_USE_OTHER_PLUGIN_MATCH_MODE("system.download.failed.use.other.plugin.match.mode","下载失败时使用其他插件搜索歌曲的匹配模式","system"),
+    /**
+     * 是否允许下载失败的歌曲使用其他插件下载时降低歌曲音质 暂时不开发
+     */
+//    INSERT INTO `sq_config` ( `config_name`, `config_value`, `config_key`, `config_type`, `config_show`, `config_remark`, `config_null_check`, `config_disabled`) VALUES ('是否允许下载失败的歌曲使用其他插件下载时降低歌曲音质', 'true', 'system.download.failed.use.other.plugin.decrease.quality', 'boolean', 1, '是否允许下载失败的歌曲使用其他插件下载时降低歌曲音质（如果flac都无法下载是否允许下载为mp3）', 1, 1);
+//    SYSTEM_DOWNLOAD_FAILED_USE_OTHER_PLUGIN_DECREASE_QUALITY("system.download.failed.use.other.plugin.decrease.quality","是否允许下载失败的歌曲使用其他插件下载时降低歌曲音质","system"),
 //    ------------QQ插件配置-----------------
 
     /**

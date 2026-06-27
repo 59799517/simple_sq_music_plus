@@ -2,6 +2,7 @@ package com.sqmusicplus.v3.utils;
 
 
 import cn.hutool.core.text.StrFormatter;
+import com.github.houbb.opencc4j.util.ZhConverterUtil;
 import org.springframework.util.AntPathMatcher;
 
 import java.util.*;
@@ -511,6 +512,19 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils
     {
         AntPathMatcher matcher = new AntPathMatcher();
         return matcher.match(pattern, url);
+    }
+
+    /**
+     * 将字符串中的繁体中文转换为简体中文
+     *
+     * @param str 原始字符串
+     * @return 转换后的简体中文字符串
+     */
+    public static String toSimplified(String str) {
+        if (str == null) {
+            return null;
+        }
+        return ZhConverterUtil.toSimple(str);
     }
 
     @SuppressWarnings("unchecked")

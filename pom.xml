@@ -226,6 +226,13 @@
             <artifactId>spring-boot-starter-aop</artifactId>
         </dependency>
 
+<!-- 中文繁简体转换 -->
+        <dependency>
+            <groupId>com.github.houbb</groupId>
+            <artifactId>opencc4j</artifactId>
+            <version>1.8.1</version>
+        </dependency>
+
 <!--文本相似度算法-->
 <!--        <dependency>-->
 <!--            <groupId>com.github.shibing624</groupId>-->
