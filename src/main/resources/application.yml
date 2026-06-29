@@ -68,15 +68,21 @@ mybatis-plus:
 logging:
   level:
     com.sqmusicplus: info
-    com.sqmusicplus.v3.config.RequireLoginPathScanner: debug
+    com.sqmusicplus.v3.config.RequireLoginPathScanner: info
     org.springframework: warn
     org.jaudiotagger: warn
 
-version: 3.1.17
+version: 3.1.18
 webversion: 3.1.4
 
 # JWT 配置
 jwt:
   secret: sqmusic-secret-key-2025-very-long-string-for-security-purposes
   expiration: 604800000  # Token 有效期 7 天
+
+# MCP (Model Context Protocol) 配置
+mcp:
+  enabled: ${MCP_ENABLED:true}           # 是否启用 MCP 服务器, 默认关闭, 需显式开启
+  http-path: /mcp         # HTTP 传输路径
+  stdio-enabled: ${MCP_STDIO_ENABLED:false}   # 是否启用 STDIO 传输 (默认关闭, 仅作为子进程启动时开启)
 

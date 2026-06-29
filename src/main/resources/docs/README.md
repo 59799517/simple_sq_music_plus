@@ -1797,6 +1797,34 @@ docker-compose -f docker-compose-arm.yml restart
 
 ---
 
+##### 4.9 重试错误任务
+**接口地址**: `/api/task/errorTaskRetry`  
+**请求方式**: POST  
+**Content-Type**: application/json  
+**是否需要登录**: 否  
+**接口描述**: 根据任务ID重试指定的错误下载任务
+
+**请求参数**:
+```json
+{
+    "id": 1
+}
+```
+
+| 参数名 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| id | integer | 是 | 任务ID |
+
+**响应参数**:
+```json
+{
+    "code": 200,
+    "msg": "成功"
+}
+```
+
+---
+
 #### 5. 插件功能模块 (PlugController)
 
 ##### 5.1 获取酷狗登录二维码
@@ -2440,6 +2468,170 @@ docker-compose -f docker-compose-arm.yml restart
 | bit | integer | 比特率(kbps) |
 | plugName | string | 插件名称标识 |
 | id | string | 唯一标识ID(用于前端选择) |
+
+---
+
+#### 10. Tidal 音频分段代理模块 (TidalSegmentProxyController)
+
+> Tidal CDN 分段代理，解决浏览器 CORS 问题，支持流式转发音频分段
+
+##### 10.1 预检请求 (CORS)
+**接口地址**: `/api/proxy/tidal`  
+**请求方式**: OPTIONS  
+**是否需要登录**: 否  
+**接口描述**: 处理 CORS 预检请求,返回允许跨域的头信息
+
+**响应头**:
+| 头名称 | 值 | 说明 |
+| --- | --- | --- |
+| Access-Control-Allow-Origin | * | 允许所有来源 |
+| Access-Control-Allow-Methods | GET, HEAD, OPTIONS | 允许的请求方法 |
+| Access-Control-Allow-Headers | Range, Accept, Origin | 允许的请求头 |
+| Access-Control-Max-Age | 3600 | 预检结果缓存时间(秒) |
+
+---
+
+##### 10.2 直接代理分段
+**接口地址**: `/api/proxy/tidal/direct`  
+**请求方式**: GET  
+**是否需要登录**: 否  
+**接口描述**: 直接代理指定的 Tidal CDN 音频分段 URL
+
+**请求参数**:
+
+| 参数名 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| url | string | 是 | Tidal CDN 分段 URL(需 URL 编码) |
+
+**响应**: 流式转发音频数据 (Content-Type: audio/mp4)
+
+---
+
+##### 10.3 模板代理分段
+**接口地址**: `/api/proxy/tidal`  
+**请求方式**: GET  
+**是否需要登录**: 否  
+**接口描述**: 通过模板 URL 代理 Tidal 音频分段,自动替换 `$Number$` 占位符
+
+**请求参数**:
+
+| 参数名 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| baseurl | string | 否 | 模板 URL,包含 `$Number$` 占位符 |
+| number | integer | 否 | 分段序号,替换 `$Number$` |
+| url | string | 否 | 完整分段 URL(优先级低于 baseurl+number) |
+
+> 当提供 `baseurl` 和 `number` 时,系统自动将 `$Number$` 替换为实际分段序号;否则使用 `url` 参数直接代理。
+
+**响应**: 流式转发音频数据 (Content-Type: audio/mp4)
+
+---
+
+#### 11. MCP 说明
+
+> MCP (Model Context Protocol) 是 Simple SQ Music Plus 提供的 AI 模型集成接口,允许 AI 助手直接调用系统的各项功能。
+
+##### 11.1 概述
+
+Simple SQ Music Plus 集成了 MCP (Model Context Protocol) 服务器,支持两种传输方式:
+
+| 方式 | 地址 | 说明 |
+| --- | --- | --- |
+| HTTP | `/mcp` (默认) | 远程 AI 代理连接 |
+| STDIO | 标准输入/输出 | 本地 AI 助手连接 (如 Claude Desktop) |
+
+##### 11.2 配置说明
+
+在 `application.yml` 中配置 MCP 相关参数:
+
+```yaml
+mcp:
+  enabled: true                    # 是否启用 MCP (默认 true)
+  http-path: /mcp                  # HTTP 传输路径 (默认 /mcp)
+  stdio-enabled: false             # 是否启用 STDIO 传输 (默认 false)
+```
+
+##### 11.3 安全认证 (HTTP)
+
+HTTP 传输需要 JWT Token 验证,请求头格式:
+
+```
+sqmusic: <JWT Token>
+```
+
+Token 通过登录接口获取,未通过验证返回 HTTP 403。
+
+##### 11.4 可用工具
+
+系统会自动将所有 `@RestController` 控制器方法注册为 MCP 工具,工具命名规则:
+
+```
+{控制器名小写}_{方法名}
+```
+
+例如:
+- `config_getConfigList` - 获取系统配置列表
+- `music_searchSong` - 搜索歌曲
+- `downloadservice_downloadSong` - 下载歌曲
+- `task_list` - 获取任务列表
+
+##### 11.5 参数传递规则
+
+| Controller 参数 | MCP 传参方式 | 示例 |
+|----------------|-------------|------|
+| `@RequestBody POJO` | 展平为各字段 | `{"plugName":"kg"}` |
+| `@RequestParam` | 直接传参 | `{"pageIndex":1}` |
+| `@PathVariable` | 直接传参 | `{"id":"xxx"}` |
+| 无注解 POJO | 前缀 `.` 分隔 | `{"paramName.field":"val"}` |
+
+##### 11.6 内置帮助工具
+
+**工具名**: `mcp_help`
+
+查看所有可用 MCP 工具及其参数说明，或查询指定工具的详细用法。
+
+**参数**:
+
+| 参数 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| tool | string | 否 | 要查询的工具名称,不填则列出所有工具 |
+
+##### 11.7 使用示例
+
+**远程 AI 代理连接**:
+
+```bash
+# 使用 curl 测试 MCP 服务
+curl -X POST http://localhost:8099/mcp \
+  -H "sqmusic: <JWT_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "tools/call",
+    "params": {
+      "name": "mcp_help",
+      "arguments": {}
+    }
+  }'
+```
+
+**Claude Desktop 配置** (`claude_desktop_config.json`):
+
+```json
+{
+  "mcpServers": {
+    "sqmusic": {
+      "command": "java",
+      "args": ["-jar", "simple-sq-music-plus.jar"],
+      "env": {
+        "MCP_ENABLED": "true",
+        "MCP_STDIO_ENABLED": "true"
+      }
+    }
+  }
+}
+```
 
 ### 贡献指南
 

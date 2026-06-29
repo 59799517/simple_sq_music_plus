@@ -12,6 +12,8 @@
     .cover.show {
       display: flex !important;
     }
+    /* 只在 docsify 未就绪时强制可滚动，就绪后交给 docsify 控制 */
+    body:not(.ready) { overflow-y: auto !important; }
   </style>
 </head>
 <body>

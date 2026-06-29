@@ -12,3 +12,5 @@
   - [7. 监听歌单模块](README.md#_7-监听歌单模块-monitorcontroller)
   - [8. 阿里云盘扩展模块](README.md#_8-阿里云盘扩展模块-expandcontroller)
   - [9. 音质类型模块](README.md#_9-音质类型模块-plugbrtype)
+  - [10. Tidal 音频分段代理模块](README.md#_10-tidal-音频分段代理模块-tidalsegmentproxycontroller)
+  - [11. MCP 说明](README.md#_11-mcp-说明)

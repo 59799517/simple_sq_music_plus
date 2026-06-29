@@ -35,8 +35,17 @@ emby,jellyfin识别请参考如下配置 https://support.emby.media/support/solu
 ![wechat_2025-09-28_161552_590.png](img/wechat_2025-09-28_161552_590.png)
 
 
-#### 接口文档：（有AI的可以训练下后续会出MCP）
+#### 接口文档：
 https://59799517.github.io/simple_sq_music_plus/#/README
+#### MCP
+```agsl
+- 访问地址：
+- http(s)://IP:端口/mcp
+- 请求头：
+- sqmusic=Token(设置下方的token值)
+```
+
+
 
 
 ### 运行项目

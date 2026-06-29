@@ -131,7 +131,7 @@ public class ConfigController {
      *
      * @return
      */
-    @RequireLogin(value = false)
+//    @RequireLogin(value = false)
     @GetMapping("/getConfigList")
     public AjaxResult getConfigList() {
         return AjaxResult.success(SqConfigCache.getAllConfig());

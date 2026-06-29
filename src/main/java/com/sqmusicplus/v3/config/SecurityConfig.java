@@ -40,7 +40,8 @@ public class SecurityConfig {
         List<String> fixedPublicPaths = Arrays.asList(
             "/api/config/login",
             "/api/config/isLogin",
-            "/api/version"
+            "/api/version",
+            "/mcp"
         );
         
         // 合并所有公开路径
@@ -53,14 +54,17 @@ public class SecurityConfig {
             "/**/*.html",
             "/**/*.js",
             "/**/*.css",
+            "/**/*.md",
             "/**/*.png",
             "/**/*.jpg",
             "/**/*.svg",
             "/**/*.json",
+            "/**/*.map",
             "/**/*.woff",
             "/**/*.woff2",
             "/**/*.ttf",
             "/**/*.otf",
+            "/**/*.ico",
             "/favicon.ico"
         ));
         

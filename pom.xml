@@ -143,6 +143,18 @@
             <artifactId>okio</artifactId>
             <version>3.6.0</version>
         </dependency>
+
+        <!-- MCP (Model Context Protocol) SDK -->
+        <dependency>
+            <groupId>io.modelcontextprotocol.sdk</groupId>
+            <artifactId>mcp-core</artifactId>
+            <version>2.0.0</version>
+        </dependency>
+        <dependency>
+            <groupId>io.modelcontextprotocol.sdk</groupId>
+            <artifactId>mcp-json-jackson2</artifactId>
+            <version>2.0.0</version>
+        </dependency>
         <!-- collections工具类 -->
         <dependency>
             <groupId>commons-collections</groupId>
@@ -300,6 +312,10 @@
                     <include>**/*.xml</include>
                     <include>**/*.html</include>
                     <include>**/*.json</include>
+                    <include>**/*.css</include>
+                    <include>**/*.js</include>
+                    <include>**/*.md</include>
+                    <include>**/*.map</include>
                     <include>**/*.otf</include>
                     <include>**/*.ttf</include>
                     <include>**/*.db</include>
@@ -307,7 +323,11 @@
                 </includes>
                 <filtering>true</filtering>
             </resource>
-
+            <!-- docs 目录资源 - 不进行 filtering 避免损坏二进制文件 -->
+            <resource>
+                <directory>src/main/resources/docs</directory>
+                <filtering>false</filtering>
+            </resource>
         </resources>
         <plugins>
             <plugin>
