@@ -36,11 +36,7 @@ emby,jellyfin识别请参考如下配置 https://support.emby.media/support/solu
 
 
 
-### 2.x迁移3.x版本
-1. 导出已经同步过的歌单、专辑、歌手信息（文件是.json）
-![img.png](img/img.png)
-2. 3.0版本导入已经同步信息(时间较长耐心等待)
-![wechat_2025-09-28_163226_700.png](img/wechat_2025-09-28_163226_700.png)
+
 
 ### 运行项目
 #### 1. docker-compose（推荐--mysql启动慢导致报错可以多运行几次）
@@ -113,7 +109,7 @@ Todo：
 12. ~~下载失败使用其他插件进行下载~~
 13. 综合查询下载不根据单一插件下载查询
 
-下载模板支持（3.1.15版本后取消el表达式支持）
+下载模板支持（3.1.15版本后取消el表达式支持-有安全风险需要提出issues）
 描述：目前支持
 1. ${musicName}---歌曲名称
 2. ${artists}---歌手名称（全部歌手）
@@ -150,10 +146,14 @@ ${album}/${musicName} - ${artists}  ------------专辑/歌曲名称 - 歌手名�
 
 
 感谢：
-https://github.com/MakcRe/KuGouMusicApi  酷狗API
-https://zmusic.zhenxin.me/ 网易API
+1. https://github.com/MakcRe/KuGouMusicApi  酷狗API
+2. https://zmusic.zhenxin.me/ 网易API
 
 
 
-
+### 2.x迁移3.x版本
+1. 导出已经同步过的歌单、专辑、歌手信息（文件是.json）
+   ![img.png](img/img.png)
+2. 3.0版本导入已经同步信息(时间较长耐心等待)
+   ![wechat_2025-09-28_163226_700.png](img/wechat_2025-09-28_163226_700.png)
 

@@ -51,7 +51,7 @@ public class TaskController {
         downloadInfoLambdaQueryWrapper.eq(downloadInfo.getAudioBook()!=null,DownloadInfo::getAudioBook, downloadInfo.getAudioBook());
         downloadInfoLambdaQueryWrapper.ne(DownloadInfo::getDownloadMusicId, "0");
         downloadInfoLambdaQueryWrapper.isNotNull(DownloadInfo::getDownloadPlugName);
-        downloadInfoLambdaQueryWrapper.orderByDesc(DownloadInfo::getDownloadTime);
+        downloadInfoLambdaQueryWrapper.orderByDesc(DownloadInfo::getDownloadUpdateTime);
         Page<DownloadInfo> page = downloadInfoService.page(new Page<>(downloadInfo.getPageIndex(), downloadInfo.getPageSize()),downloadInfoLambdaQueryWrapper);
         return AjaxResult.success(page);
     }
