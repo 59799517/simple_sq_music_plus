@@ -35,7 +35,8 @@ emby,jellyfin识别请参考如下配置 https://support.emby.media/support/solu
 ![wechat_2025-09-28_161552_590.png](img/wechat_2025-09-28_161552_590.png)
 
 
-
+#### 接口文档：（有AI的可以训练下后续会出MCP）
+https://59799517.github.io/simple_sq_music_plus/#/README
 
 
 ### 运行项目
