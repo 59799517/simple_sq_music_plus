@@ -410,7 +410,7 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
         } catch (Exception e) {
             e.printStackTrace();
             log.error("下载失败{}", downloadInfo.getDownloadMusicname());
-            throw new RuntimeException(e.getMessage());
+            throw new RuntimeException(e.getMessage(), e);
         }
     }
 
@@ -842,7 +842,7 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
             log.error("下载错误（标签写入错误）{}  ----------> {}", music.getMusicName(), e.getMessage());
             log.error(e.getMessage());
             e.printStackTrace();
-            throw new RuntimeException("下载失败（标签写入错误）:" + downloadInfo.getDownloadMusicname() + "------->" + e.getMessage());
+            throw new RuntimeException("下载失败（标签写入错误）:" + downloadInfo.getDownloadMusicname() + "------->" + e.getMessage(), e);
         }
     }
 

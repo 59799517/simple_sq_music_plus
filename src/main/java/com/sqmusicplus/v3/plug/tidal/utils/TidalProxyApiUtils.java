@@ -35,7 +35,7 @@ public class TidalProxyApiUtils {
     private static final String ZARZ_API_URL = "https://api.zarz.moe/v1/dl/tid2";
     private static final int ZARZ_MAX_RETRIES = 3;
     // Tidal 官方 App User-Agent
-    private static final String TIDAL_USER_AGENT = "SpotiFLAC-Mobile/1.0";
+    private static final String TIDAL_USER_AGENT = "SpotiFLAC-Mobile/4.6.0";
 
     // 代理 API 列表（与 Go 版本一致）
     private static final List<String> PROXY_APIS = new ArrayList<>();

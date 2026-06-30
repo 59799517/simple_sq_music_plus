@@ -110,7 +110,7 @@ public class MusicUtils {
                         Artwork firstArtwork = Artwork.createArtworkFromFile(image);
                         tag.setField(firstArtwork);
                     }catch (Error exc) {
-                        System.out.println("Caught an error: " + e.getMessage());
+                        System.out.println("Caught an error: " + exc.getMessage());
                     }
                 }
             }

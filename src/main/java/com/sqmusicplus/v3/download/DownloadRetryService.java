@@ -131,7 +131,6 @@ public class DownloadRetryService {
                 if (matched == null) {
                     log.info("在插件 {} 中未匹配到歌曲: {} - {}", plugName, artistName, musicName);
                     // 插入一条错误记录，标记该插件未找到歌曲
-
                     DownloadInfo noMatchRecord = new DownloadInfo()
                             .setDownloadMusicname(musicName)
                             .setDownloadArtistname(artistName)
