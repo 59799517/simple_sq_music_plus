@@ -47,6 +47,12 @@ public class DownloadRetryService {
      * @return true 表示已创建新的重试下载记录，false 表示无需重试 
      */
     public boolean retryWithOtherPlugin(DownloadInfo failedRecord) {
+        if(failedRecord.getParentDownloadId()!=null){
+            log.debug("子任务，不重试");
+            return false;
+        }
+
+
         // 1. 检查开关
         String switchValue = SqConfigCache.getSqConfigValue(SetConfigEnum.SYSTEM_DOWNLOAD_FAILED_USE_OTHER_PLUGIN);
         if (!"true".equalsIgnoreCase(switchValue)) {
