@@ -17,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -130,6 +131,7 @@ public class DownloadRetryService {
                 if (matched == null) {
                     log.info("在插件 {} 中未匹配到歌曲: {} - {}", plugName, artistName, musicName);
                     // 插入一条错误记录，标记该插件未找到歌曲
+
                     DownloadInfo noMatchRecord = new DownloadInfo()
                             .setDownloadMusicname(musicName)
                             .setDownloadArtistname(artistName)
@@ -151,7 +153,8 @@ public class DownloadRetryService {
                 }
 
                 // 7. 确定音质：尝试匹配原音质，否则取最大音质
-                PlugBrType targetBr = resolveBrType(plugName, failedRecord.getDownloadBrType(), matched.getBrTypes());
+
+                PlugBrType targetBr = resolveBrType(failedRecord.getDownloadBrType(), matched.getBrTypes());
                 if (targetBr == null) {
                     log.warn("插件 {} 中无可用的音质类型", plugName);
                     triedPlugins.add(plugName);
@@ -334,7 +337,7 @@ public class DownloadRetryService {
     /**
      * 解析音质：优先匹配原音质类型，否则取最大音质
      */
-    private PlugBrType resolveBrType(String newPlugName, String originalBrTypeId, List<PlugBrType> availableTypes) {
+    private PlugBrType resolveBrType( String originalBrTypeId, List<PlugBrType> availableTypes) {
         if (availableTypes == null || availableTypes.isEmpty()) {
             return null;
         }
@@ -343,16 +346,21 @@ public class DownloadRetryService {
         if (StringUtils.isNotBlank(originalBrTypeId)) {
             PlugBrType original = PlugBrType.findById(originalBrTypeId);
             if (original != null) {
-                // 在新插件中找相同格式（type）且码率最接近的
-                PlugBrType sameTypeMatch = PlugBrType.findMaxByTypeAndPlugName(original.getType(), newPlugName);
+                // 从 availableTypes 中找相同格式（type）且码率最大的
+                PlugBrType sameTypeMatch = availableTypes.stream()
+                    .filter(t -> t.getType().equals(original.getType()))
+                    .max(Comparator.comparing(PlugBrType::getBit))
+                    .orElse(null);
                 if (sameTypeMatch != null) {
                     return sameTypeMatch;
                 }
             }
         }
 
-        // 取该插件可用的最大音质
-        return MusicUtils.getMaxBr(availableTypes);
+        // 从 availableTypes 中取最大音质
+        return availableTypes.stream()
+            .max(Comparator.comparing(PlugBrType::getBit))
+            .orElse(null);
     }
 
     /**

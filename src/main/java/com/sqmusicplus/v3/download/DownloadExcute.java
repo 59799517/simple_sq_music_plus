@@ -82,9 +82,28 @@ public class DownloadExcute {
                 init_download = "5";
             }
             Long downloadsize = Long.valueOf(init_download);
-            LambdaQueryWrapper<DownloadInfo> downloadInfoQueryWrapper = new LambdaQueryWrapper<>();
-            downloadInfoQueryWrapper.eq(DownloadInfo::getDownloadStatus, DownloadStatus.loading.value);
-            long count = downloadInfoService.count(downloadInfoQueryWrapper);
+            // 查询当前 loading 记录，检查每个记录的 UpdateTime 是否超过 10 分钟
+            LambdaQueryWrapper<DownloadInfo> loadingQueryWrapper = new LambdaQueryWrapper<>();
+            loadingQueryWrapper.eq(DownloadInfo::getDownloadStatus, DownloadStatus.loading.value);
+            List<DownloadInfo> loadingList = downloadInfoService.list(loadingQueryWrapper);
+            long count = 0;
+            if (loadingList != null) {
+                for (DownloadInfo loadingRecord : loadingList) {
+                    if (loadingRecord.getDownloadUpdateTime() != null &&
+                        System.currentTimeMillis() - loadingRecord.getDownloadUpdateTime().getTime() > 10 * 60 * 1000) {
+                        // 超过 10 分钟，标记为超时错误（乐观锁会处理并发冲突）
+                        loadingRecord.setDownloadStatus(DownloadStatus.error.getValue());
+                        loadingRecord.setDownloadMsg("下载超时");
+                        boolean updated = downloadInfoService.updateById(loadingRecord);
+                        if (updated) {
+                            log.warn("下载超时标记: id={}, name={}, updateTime={}",
+                                loadingRecord.getId(), loadingRecord.getDownloadMusicname(), loadingRecord.getDownloadUpdateTime());
+                        }
+                    } else {
+                        count++;
+                    }
+                }
+            }
             log.info("正在下载任务--->{}个",count);
             if (count-downloadsize<0){
                 long l = downloadsize - count;

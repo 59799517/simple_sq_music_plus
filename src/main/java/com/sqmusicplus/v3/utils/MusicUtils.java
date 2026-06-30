@@ -148,6 +148,7 @@ public class MusicUtils {
             }
             return null;
         } catch (Exception e) {
+            e.printStackTrace();
             log.error("设置音频标签失败: {}", e.getMessage(), e);
             throw new RuntimeException("设置音频标签失败: " + file.getAbsolutePath(), e);
         }
