@@ -1,5 +1,8 @@
 # 第一阶段：提取分层 JAR（直接使用预构建 JAR，避免在 Docker 内重复编译）
-FROM amazoncorretto:21-alpine AS extractor
+# 默认保持原有 Corretto 运行时；离线或私有构建环境可通过
+# --build-arg JAVA_IMAGE=<本地Java21镜像> 覆盖。
+ARG JAVA_IMAGE=amazoncorretto:21-alpine
+FROM ${JAVA_IMAGE} AS extractor
 LABEL maintainer="SQ"
 WORKDIR /extractor
 
@@ -12,7 +15,7 @@ COPY ${JAR_FILE} app.jar
 RUN java -Djarmode=layertools -jar app.jar extract --destination /extractor/layers
 
 # 第二阶段：运行环境
-FROM amazoncorretto:21-alpine
+FROM ${JAVA_IMAGE}
 
 # 设置工作目录
 WORKDIR /app
