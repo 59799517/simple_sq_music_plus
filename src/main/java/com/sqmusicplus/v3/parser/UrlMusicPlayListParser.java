@@ -398,6 +398,9 @@ public class UrlMusicPlayListParser {
                 String playlistId = urlParams.get("id");
                 PlaylistTrackAllResult playListInfo = neteaseHander.getPlayListInfo(playlistId);
                 PlaylistTrackAllResult.playlist playlist = playListInfo.getPlaylist();
+                if (playlist == null) {
+                    throw new RuntimeException("获取网易云歌单详情失败，歌单ID=" + playlistId);
+                }
                 ParserInfo parserInfo = new ParserInfo();
                 parserInfo.setName(playlist.getName());
                 parserInfo.setPlugNmae(neteaseHander.getPlugName());
@@ -417,5 +420,4 @@ public class UrlMusicPlayListParser {
 
 
 }
-
 

@@ -21,6 +21,14 @@ import com.sqmusicplus.v3.utils.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
+import java.net.URI;
+import java.net.URLEncoder;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -41,6 +49,21 @@ import java.util.stream.Collectors;
 @Slf4j
 @Component("neteaseHander")
 public class NeteaseHander extends SearchHanderAbstract {
+
+
+    private static final String NETEASE_OFFICIAL_PLAYLIST_DETAIL_URL =
+            "https://music.163.com/api/v6/playlist/detail";
+    private static final String NETEASE_OFFICIAL_SONG_DETAIL_URL =
+            "https://music.163.com/api/v3/song/detail";
+    private static final String NETEASE_OFFICIAL_HEALTH_URL =
+            "https://music.163.com/api/v2/banner/get";
+    private static final String NETEASE_WEB_USER_AGENT =
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
+                    "(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
+    private static final HttpClient NETEASE_OFFICIAL_HTTP_CLIENT = HttpClient.newBuilder()
+            .connectTimeout(Duration.ofSeconds(10))
+            .followRedirects(HttpClient.Redirect.NORMAL)
+            .build();
 
 
     public SQNeteaseCloudMusicInfo neteaseCloudMusicInfo = new SQNeteaseCloudMusicInfo();
@@ -71,7 +94,7 @@ public class NeteaseHander extends SearchHanderAbstract {
                         continue;
                     }
                 } catch (Exception e) {
-                    log.error("netease使用{}访问失败！",s);
+                    log.error("netease使用{}访问失败: {}", s, e.getMessage());
                 }
             }else{
                 String cookie = SqConfigCache.getSqConfigValue(SetConfigEnum.PLUG_NETEASE_COOKIE);
@@ -82,7 +105,18 @@ public class NeteaseHander extends SearchHanderAbstract {
             }
         }
         if (!isOpen){
-            log.error("网易云音乐未配置成功！请检查配置！");
+            try {
+                JSONObject officialHealth = fetchOfficialMetadataHealth();
+                if (officialHealth != null && officialHealth.getInteger("code") == 200) {
+                    isOpen = true;
+                    log.warn("所有网易云代理API均不可用，元数据读取将回退网易云官方接口；下载地址仍使用原下载配置");
+                }
+            } catch (Exception e) {
+                log.error("网易云官方元数据接口也不可用: {}", e.getMessage());
+            }
+        }
+        if (!isOpen){
+            log.error("网易云音乐未配置成功！代理API和官方元数据接口均不可用，请检查网络配置！");
         }
         return isOpen;
 
@@ -752,11 +786,73 @@ public class NeteaseHander extends SearchHanderAbstract {
      * 获取歌单详情
      */
     public PlaylistTrackAllResult  getPlayListInfo(String playlistId) {
+        if (StringUtils.isBlank(playlistId)) {
+            throw new RuntimeException("网易云歌单ID不能为空");
+        }
         JSONObject parameter = new JSONObject();// 请求参数
         parameter.put("id", playlistId);
-        JSONObject jsonObject1 = neteaseCloudMusicInfo.playlistDetail(parameter);
-        PlaylistTrackAllResult javaObject = jsonObject1.toJavaObject(PlaylistTrackAllResult.class);
-        return javaObject;
+        JSONObject proxyResponse = null;
+        Exception proxyException = null;
+        try {
+            proxyResponse = neteaseCloudMusicInfo.playlistDetail(parameter);
+            PlaylistTrackAllResult result = toValidPlaylistResult(proxyResponse);
+            if (result != null) {
+                return result;
+            }
+            log.warn("网易云代理歌单详情响应无效，准备回退官方接口: playlistId={}, baseUrl={}, code={}, message={}",
+                    playlistId, neteaseCloudMusicInfo.getBaseUrl(), responseCode(proxyResponse), responseMessage(proxyResponse));
+        } catch (Exception e) {
+            proxyException = e;
+            log.warn("网易云代理歌单详情请求失败，准备回退官方接口: playlistId={}, baseUrl={}, error={}",
+                    playlistId, neteaseCloudMusicInfo.getBaseUrl(), e.getMessage());
+        }
+
+        try {
+            JSONObject officialResponse = fetchOfficialPlaylistDetail(playlistId);
+            PlaylistTrackAllResult result = toValidPlaylistResult(officialResponse);
+            if (result != null) {
+                log.info("网易云歌单详情已使用官方接口回退: playlistId={}", playlistId);
+                return result;
+            }
+            throw new RuntimeException("官方接口返回无效响应，code=" + responseCode(officialResponse)
+                    + ", message=" + responseMessage(officialResponse));
+        } catch (Exception officialException) {
+            String proxyError = proxyException == null
+                    ? "code=" + responseCode(proxyResponse) + ", message=" + responseMessage(proxyResponse)
+                    : proxyException.getMessage();
+            throw new RuntimeException("获取网易云歌单详情失败，歌单ID=" + playlistId
+                    + "，代理接口错误=" + proxyError
+                    + "，官方接口错误=" + officialException.getMessage(), officialException);
+        }
+    }
+
+    private PlaylistTrackAllResult toValidPlaylistResult(JSONObject response) {
+        if (response == null) {
+            return null;
+        }
+        PlaylistTrackAllResult result = response.toJavaObject(PlaylistTrackAllResult.class);
+        return result != null && result.getPlaylist() != null ? result : null;
+    }
+
+    protected JSONObject fetchOfficialPlaylistDetail(String playlistId) {
+        return getOfficialJson(NETEASE_OFFICIAL_PLAYLIST_DETAIL_URL,
+                Collections.singletonMap("id", playlistId));
+    }
+
+    protected JSONObject fetchOfficialMetadataHealth() {
+        return getOfficialJson(NETEASE_OFFICIAL_HEALTH_URL, Collections.emptyMap());
+    }
+
+    private String responseCode(JSONObject response) {
+        return response == null ? "null" : response.getString("code");
+    }
+
+    private String responseMessage(JSONObject response) {
+        if (response == null) {
+            return "empty response";
+        }
+        String message = response.getString("message");
+        return StringUtils.isBlank(message) ? response.getString("msg") : message;
     }
 
     /**
@@ -796,10 +892,7 @@ public class NeteaseHander extends SearchHanderAbstract {
             List<Long> batch = new ArrayList<>(songIds.subList(i, Math.min(i + batchSize, songIds.size())));
             JSONObject parameter = new JSONObject();
             parameter.put("ids", batch.stream().map(String::valueOf).collect(Collectors.joining(",")));
-            JSONObject jsonObject = neteaseCloudMusicInfo.songDetail(parameter);
-            if (jsonObject == null) {
-                continue;
-            }
+            JSONObject jsonObject = getSongDetailWithFallback(parameter, batch);
             PlaylistTrackAllResult result = jsonObject.toJavaObject(PlaylistTrackAllResult.class);
             if (result != null && result.getSongs() != null) {
                 List<Long> returnedIds = new ArrayList<>();
@@ -830,6 +923,84 @@ public class NeteaseHander extends SearchHanderAbstract {
             }
         }
         return resmusic;
+    }
+
+    private JSONObject getSongDetailWithFallback(JSONObject parameter, List<Long> songIds) {
+        JSONObject proxyResponse = null;
+        try {
+            proxyResponse = neteaseCloudMusicInfo.songDetail(parameter);
+            if (hasSongs(proxyResponse)) {
+                return proxyResponse;
+            }
+            log.warn("网易云代理歌曲详情响应无效，准备回退官方接口: songCount={}, baseUrl={}, code={}, message={}",
+                    songIds.size(), neteaseCloudMusicInfo.getBaseUrl(), responseCode(proxyResponse), responseMessage(proxyResponse));
+        } catch (Exception e) {
+            log.warn("网易云代理歌曲详情请求失败，准备回退官方接口: songCount={}, baseUrl={}, error={}",
+                    songIds.size(), neteaseCloudMusicInfo.getBaseUrl(), e.getMessage());
+        }
+
+        try {
+            JSONObject officialResponse = fetchOfficialSongDetail(songIds);
+            if (hasSongs(officialResponse)) {
+                log.info("网易云歌曲详情已使用官方接口回退: songCount={}", songIds.size());
+                return officialResponse;
+            }
+            throw new RuntimeException("官方接口返回无歌曲，code=" + responseCode(officialResponse)
+                    + ", message=" + responseMessage(officialResponse));
+        } catch (Exception e) {
+            throw new RuntimeException("获取网易云歌曲详情失败，歌曲数量=" + songIds.size()
+                    + "，代理接口code=" + responseCode(proxyResponse)
+                    + "，官方接口错误=" + e.getMessage(), e);
+        }
+    }
+
+    private boolean hasSongs(JSONObject response) {
+        return response != null && response.getJSONArray("songs") != null
+                && !response.getJSONArray("songs").isEmpty();
+    }
+
+    protected JSONObject fetchOfficialSongDetail(List<Long> songIds) {
+        JSONArray songs = new JSONArray();
+        for (Long songId : songIds) {
+            JSONObject song = new JSONObject();
+            song.put("id", songId);
+            songs.add(song);
+        }
+        return getOfficialJson(NETEASE_OFFICIAL_SONG_DETAIL_URL,
+                Collections.singletonMap("c", songs.toJSONString()));
+    }
+
+    private JSONObject getOfficialJson(String url, Map<String, String> parameters) {
+        StringBuilder requestUrl = new StringBuilder(url);
+        if (parameters != null && !parameters.isEmpty()) {
+            requestUrl.append('?');
+            parameters.forEach((key, value) -> requestUrl
+                    .append(URLEncoder.encode(key, StandardCharsets.UTF_8))
+                    .append('=')
+                    .append(URLEncoder.encode(value, StandardCharsets.UTF_8))
+                    .append('&'));
+            requestUrl.setLength(requestUrl.length() - 1);
+        }
+
+        HttpRequest request = HttpRequest.newBuilder(URI.create(requestUrl.toString()))
+                .timeout(Duration.ofSeconds(15))
+                .header("User-Agent", NETEASE_WEB_USER_AGENT)
+                .header("Referer", "https://music.163.com/")
+                .GET()
+                .build();
+        try {
+            HttpResponse<String> response = NETEASE_OFFICIAL_HTTP_CLIENT.send(
+                    request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            if (response.statusCode() < 200 || response.statusCode() >= 300) {
+                throw new RuntimeException("HTTP " + response.statusCode());
+            }
+            return JSONObject.parseObject(response.body());
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("请求被中断", e);
+        } catch (IOException e) {
+            throw new RuntimeException("网络请求失败: " + e.getMessage(), e);
+        }
     }
 
     /**
