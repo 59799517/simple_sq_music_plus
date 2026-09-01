@@ -51,6 +51,27 @@ services:
       retries: 5
     restart: always
 
+  kugoumusicapi:
+    build:
+      context: https://github.com/MakcRe/KuGouMusicApi.git
+    container_name: sqmusic_kugou_api
+    ports:
+      - "3000:3000"
+    networks:
+      - sq-app-network
+    restart: unless-stopped
+    environment:
+      PLATFORM: lite
+
+  neteasecloudmusicapi:
+    image: registry.cn-hangzhou.aliyuncs.com/sqdockler/netease_cloud_music_api:v4.32.0
+    container_name: sqmusic_netease_api
+    ports:
+      - "3001:3000"
+    networks:
+      - sq-app-network
+    restart: unless-stopped
+
 networks:
   sq-app-network:
     driver: bridge

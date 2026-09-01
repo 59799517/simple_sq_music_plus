@@ -80,6 +80,41 @@ public class InitV3  implements ApplicationRunner {
         //------------------------网易云音乐-----------------------------
         String  netsqConfigvalue = SqConfigCache.getSqConfigValue(SetConfigEnum.PLUG_NETEASE_OPEN);
         if (Boolean.valueOf(netsqConfigvalue)) {
+            // 检测自建 neteasecloudmusicapi 服务，若可用则将其放到 baseUrl 首位
+            String neteaseBuiltinUrl = "http://neteasecloudmusicapi:3000";
+//            String neteaseBuiltinUrl = "http://127.0.0.1:3000";
+            if (checkServiceAvailable(neteaseBuiltinUrl)) {
+                log.info("✓ 检测到自建网易云API服务: {}", neteaseBuiltinUrl);
+                String neteaseBaseUrl = SqConfigCache.getSqConfigValue(SetConfigEnum.PLUG_NETEASE_BASEURL);
+                boolean needUpdate = false;
+                if (StringUtils.isNotBlank(neteaseBaseUrl)) {
+                    // 取出第一个非空地址，判断是否为内置URL
+                    String[] urls = neteaseBaseUrl.split(";");
+                    String firstUrl = "";
+                    for (String url : urls) {
+                        if (StringUtils.isNotBlank(url)) {
+                            firstUrl = url.trim();
+                            break;
+                        }
+                    }
+                    if (!neteaseBuiltinUrl.equals(firstUrl)) {
+                        neteaseBaseUrl = neteaseBuiltinUrl + ";" + neteaseBaseUrl;
+                        needUpdate = true;
+                    }
+                } else {
+                    neteaseBaseUrl = neteaseBuiltinUrl + ";";
+                    needUpdate = true;
+                }
+                if (needUpdate) {
+                    SqConfigCache.updateConfigToDb(SetConfigEnum.PLUG_NETEASE_BASEURL, neteaseBaseUrl);
+                    log.info("已将自建网易云API地址添加到baseUrl首位: {}", neteaseBaseUrl);
+                } else {
+                    log.info("自建网易云API地址已在baseUrl首位，无需更新");
+                }
+            } else {
+                log.error("未检测到自建网易云API服务: {}, 使用配置的公共API", neteaseBuiltinUrl);
+            }
+
             String sqConfigValue = SqConfigCache.getSqConfigValue(SetConfigEnum.PLUG_NETEASE_COOKIE);
             if (StringUtils.isNotEmpty(sqConfigValue)){
                log.info("发现网易云音cookie使用cookie登陆");
