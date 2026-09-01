@@ -8,14 +8,6 @@ on:
         description: '要构建的 npm 包版本号（如 4.32.0），留空则自动使用 npm 最新版本'
         required: false
         default: ''
-      update_compose:
-        description: '构建成功后是否同步更新 compose 文件版本号 (true/false)'
-        required: false
-        default: 'true'
-
-permissions:
-  contents: write  # 允许提交更新后的 compose 版本号
-
 env:
   IMAGE_NAME: registry.cn-hangzhou.aliyuncs.com/sqdockler/netease_cloud_music_api
   NPM_PACKAGE: NeteaseCloudMusicApi
@@ -70,12 +62,40 @@ jobs:
             echo "exists=false" >> $GITHUB_OUTPUT
           fi
 
+      # 构建上下文目录无需提交到仓库：构建时临时生成一个极简 Dockerfile，
+      # 直接基于 npm 包 NeteaseCloudMusicApi 安装（与本地 npm install 流程一致）
+      # 用 printf 逐行写入（单引号防 shell 展开，${NETEASE_API_VERSION} 保留给 Docker ARG 使用）
+      - name: Prepare build context
+        if: steps.check_image.outputs.exists == 'false'
+        run: |
+          mkdir -p ./netease-cloud-music-api
+          printf '%s\n' \
+            'FROM node:20-alpine' \
+            '' \
+            'RUN apk add --no-cache tini' \
+            '' \
+            'ENV NODE_ENV=production' \
+            '' \
+            'WORKDIR /app' \
+            '' \
+            'ARG NETEASE_API_VERSION=latest' \
+            '' \
+            'RUN npm install --omit=dev NeteaseCloudMusicApi@${NETEASE_API_VERSION}' \
+            '' \
+            'EXPOSE 3000' \
+            '' \
+            'CMD ["/sbin/tini", "--", "node", "node_modules/NeteaseCloudMusicApi/app.js"]' \
+            > ./netease-cloud-music-api/Dockerfile
+          echo "Dockerfile 生成完成，构建版本: ${{ steps.npm_version.outputs.version }}"
+
       - name: Build and Push to Aliyun
         if: steps.check_image.outputs.exists == 'false'
         uses: docker/build-push-action@v6
         with:
           context: ./netease-cloud-music-api
           file: ./netease-cloud-music-api/Dockerfile
+          build-args: |
+            NETEASE_API_VERSION=${{ steps.npm_version.outputs.version }}
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
@@ -84,31 +104,6 @@ jobs:
           provenance: false
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
-      # 新版本构建成功后，可把 compose 文件里的固定版本号更新到本次构建版本并提交，
-      # 保证 compose 引用的是构建好的固定版本（可用 update_compose 输入控制）
-      - name: Update compose version and commit
-        if: steps.check_image.outputs.exists == 'false' && inputs.update_compose == 'true'
-        run: |
-          NEW_TAG="v${{ steps.npm_version.outputs.version }}"
-          echo "更新 compose 版本号到: ${NEW_TAG}"
-
-          for file in docker-compose.yml docker-compose-arm.yml docker-compose-template.yml docker-compose-arm-template.yml; do
-            if [ -f "$file" ]; then
-              sed -i "s|${IMAGE_NAME}:v[0-9.]*|${IMAGE_NAME}:${NEW_TAG}|g" "$file"
-              echo "已更新: $file"
-            fi
-          done
-
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git add docker-compose.yml docker-compose-arm.yml docker-compose-template.yml docker-compose-arm-template.yml
-          if git diff --cached --quiet; then
-            echo "无版本号变更，跳过提交"
-          else
-            git commit -m "chore: update netease api image version to ${NEW_TAG}"
-            git push
-          fi
 
       - name: Summary
         if: always()
