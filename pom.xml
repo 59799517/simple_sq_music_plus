@@ -336,6 +336,7 @@
                 <configuration>
                     <layers>
                         <enabled>true</enabled>
+                        <configuration>${project.basedir}/src/main/resources/layers.xml</configuration>
                     </layers>
                 </configuration>
             </plugin>

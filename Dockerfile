@@ -8,8 +8,8 @@ ARG JAR_FILE=target/simple_sq_music_plus.jar
 # 复制预构建 JAR（CI 中由 build job 产出并通过 artifact 传入）
 COPY ${JAR_FILE} app.jar
 
-# 使用 Spring Boot 的分层工具提取 JAR
-RUN java -Djarmode=layertools -jar app.jar extract --destination /extractor/layers
+# 使用 Spring Boot 的分层工具提取 JAR（自定义 layers.xml 将重型依赖隔离到 heavy-native 层）
+RUN java -Djarmode=tools -jar app.jar extract --layers --launcher --destination /extractor/layers
 
 # 第二阶段：运行环境
 FROM amazoncorretto:21-alpine
@@ -17,12 +17,14 @@ FROM amazoncorretto:21-alpine
 # 设置工作目录
 WORKDIR /app
 
-# 按层次复制文件（优化 Docker 缓存）
-# dependencies 层（很少变化）
+# 按稳定性从高到低复制（最稳定的放最前面，优化 Docker 缓存）
+# heavy-native 层：jave/javacv/nashorn 重型依赖，版本不变则永远缓存
+COPY --from=extractor /extractor/layers/heavy-native/ ./
+# dependencies 层：其余 Maven 依赖
 COPY --from=extractor /extractor/layers/dependencies/ ./
-# spring-boot-loader 层（很少变化）
+# spring-boot-loader 层
 COPY --from=extractor /extractor/layers/spring-boot-loader/ ./
-# application 层（经常变化）
+# application 层：业务代码（最常变）
 COPY --from=extractor /extractor/layers/application/ ./
 
 # 显示架构信息（便于调试）

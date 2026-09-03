@@ -1,0 +1,28 @@
+<layers xmlns="http://www.springframework.org/schema/boot/layers"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.springframework.org/schema/boot/layers
+                            https://www.springframework.org/schema/boot/layers/layers-2.7.xsd">
+    <dependencies>
+        <!-- 重型原生依赖单独一层：不随业务代码、小依赖变动而失效 -->
+        <into layer="heavy-native">
+            <include>org.bytedeco:*</include>
+            <include>ws.schild:*</include>
+            <include>org.openjdk.nashorn:*</include>
+        </into>
+        <!-- 其余普通依赖一层 -->
+        <into layer="dependencies"/>
+    </dependencies>
+    <application>
+        <into layer="spring-boot-loader">
+            <include>org/springframework/boot/loader/**</include>
+        </into>
+        <into layer="application"/>
+    </application>
+    <!-- 越稳定的层越靠前 -->
+    <layerOrder>
+        <layer>heavy-native</layer>
+        <layer>dependencies</layer>
+        <layer>spring-boot-loader</layer>
+        <layer>application</layer>
+    </layerOrder>
+</layers>
