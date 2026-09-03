@@ -9,7 +9,7 @@ ARG JAR_FILE=target/simple_sq_music_plus.jar
 COPY ${JAR_FILE} app.jar
 
 # 使用 Spring Boot 的分层工具提取 JAR（自定义 layers.xml 将重型依赖隔离到 heavy-native 层）
-RUN java -Djarmode=tools -jar app.jar extract --layers --launcher --destination /extractor/layers
+RUN java -Djarmode=layertools -jar app.jar extract --destination /extractor/layers
 
 # 第二阶段：运行环境
 FROM amazoncorretto:21-alpine
