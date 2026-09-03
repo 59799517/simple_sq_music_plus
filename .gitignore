@@ -42,4 +42,7 @@ vue/package-lock.json
 .lingma/**
 /.reasonix/
 .reasonix/**
+./.codebuddy
+./.codebuddy/**
+.codebuddy/
 AGENTS.md
