@@ -2,12 +2,6 @@
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="http://www.springframework.org/schema/boot/layers
                             https://www.springframework.org/schema/boot/layers/layers-2.7.xsd">
-    <application>
-        <into layer="spring-boot-loader">
-            <include>org/springframework/boot/loader/**</include>
-        </into>
-        <into layer="application"/>
-    </application>
     <dependencies>
         <!-- 重型原生依赖单独一层：不随业务代码、小依赖变动而失效 -->
         <into layer="heavy-native">
