@@ -12,10 +12,10 @@ public enum DownloadStatus {
 
     waiting("待下载","waiting"),
     loading("正在进行","loading"),
-    
     success("成功","success"),
-
     error("错误","error"),
+    //等待重试
+    retry("等待重试","retry"),
 //   补充下载
     supplement("补充下载","supplement"),
     supplement_success("补充成功","supplement_success");

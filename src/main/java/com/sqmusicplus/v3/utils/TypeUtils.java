@@ -43,9 +43,9 @@ public class TypeUtils {
 //        if (plugTypeName.equals(PlugBrType.MG_FLAC_2000.getPlugName())&&br==null){
 //            return PlugBrType.MG_FLAC_2000;
 //        }
-        if (plugTypeName.equals(PlugBrType.QQ_Flac_2000.getPlugName())&&br==null){
-            return PlugBrType.QQ_Flac_2000;
-        }
+//        if (plugTypeName.equals(PlugBrType.QQ_Flac_2000.getPlugName())&&br==null){
+//            return PlugBrType.QQ_Flac_2000;
+//        }
         if (plugTypeName.equals(PlugBrType.QQVIP_Flac_2000.getPlugName())&&br==null){
             return PlugBrType.QQVIP_Flac_2000;
         }
@@ -89,9 +89,9 @@ public class TypeUtils {
 //        if (plugTypeName.equals(PlugBrType.MG_FLAC_2000.getPlugName())&&StringUtils.isEmpty(value)){
 //            return PlugBrType.MG_FLAC_2000;
 //        }
-        if (plugTypeName.equals(PlugBrType.QQ_Flac_2000.getPlugName())&&StringUtils.isEmpty(value)){
-            return PlugBrType.QQ_Flac_3000;
-        }
+//        if (plugTypeName.equals(PlugBrType.QQ_Flac_2000.getPlugName())&&StringUtils.isEmpty(value)){
+//            return PlugBrType.QQ_Flac_3000;
+//        }
         if (plugTypeName.equals(PlugBrType.QQVIP_Flac_2000.getPlugName())&&StringUtils.isEmpty(value)){
             return PlugBrType.QQVIP_Flac_2000;
         }

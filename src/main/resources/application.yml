@@ -67,12 +67,12 @@ mybatis-plus:
 # 日志配置
 logging:
   level:
-    com.sqmusicplus: info
+    com.sqmusicplus: debug
     com.sqmusicplus.v3.config.RequireLoginPathScanner: info
     org.springframework: warn
     org.jaudiotagger: warn
 
-version: 3.1.22
+version: 3.1.23
 webversion: 3.1.4
 
 # JWT 配置

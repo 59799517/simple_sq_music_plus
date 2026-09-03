@@ -17,6 +17,7 @@ import com.sqmusicplus.v3.base.enums.PlugBrType;
 import com.sqmusicplus.v3.base.enums.SetConfigEnum;
 import com.sqmusicplus.v3.base.service.DownloadInfoService;
 import com.sqmusicplus.v3.config.SqConfigCache;
+import com.sqmusicplus.v3.config.exception.DownloadTimeoutException;
 import com.sqmusicplus.v3.download.DownloadStatus;
 import com.sqmusicplus.v3.download.vo.DownloadUrlResult;
 import com.sqmusicplus.v3.plug.entity.PlugSearchMusicResult;
@@ -323,7 +324,7 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
                         boolean completed = downloadLatch.await(5, TimeUnit.MINUTES);
                         if (!completed) {
                             log.error("后续处理超时: {}", baseMusicName);
-                            throw new RuntimeException("后续处理超时: " + baseMusicName);
+                            throw new DownloadTimeoutException("后续处理超时: " + baseMusicName);
                         }
                         Exception exception = downloadException.get();
                         if (exception != null) {
@@ -383,7 +384,7 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
                 boolean completed = downloadLatch.await(5, TimeUnit.MINUTES);
                 if (!completed) {
                     log.error("下载超时: {}", baseMusicName);
-                    throw new RuntimeException("下载超时: " + baseMusicName);
+                    throw new DownloadTimeoutException("下载超时: " + baseMusicName);
                 }
                 
                 // 检查下载过程中是否有异常

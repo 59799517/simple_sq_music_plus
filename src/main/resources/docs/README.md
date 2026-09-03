@@ -566,6 +566,64 @@ docker-compose -f docker-compose-arm.yml restart
 
 ---
 
+##### 1.10 获取全部支持的插件音质列表
+**接口地址**: `/api/config/getPlugBrTypeList`  
+**请求方式**: GET  
+**是否需要登录**: 否  
+**接口描述**: 获取系统全部支持的插件音质类型列表
+
+**请求参数**: 无
+
+**响应参数**:
+```json
+{
+    "msg": "操作成功",
+    "code": 200,
+    "data": [
+        {
+            "value": "2000kflac",
+            "type": "flac",
+            "bit": 2000,
+            "plugName": "kw",
+            "springName": "nKwSearchHander",
+            "id": "kw_flac_2000"
+        },
+        {
+            "value": "320kmp3",
+            "type": "mp3",
+            "bit": 320,
+            "plugName": "kw",
+            "springName": "nKwSearchHander",
+            "id": "kw_mp3_320"
+        },
+        {
+            "value": "standard",
+            "type": "mp3",
+            "bit": 128,
+            "plugName": "netease",
+            "springName": "neteaseHander",
+            "id": "netease_mp3_128"
+        }
+    ]
+}
+```
+
+| 字段名 | 类型 | 说明 |
+| --- | --- | --- |
+| value | string | 音质原始标识值(如:"2000kflac"、"320kmp3") |
+| type | string | 音频文件格式(如:flac、mp3、ape、m4a、aac、ogg) |
+| bit | integer | 音质比特率(如:128、320、2000、2800) |
+| plugName | string | 所属插件标识(如:kw、qq、netease、mg、tidal、qobuz) |
+| springName | string | 对应的Spring Bean名称(如:nKwSearchHander) |
+| id | string | 音质唯一标识ID(如:kw_flac_2000、netease_mp3_128,用于下载接口的brType参数) |
+
+**注意事项**:
+- 返回的是系统支持的全部音质类型,不区分插件是否已启用
+- id 字段用于下载相关接口中的 brType / downloadBrType 参数
+- 同一插件可能支持多种音质,通过 bit 值区分
+
+---
+
 #### 2. 音乐搜索模块 (MusicController)
 
 ##### 2.1 搜索提示词
@@ -1822,6 +1880,65 @@ docker-compose -f docker-compose-arm.yml restart
     "msg": "成功"
 }
 ```
+
+---
+
+##### 4.10 高级任务处理
+**接口地址**: `/api/task/advancedTask`  
+**请求方式**: POST  
+**Content-Type**: application/json  
+**是否需要登录**: 否  
+**接口描述**: 根据多种筛选条件批量删除或重新下载任务
+
+**请求参数**:
+```json
+{
+    "operationType": "delete",
+    "downloadCreateTimeStart": "2026-04-01 00:00:00",
+    "downloadCreateTimeEnd": "2026-04-10 00:00:00",
+    "downloadPlugName": "kw",
+    "downloadBrType": "kw_flac_2000",
+    "downloadMusicname": "那天下雨了",
+    "downloadArtistname": "周杰伦",
+    "downloadAlbumname": "太阳之子",
+    "downloadStatus": "error",
+    "downloadUpdateTimeStart": "2026-04-01 00:00:00",
+    "downloadUpdateTimeEnd": "2026-04-10 00:00:00"
+}
+```
+
+| 参数名 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| operationType | string | 是 | 操作类型:`delete`(删除) 或 `rewrite`(重新下载) |
+| downloadCreateTimeStart | string | 否 | 创建时间范围-开始(格式:yyyy-MM-dd HH:mm:ss) |
+| downloadCreateTimeEnd | string | 否 | 创建时间范围-结束(格式:yyyy-MM-dd HH:mm:ss) |
+| downloadPlugName | string | 否 | 插件名称(如:kw、qq、netease) |
+| downloadBrType | string | 否 | 音质类型ID(如:kw_flac_2000) |
+| downloadMusicname | string | 否 | 歌曲名称(精确匹配) |
+| downloadArtistname | string | 否 | 歌手名称(精确匹配) |
+| downloadAlbumname | string | 否 | 专辑名称(精确匹配) |
+| downloadStatus | string | 否 | 下载状态(success/error/waiting/loading/retry) |
+| downloadUpdateTimeStart | string | 否 | 更新时间范围-开始(格式:yyyy-MM-dd HH:mm:ss) |
+| downloadUpdateTimeEnd | string | 否 | 更新时间范围-结束(格式:yyyy-MM-dd HH:mm:ss) |
+
+**响应参数**:
+```json
+{
+    "code": 200,
+    "msg": "重试成功！"
+}
+```
+
+**操作类型说明**:
+- **delete**: 根据筛选条件批量删除匹配的下载任务
+- **rewrite**: 根据筛选条件批量将匹配的任务重置为等待下载状态,同时清空重试次数和重试时间
+
+**注意事项**:
+- operationType 必须填写,仅支持 `delete` 和 `rewrite` 两个值
+- 所有筛选条件为可选参数,多个条件之间为 AND 关系(同时满足)
+- 时间范围条件需要 start 和 end 同时提供才会生效
+- rewrite 操作会将匹配任务的状态重置为 waiting,并将 downloadRetryNum 置为 0、downloadRetryTime 置为 null
+- 建议先用较精确的条件筛选,避免误操作大量任务
 
 ---
 

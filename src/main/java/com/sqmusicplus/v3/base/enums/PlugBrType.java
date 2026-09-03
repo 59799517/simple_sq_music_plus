@@ -15,13 +15,13 @@ public enum PlugBrType {
     MG_MP3_320("HQ","mp3",320,"mg","mgHander","mg_mp3_320"),
     MG_MP3_128("PQ","mp3",128,"mg","mgHander","mg_mp3_128"),
     MG_MP3_64("LQ","mp3",64,"mg","mgHander","mg_mp3_64"),
-
-    QQ_MP3_128("HQ_M500","mp3",128,"qq","qqHander","qq_mp3_128"),
-    QQ_MP3_320("HQ_M800","mp3",320,"qq","qqHander","qq_mp3_320"),
-    QQ_Flac_2000("SQ_F000","flac",2000,"qq","qqHander","qq_flac_2000"),
-    QQ_Flac_3000("HR_RS01","flac",3000,"qq","qqHander","qq_flac_3000"),
-    QQ_Flac_4000("HR_Q000","flac",3000,"qq","qqHander","qq_flac_4000"),
-    QQ_Flac_5000("HR_AI00","flac",3000,"qq","qqHander","qq_flac_5000"),
+//
+//    QQ_MP3_128("HQ_M500","mp3",128,"qq","qqHander","qq_mp3_128"),
+//    QQ_MP3_320("HQ_M800","mp3",320,"qq","qqHander","qq_mp3_320"),
+//    QQ_Flac_2000("SQ_F000","flac",2000,"qq","qqHander","qq_flac_2000"),
+//    QQ_Flac_3000("HR_RS01","flac",3000,"qq","qqHander","qq_flac_3000"),
+//    QQ_Flac_4000("HR_Q000","flac",3000,"qq","qqHander","qq_flac_4000"),
+//    QQ_Flac_5000("HR_AI00","flac",3000,"qq","qqHander","qq_flac_5000"),
 
     NETEASE_MP3_128("standard", "mp3", 128,"netease","neteaseHander","netease_mp3_128"),
     NETEASE_MP3_192("higher", "mp3", 192,"netease","neteaseHander","netease_mp3_192"),
@@ -52,13 +52,13 @@ public enum PlugBrType {
 //    KG_Flac_5000("viper_tape", "flac", 5000,"kg","kgHander","kg_flac_5000"),
 
 
-    APPLE_MP3_320("320","mp3",320,"apple","appleHander","apple_mp3_320"),
-    APPLE_AAC_256("3000","aac",256,"apple","appleHander","apple_aac_256"),
-    APPLE_OGG_257("256","ogg",257,"apple","appleHander","apple_ogg_257"),
-    APPLE_M4A_258("257","m4a",258,"apple","appleHander","apple_m4a_258"),
-    APPLE_WAV_1500("1500","wav",1500,"apple","appleHander","apple_wav_1500"),
-    APPLE_FLAC_2000("2000","flac",2000,"apple","appleHander","apple_flac_2000"),
-    APPLE_SOURCE_9999("2000","m4a",9999,"apple","appleHander","apple_source_9999"),
+//    APPLE_MP3_320("320","mp3",320,"apple","appleHander","apple_mp3_320"),
+//    APPLE_AAC_256("3000","aac",256,"apple","appleHander","apple_aac_256"),
+//    APPLE_OGG_257("256","ogg",257,"apple","appleHander","apple_ogg_257"),
+//    APPLE_M4A_258("257","m4a",258,"apple","appleHander","apple_m4a_258"),
+//    APPLE_WAV_1500("1500","wav",1500,"apple","appleHander","apple_wav_1500"),
+//    APPLE_FLAC_2000("2000","flac",2000,"apple","appleHander","apple_flac_2000"),
+//    APPLE_SOURCE_9999("2000","m4a",9999,"apple","appleHander","apple_source_9999"),
 
     TIDAL_M4A_320("HIGH","mp3",320,"tidal","tidalSearchHander","tidal_m4a_320"),
     TIDAL_FLAC_LOSSLESS("LOSSLESS","flac",1411,"tidal","tidalSearchHander","tidal_flac_lossless"),
@@ -136,9 +136,9 @@ public enum PlugBrType {
     }
 
 
-    public static List<PlugBrType> getAppleAllType(){
-        return List.of(APPLE_MP3_320,APPLE_AAC_256,APPLE_OGG_257,APPLE_M4A_258,APPLE_WAV_1500,APPLE_FLAC_2000,APPLE_SOURCE_9999);
-    }
+//    public static List<PlugBrType> getAppleAllType(){
+//        return List.of(APPLE_MP3_320,APPLE_AAC_256,APPLE_OGG_257,APPLE_M4A_258,APPLE_WAV_1500,APPLE_FLAC_2000,APPLE_SOURCE_9999);
+//    }
 
     /**
      * 根据 type（文件格式如 flac/mp3）和 plugName 找出该类型中 bit 最大的枚举

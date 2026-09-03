@@ -32,6 +32,7 @@ public class SqConfigCache {
 
 
 
+
     public static void setSqConfigMap(HashMap<String, SqConfig> sqConfigMap) {
         SqConfigCache.sqConfigMap = sqConfigMap;
     }

@@ -97,11 +97,16 @@ public enum SetConfigEnum {
      */
     SYSTEM_DOWNLOAD_FAILED_USE_OTHER_PLUGIN_MATCH_MODE("system.download.failed.use.other.plugin.match.mode","下载失败时使用其他插件搜索歌曲的匹配模式","system"),
     /**
-     * 是否允许下载失败的歌曲使用其他插件下载时降低歌曲音质 暂时不开发
+     * 下载超时歌曲重试间隔时长（分）
      */
-//    INSERT INTO `sq_config` ( `config_name`, `config_value`, `config_key`, `config_type`, `config_show`, `config_remark`, `config_null_check`, `config_disabled`) VALUES ('是否允许下载失败的歌曲使用其他插件下载时降低歌曲音质', 'true', 'system.download.failed.use.other.plugin.decrease.quality', 'boolean', 1, '是否允许下载失败的歌曲使用其他插件下载时降低歌曲音质（如果flac都无法下载是否允许下载为mp3）', 1, 1);
-//    SYSTEM_DOWNLOAD_FAILED_USE_OTHER_PLUGIN_DECREASE_QUALITY("system.download.failed.use.other.plugin.decrease.quality","是否允许下载失败的歌曲使用其他插件下载时降低歌曲音质","system"),
+    SYSTEM_DOWNLOAD_TIMEOUT_RETRY_INTERVAL("system.download.timeout.retry.interval","下载超时歌曲重试间隔时长（分）","system"),
+    /**
+     * 插件下载超时重试次数
+     */
+    SYSTEM_DOWNLOAD_TIMEOUT_RETRY_NUM("system.download.timeout.retry.num","插件下载超时重试次数","system"),
+
 //    ------------QQ插件配置-----------------
+
 
     /**
      * 是否开启QQvip音乐插件

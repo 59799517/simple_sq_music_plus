@@ -36,6 +36,7 @@ public class AutoDdlConfig   extends SimpleDdl {
                 ,"db/3.1.9update.sql"
                 ,"db/3.1.16update.sql"
                 ,"db/3.1.17update.sql"
+                ,"db/3.1.23update.sql"
         );
     }
 

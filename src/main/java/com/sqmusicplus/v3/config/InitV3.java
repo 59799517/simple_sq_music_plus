@@ -70,7 +70,8 @@ public class InitV3  implements ApplicationRunner {
         if (Boolean.valueOf(kwsqConfigvalue)) {
             HashMap<String, String> kwoption = new HashMap<>();
             kwoption.put("value","kw");
-            kwoption.put("label","某我(无需登录支持flac)");
+            kwoption.put("label","某我");
+            kwoption.put("desc","无需登录支持flac");
             SqConfigCache.addPlugOptions(kwoption);
             log.info("酷我插件开启成功！");
         }else{
@@ -125,7 +126,8 @@ public class InitV3  implements ApplicationRunner {
             if ( b){
                 HashMap<String, String> neteaseoption = new HashMap<>();
                 neteaseoption.put("value","netease");
-                neteaseoption.put("label","猪厂(无需登录支持flac)");
+                neteaseoption.put("label","猪厂");
+                neteaseoption.put("desc","无需登录支持flac");
                 SqConfigCache.addPlugOptions(neteaseoption);
                 log.info("网易云音乐插件开启成功！");
             }else{
@@ -142,7 +144,9 @@ public class InitV3  implements ApplicationRunner {
         if (Boolean.valueOf(qqvipsqConfigvalue)) {
             HashMap<String, String> QQVIPoption = new HashMap<>();
             QQVIPoption.put("value","qqvip");
-            QQVIPoption.put("label","鹅厂VIP下载（登录支持flac，自动同步喜欢的去设置开启）");
+            QQVIPoption.put("label","鹅厂VIP下");
+            QQVIPoption.put("desc","需要登录，支持flac，自动同步喜欢的去设置开启");
+
             SqConfigCache.addPlugOptions(QQVIPoption);
             log.info("QQvip插件开启成功！");
             qqvipHander.initPlug();
@@ -164,7 +168,8 @@ public class InitV3  implements ApplicationRunner {
         if (Boolean.valueOf(mgsqConfigvalue)) {
             HashMap<String, String> kwoption = new HashMap<>();
             kwoption.put("value","mg");
-            kwoption.put("label","移动(无需登录支持320Mp3)");
+            kwoption.put("label","移动");
+            kwoption.put("desc","无需登录支持320Mp3");
             SqConfigCache.addPlugOptions(kwoption);
             log.info("咪咕（移动）插件开启成功！");
         }else{
@@ -193,7 +198,8 @@ public class InitV3  implements ApplicationRunner {
             if (StringUtils.isNotEmpty(dockerApiUrl)){
                 HashMap<String, String> KGoption = new HashMap<>();
                 KGoption.put("value","kg");
-                KGoption.put("label","某狗-概念版（签到只支持128Mp3）");
+                KGoption.put("label","某狗-概念版");
+                KGoption.put("desc","需要登录签到，支持128Mp3");
                 SqConfigCache.addPlugOptions(KGoption);
                 log.info("酷狗插件开启成功！");
 
@@ -210,7 +216,8 @@ public class InitV3  implements ApplicationRunner {
         if (Boolean.valueOf(tidalsqConfigvalue)) {
             HashMap<String, String> Tidaloption = new HashMap<>();
             Tidaloption.put("value","tidal");
-            Tidaloption.put("label","Tidal(无需登录支持真flac无损)");
+            Tidaloption.put("label","Tidal");
+            Tidaloption.put("desc","无需登录支持真flac无损-下载错误多试几次");
             SqConfigCache.addPlugOptions(Tidaloption);
             log.info("Tidal插件开启成功！");
         }else {

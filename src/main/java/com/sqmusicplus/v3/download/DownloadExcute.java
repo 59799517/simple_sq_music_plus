@@ -8,6 +8,7 @@ import com.sqmusicplus.v3.base.enums.PlugBrType;
 import com.sqmusicplus.v3.base.enums.SetConfigEnum;
 import com.sqmusicplus.v3.base.service.DownloadInfoService;
 import com.sqmusicplus.v3.config.SqConfigCache;
+import com.sqmusicplus.v3.config.exception.DownloadTimeoutException;
 import com.sqmusicplus.v3.config.exception.IgnoreDownloadException;
 import com.sqmusicplus.v3.download.DownloadRetryService;
 import com.sqmusicplus.v3.plug.base.hander.SearchHander;
@@ -20,6 +21,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 
@@ -85,9 +87,8 @@ public class DownloadExcute {
             for (DownloadInfo loadingRecord : loadingList) {
                 if (loadingRecord.getDownloadUpdateTime() != null &&
                     System.currentTimeMillis() - loadingRecord.getDownloadUpdateTime().getTime() > 10 * 60 * 1000) {
-                    // 超过 10 分钟，标记为超时错误（乐观锁会处理并发冲突）
-                    loadingRecord.setDownloadStatus(DownloadStatus.error.getValue());
-                    loadingRecord.setDownloadMsg("下载超时");
+                    // 超过 10 分钟，进入超时重试流程（乐观锁会处理并发冲突）
+                    markTimeoutRetry(loadingRecord, "下载超时，等待重试");
                     boolean updated = downloadInfoService.updateById(loadingRecord);
                     if (updated) {
                         log.warn("下载超时标记: id={}, name={}, updateTime={}",
@@ -98,6 +99,10 @@ public class DownloadExcute {
                 }
             }
         }
+
+        // 处理 retry 到期记录：到达重试间隔后转回 waiting，重新加入下载队列
+        promoteDueRetryToWaiting();
+
         log.info("正在下载任务--->{}个", loadingCount);
 
         if (waitsize>0) {
@@ -129,6 +134,7 @@ public class DownloadExcute {
                                 searchHander.dnonloadAndSaveToFile(record, searchHander);
                                 //捕获内容
                                 record.setDownloadStatus(DownloadStatus.success.getValue());
+                                record.setDownloadRetryTime(null);
                                 downloadInfoService.updateById(record);
                                 log.debug("修改完成状态--->{}",record);
                                 // QQVIP下载成功后立即更新今日下载计数到DB
@@ -139,6 +145,10 @@ public class DownloadExcute {
                                 //一般是酷我的歌曲信息获取失败导致的需要从新下载
                                 record.setDownloadStatus(DownloadStatus.waiting.getValue());
                                 record.setDownloadMsg(e.getMessage());
+                                downloadInfoService.updateById(record);
+                            }catch (DownloadTimeoutException e){
+                                //下载超时，进入超时重试流程（超时换插件意义不大，跳过其他插件重试）
+                                markTimeoutRetry(record, e.getMessage());
                                 downloadInfoService.updateById(record);
                             }catch (Exception e){
                                 e.printStackTrace();
@@ -157,6 +167,7 @@ public class DownloadExcute {
                             try {
                                 ReflectUtil.invoke(bean, "dnonloadAndSaveToFile", record, bean);
                                 record.setDownloadStatus(DownloadStatus.success.getValue());
+                                record.setDownloadRetryTime(null);
                                 downloadInfoService.updateById(record);
                                 log.debug("修改完成状态--->{}",record);
                                 // QQVIP下载成功后立即更新今日下载计数到DB
@@ -167,6 +178,10 @@ public class DownloadExcute {
                                 //一般是酷我的歌曲信息获取失败导致的需要从新下载
                                 record.setDownloadStatus(DownloadStatus.waiting.getValue());
                                 record.setDownloadMsg(e.getMessage());
+                                downloadInfoService.updateById(record);
+                            }catch (DownloadTimeoutException e){
+                                //下载超时，进入超时重试流程（超时换插件意义不大，跳过其他插件重试）
+                                markTimeoutRetry(record, e.getMessage());
                                 downloadInfoService.updateById(record);
                             }catch (Exception e){
                                 e.printStackTrace();
@@ -190,6 +205,82 @@ public class DownloadExcute {
             }
         }
         
+    }
+
+    /**
+     * 超时重试处理：未达重试次数上限则置 retry 并递增次数、记录重试时间；已达上限则置 error 放弃
+     *
+     * @param record 超时的下载记录
+     * @param msg    进入重试时的提示信息
+     * @return true 表示进入等待重试(retry)，false 表示重试次数已达上限(置为error)
+     */
+    private boolean markTimeoutRetry(DownloadInfo record, String msg) {
+        int maxRetryNum = 3;
+        String retryNumConfig = SqConfigCache.getSqConfigValue(SetConfigEnum.SYSTEM_DOWNLOAD_TIMEOUT_RETRY_NUM);
+        if (StringUtils.isNotBlank(retryNumConfig)) {
+            try {
+                maxRetryNum = Integer.parseInt(retryNumConfig);
+            } catch (NumberFormatException e) {
+                log.warn("解析 SYSTEM_DOWNLOAD_TIMEOUT_RETRY_NUM 失败: {}, 默认使用 {}", retryNumConfig, maxRetryNum);
+            }
+        } else {
+            log.warn("SYSTEM_DOWNLOAD_TIMEOUT_RETRY_NUM 未配置，默认使用 {}", maxRetryNum);
+        }
+
+        int retryNum = record.getDownloadRetryNum() == null ? 0 : record.getDownloadRetryNum();
+        if (retryNum >= maxRetryNum) {
+            record.setDownloadStatus(DownloadStatus.error.getValue());
+            record.setDownloadMsg("下载超时，重试次数已达上限");
+            log.warn("下载超时重试次数已达上限({}), 标记为error: id={}, name={}",
+                maxRetryNum, record.getId(), record.getDownloadMusicname());
+            return false;
+        }
+        record.setDownloadStatus(DownloadStatus.retry.getValue());
+        record.setDownloadRetryNum(retryNum + 1);
+        record.setDownloadRetryTime(new Date());
+        record.setDownloadMsg(msg);
+        log.warn("下载超时, 进入等待重试第{}/{}次: id={}, name={}",
+            retryNum + 1, maxRetryNum, record.getId(), record.getDownloadMusicname());
+        return true;
+    }
+
+    /**
+     * retry 到期扫描：按 SYSTEM_DOWNLOAD_TIMEOUT_RETRY_INTERVAL（分钟）判断是否到达下次重试时间，
+     * 到期的记录转回 waiting 重新进入下载队列；downloadRetryTime 为 null 的老数据视为已到期
+     */
+    private void promoteDueRetryToWaiting() {
+        LambdaQueryWrapper<DownloadInfo> retryQueryWrapper = new LambdaQueryWrapper<>();
+        retryQueryWrapper.eq(DownloadInfo::getDownloadStatus, DownloadStatus.retry.getValue());
+        List<DownloadInfo> retryList = downloadInfoService.list(retryQueryWrapper);
+        if (retryList == null || retryList.isEmpty()) {
+            return;
+        }
+        // 读取重试间隔配置（分钟），未配置/解析失败默认 720
+        long intervalMinutes = 720;
+        String intervalConfig = SqConfigCache.getSqConfigValue(SetConfigEnum.SYSTEM_DOWNLOAD_TIMEOUT_RETRY_INTERVAL);
+        if (StringUtils.isNotBlank(intervalConfig)) {
+            try {
+                intervalMinutes = Long.parseLong(intervalConfig);
+            } catch (NumberFormatException e) {
+                log.warn("解析 SYSTEM_DOWNLOAD_TIMEOUT_RETRY_INTERVAL 失败: {}, 默认使用 {} 分钟", intervalConfig, intervalMinutes);
+            }
+        } else {
+            log.warn("SYSTEM_DOWNLOAD_TIMEOUT_RETRY_INTERVAL 未配置，默认使用 {} 分钟", intervalMinutes);
+        }
+        long intervalMillis = intervalMinutes * 60 * 1000;
+        for (DownloadInfo retryRecord : retryList) {
+            boolean due = retryRecord.getDownloadRetryTime() == null
+                || System.currentTimeMillis() - retryRecord.getDownloadRetryTime().getTime() >= intervalMillis;
+            if (due) {
+                retryRecord.setDownloadStatus(DownloadStatus.waiting.getValue());
+                retryRecord.setDownloadMsg("重试时间已到，重新加入下载队列");
+                boolean updated = downloadInfoService.updateById(retryRecord);
+                if (updated) {
+                    log.info("重试到期, 重新入队: id={}, name={}, retryNum={}",
+                        retryRecord.getId(), retryRecord.getDownloadMusicname(), retryRecord.getDownloadRetryNum());
+                }
+            }
+        }
     }
 
     /**

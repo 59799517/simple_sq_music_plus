@@ -99,6 +99,14 @@ public class DownloadInfo implements Serializable {
 //    父级下载ID（由其他插件重试时产生的新记录的来源下载ID）
     @TableField("parent_download_id")
     private Integer parentDownloadId;
+    //下载的重试次数
+    @TableField("download_retry_num")
+    private Integer downloadRetryNum;
+    //下载的重试时间
+    @TableField("download_retry_time")
+    @JsonFormat(pattern="yyyy-MM-dd HH:mm:ss",timezone="GMT+8")
+    @JSONField(format="yyyy-MM-dd HH:mm:ss")
+    private Date downloadRetryTime;
 
 
 

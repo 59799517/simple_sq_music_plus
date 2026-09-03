@@ -192,6 +192,26 @@ public class ConfigController {
     }
 
     /**
+     * 获取全部支持的插件码率
+     */
+    @RequireLogin(value = false)
+    @GetMapping("/getPlugBrTypeList")
+    public AjaxResult getPlugBrTypeList() {
+        List<HashMap> list = new ArrayList<>();
+        for (PlugBrType value : PlugBrType.values()) {
+            HashMap<String, Object> tempMap = new HashMap<>();
+            tempMap.put("value", value.getValue());
+            tempMap.put("type", value.getType());
+            tempMap.put("bit", value.getBit());
+            tempMap.put("plugName", value.getPlugName());
+            tempMap.put("springName", value.getSpringName());
+            tempMap.put("id", value.getId());
+            list.add(tempMap);
+        }
+
+        return AjaxResult.success(list);
+    }
+    /**
      * 获取版本信息
      *
      * @return
@@ -257,7 +277,8 @@ public class ConfigController {
             if (configValue.equals(DbBooleanConvert.YES.getBooleanValue().toString())) {
                 HashMap<String, String> kwoption = new HashMap<>();
                 kwoption.put("value", "kw");
-                kwoption.put("label", "某我(无需登录支持flac)");
+                kwoption.put("label", "某我");
+                kwoption.put("desc","无需登录支持flac");
                 //修改酷狗插打开插件功能
                 SqConfigCache.updatePlugOptions(kwoption);
             } else {
@@ -269,7 +290,9 @@ public class ConfigController {
             if (configValue.equals(DbBooleanConvert.YES.getBooleanValue().toString())) {
                 HashMap<String, String> QQVIPoption = new HashMap<>();
                 QQVIPoption.put("value", "qqvip");
-                QQVIPoption.put("label","鹅厂VIP下载（登录支持flac，自动同步喜欢的去设置开启）");
+                QQVIPoption.put("label","鹅厂VIP下载");
+                QQVIPoption.put("desc","需要登录，支持flac，自动同步喜欢的去设置开启");
+
                 //修改酷狗插打开插件功能
                 SqConfigCache.updatePlugOptions(QQVIPoption);
                 qqvipHander.initPlug();
@@ -285,7 +308,9 @@ public class ConfigController {
                 if (b) {
                     HashMap<String, String> neteaseoption = new HashMap<>();
                     neteaseoption.put("value", "netease");
-                    neteaseoption.put("label", "猪厂(无需登录支持flac)");
+                    neteaseoption.put("label", "猪厂");
+                    neteaseoption.put("desc","无需登录支持flac");
+
                     //修改酷狗插打开插件功能
                     SqConfigCache.updatePlugOptions(neteaseoption);
                 }else{
@@ -300,7 +325,9 @@ public class ConfigController {
             if (configValue.equals(DbBooleanConvert.YES.getBooleanValue().toString())) {
                 HashMap<String, String> kwoption = new HashMap<>();
                 kwoption.put("value","mg");
-                kwoption.put("label","移动(无需登录支持320Mp3)");
+                kwoption.put("label","移动");
+                kwoption.put("desc","无需登录支持320Mp3");
+
                 SqConfigCache.addPlugOptions(kwoption);
             } else {
                 SqConfigCache.removePlugOptions("mg");
@@ -311,7 +338,9 @@ public class ConfigController {
             if (configValue.equals(DbBooleanConvert.YES.getBooleanValue().toString())) {
                 HashMap<String, String> KGoption = new HashMap<>();
                 KGoption.put("value", "kg");
-                KGoption.put("label","某狗-概念版（签到只支持128Mp3）");
+                KGoption.put("label","某狗-概念版");
+                KGoption.put("desc","需要登录签到，支持128Mp3");
+
                 //修改酷狗插打开插件功能
                 SqConfigCache.updatePlugOptions(KGoption);
             } else {
@@ -334,7 +363,8 @@ public class ConfigController {
             if (configValue.equals(DbBooleanConvert.YES.getBooleanValue().toString())) {
                 HashMap<String, String> TIDALoption = new HashMap<>();
                 TIDALoption.put("value", "tidal");
-                TIDALoption.put("label","Tidal(无需登录支持真flac无损)");
+                TIDALoption.put("label","Tidal");
+                TIDALoption.put("desc","无需登录支持真flac无损-下载错误多试几次");
                 //修改酷狗插打开插件功能
                 SqConfigCache.updatePlugOptions(TIDALoption);
             } else {
