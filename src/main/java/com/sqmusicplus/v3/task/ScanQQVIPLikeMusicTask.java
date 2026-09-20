@@ -130,7 +130,7 @@ public class ScanQQVIPLikeMusicTask {
                 String mid = item.getMid();
                 String name = item.getName();
                 if (!excludeNames.contains(name)&&!exclude.contains(mid)){
-                    List<DownloadInfo> downloadInfos = qQvipHander.downloadArtistAllSong(mid, PlugBrType.QQVIP_Flac_2000);
+                    List<DownloadInfo> downloadInfos = qQvipHander.downloadArtistAllSong(mid, null);
                     List<DownloadInfo> downloadInfos1 = qQvipHander.musicIgnoreCheck(downloadInfos);
                     downloadInfoService.add(downloadInfos1);
                     SqSync sqSync = new SqSync();
@@ -203,7 +203,7 @@ public class ScanQQVIPLikeMusicTask {
                 List<String> collect = item.getVSinger().stream().map(item1 -> item1.getName()).collect(Collectors.toList());
                 String albumname = item.getName();
                 if (!excludeNames.contains(albumname)&&!exclude.contains(albummid)) {
-                    ArrayList<DownloadInfo> downloadInfos = qQvipHander.downloadAlbum(albummid, PlugBrType.QQVIP_Flac_2000, collect, false, albumname);
+                    ArrayList<DownloadInfo> downloadInfos = qQvipHander.downloadAlbum(albummid, null, collect, false, albumname);
                     List<DownloadInfo> downloadInfos1 = qQvipHander.musicIgnoreCheck(downloadInfos);
                     downloadInfoService.add(downloadInfos1);
                     SqSync sqSync = new SqSync();
