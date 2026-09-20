@@ -883,8 +883,19 @@ public abstract class SearchHanderAbstract implements SearchHander, Serializable
                 } catch (Exception e) {
                     log.error("第三方音频标签修改失败{}", e.getMessage(), e);
                 }
-
-                MusicUtils.setMediaFileInfo(onSuccess, music.getMusicName(), music.getMusicAlbum(), String.join(";", music.getMusicArtists()), "", music.getMusicLyric(), albumfile,music.getMusicArtists().get(0),albumYear,music.getCd(),music.getTrack(),String.join(";", music.getTags()));
+                String tagsStr ="";
+                try {
+                    tagsStr =  String.join(";", music.getTags());
+                } catch (Exception e) {
+                    tagsStr="";
+                }
+                String musicArtistsStr ="";
+                try {
+                    musicArtistsStr = String.join(";", music.getMusicArtists());
+                } catch (Exception e) {
+                    musicArtistsStr="";
+                }
+                MusicUtils.setMediaFileInfo(onSuccess, music.getMusicName(), music.getMusicAlbum(),musicArtistsStr , "", music.getMusicLyric(), albumfile,music.getMusicArtists().get(0),albumYear,music.getCd(),music.getTrack(),tagsStr);
                 log.info("标签写入成功{}", music.getMusicName());
             }
         } catch (Exception e) {

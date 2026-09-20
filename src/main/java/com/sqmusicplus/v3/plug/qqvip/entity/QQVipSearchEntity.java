@@ -44,6 +44,27 @@ public class QQVipSearchEntity extends QQSearchEntity {
         Long flac = track_info.getJSONObject("file").getLong("size_flac");
         Long mp3320 = track_info.getJSONObject("file").getLong("size_320mp3");
         Long mp3128 = track_info.getJSONObject("file").getLong("size_128mp3");
+
+        int cd =0;
+        int track = 0;
+        ArrayList<String> tags = new ArrayList<>();
+
+
+        Integer indexCd = null;
+        try {
+            indexCd = track_info.getInteger("index_cd");
+            if (indexCd != null){
+                cd = indexCd;
+            }
+        } catch (Exception ignored) {}
+        Integer indexAlbum = null;
+        try {
+            indexAlbum = track_info.getInteger("index_album");
+            if (indexAlbum != null){
+                track = indexAlbum;
+            }
+        } catch (Exception ignored) {}
+
 //        String mediaMid = mapper1.getMapper("file").getString("media_mid");
         ArrayList<PlugBrType> longs = new ArrayList<>();
         if (flac != null&&flac.longValue()>0){
@@ -67,6 +88,9 @@ public class QQVipSearchEntity extends QQSearchEntity {
                 .setAlbumId(albumid)
                 .setArtistsIds(singerIds)
                 .setBits(longs)
+                .setCd(cd)
+                .setTrack(track)
+                .setTags(tags)
                 .setMusicDuration(track_info.getInteger("interval") * 1000L);
         return  music;
     }
