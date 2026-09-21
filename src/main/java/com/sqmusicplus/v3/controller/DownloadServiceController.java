@@ -118,9 +118,10 @@ public class DownloadServiceController {
         PlugBrType maxBr= null;
         if (plugDownloadArtisParam.getBit()!=null){
             maxBr = PlugBrType.findByPlugNameAndBit(plugDownloadArtisParam.getPlugName(), plugDownloadArtisParam.getBit());
-        } else {
-            maxBr = resolveBrByFormat(plugDownloadArtisParam.getPlugName(), plugDownloadArtisParam.getDownloadFormat());
         }
+//        else {
+//            maxBr = resolveBrByFormat(plugDownloadArtisParam.getPlugName(), plugDownloadArtisParam.getDownloadFormat());
+//        }
         List<DownloadInfo> downloadInfos = plugHander.downloadArtistAllAlbum(plugDownloadArtisParam.getArtistid(), maxBr);
         Boolean add = downloadInfoService.add(downloadInfos);
         if (add){
@@ -147,7 +148,7 @@ public class DownloadServiceController {
         if (plugDownloadAlbumParam.getBit()!=null){
             maxBr = PlugBrType.findByPlugNameAndBit(plugDownloadAlbumParam.getPlugName(), plugDownloadAlbumParam.getBit());
         } else {
-            maxBr = resolveBrByFormat(plugDownloadAlbumParam.getPlugName(), plugDownloadAlbumParam.getDownloadFormat());
+//            maxBr = resolveBrByFormat(plugDownloadAlbumParam.getPlugName(), plugDownloadAlbumParam.getDownloadFormat());
         }
         List<String> artistNameList = null;
         String albumid = plugDownloadAlbumParam.getAlbumid();
@@ -183,8 +184,8 @@ public class DownloadServiceController {
             ArrayList<DownloadInfo> downloadInfos = new ArrayList<>();
             for (Music music : parser) {
                 SearchHanderAbstract plugHander = MusicUtils.getPlugHander(music.getPlugName(), searchHanderAbstractList);
-                PlugBrType brType = resolveBrByFormat(music.getPlugName(), downlaodParserUrl.getDownloadFormat());
-                DownloadInfo downloadInfo = plugHander.musicToDownloadInfo(music, brType, false);
+//                PlugBrType brType = resolveBrByFormat(music.getPlugName(), downlaodParserUrl.getDownloadFormat());
+                DownloadInfo downloadInfo = plugHander.musicToDownloadInfo(music, null, false);
                 downloadInfos.add(downloadInfo);
             }
             Boolean add = downloadInfoService.add(downloadInfos);
@@ -212,8 +213,8 @@ public class DownloadServiceController {
         ArrayList<DownloadInfo> downloadInfos = new ArrayList<>();
         for (Music music : musicList) {
             SearchHanderAbstract plugHander = MusicUtils.getPlugHander(music.getPlugName(), searchHanderAbstractList);
-            PlugBrType brType = resolveBrByFormat(music.getPlugName(), null);
-            DownloadInfo downloadInfo = plugHander.musicToDownloadInfo(music, brType, false);
+//            PlugBrType brType = resolveBrByFormat(music.getPlugName(), null);
+            DownloadInfo downloadInfo = plugHander.musicToDownloadInfo(music, null, false);
             downloadInfos.add(downloadInfo);
         }
         Boolean add = downloadInfoService.add(downloadInfos);
@@ -249,8 +250,8 @@ public class DownloadServiceController {
                                 continue;
                             }
                             SearchHanderAbstract plugHander = MusicUtils.getPlugHander(plugSearchMusicResult.getPlugName(), searchHanderAbstractList);
-                            PlugBrType brType = resolveBrByFormat(plugSearchMusicResult.getPlugName(), param.getDownloadFormat());
-                            DownloadInfo downloadInfo = plugHander.musicToDownloadInfo(plugSearchMusicResult, brType, false);
+//                            PlugBrType brType = resolveBrByFormat(plugSearchMusicResult.getPlugName(), param.getDownloadFormat());
+                            DownloadInfo downloadInfo = plugHander.musicToDownloadInfo(plugSearchMusicResult, null, false);
                             downloadInfos.add(downloadInfo);
                         }
                         downloadInfoService.add(downloadInfos);
@@ -279,8 +280,8 @@ public class DownloadServiceController {
         for (ParserEntity parserEntity : parserEntities) {
             PlugSearchMusicResult plugSearchMusicResult = parserEntity.getPlugSearchMusicResult();
             SearchHanderAbstract plugHander = MusicUtils.getPlugHander(plugSearchMusicResult.getPlugName(), searchHanderAbstractList);
-            PlugBrType brType = resolveBrByFormat(plugSearchMusicResult.getPlugName(), null);
-            DownloadInfo downloadInfo = plugHander.musicToDownloadInfo(plugSearchMusicResult, brType, false);
+//            PlugBrType brType = resolveBrByFormat(plugSearchMusicResult.getPlugName(), null);
+            DownloadInfo downloadInfo = plugHander.musicToDownloadInfo(plugSearchMusicResult, null, false);
             downloadInfos.add(downloadInfo);
         }
         Boolean add = downloadInfoService.add(downloadInfos);
