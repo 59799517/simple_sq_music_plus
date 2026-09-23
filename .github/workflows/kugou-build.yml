@@ -1,0 +1,39 @@
+name: Build KuGouMusicApi 手动选择版本构建
+on:
+  workflow_dispatch:
+    inputs:
+      git_ref:
+        description: '构建版本：分支名 / tag / commit hash (例如 main 或者某个commitID)'
+        required: true
+        default: 'main'
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      # 拉取原仓库 MakcRe/KuGouMusicApi 指定版本代码
+      - name: 拉取KuGouMusicApi源码，版本: ${{ github.event.inputs.git_ref }}
+        uses: actions/checkout@v4
+        with:
+          repository: MakcRe/KuGouMusicApi
+          ref: ${{ github.event.inputs.git_ref }}
+          fetch-depth: 1
+
+      # 登录阿里云ACR
+      - name: 登录阿里云容器镜像仓库
+        uses: aliyun/acr-login@v1
+        with:
+          registry: registry.cn-hangzhou.aliyuncs.com
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      # 构建并推送镜像
+      - name: Build & Push Docker镜像
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            registry.cn-hangzhou.aliyuncs.com/sqdockler/kugoumusicapi:${{ github.event.inputs.git_ref }}
+            registry.cn-hangzhou.aliyuncs.com/sqdockler/kugoumusicapi:latest
+          build-args: |
+            NPM_REGISTRY=https://registry.npmmirror.com
