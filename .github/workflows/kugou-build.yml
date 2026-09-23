@@ -37,3 +37,6 @@ jobs:
             registry.cn-hangzhou.aliyuncs.com/sqdockler/kugoumusicapi:latest
           build-args: |
             NPM_REGISTRY=https://registry.npmmirror.com
+
+            # workflow_dispatch build
+
