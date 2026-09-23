@@ -1,37 +1,45 @@
-name: Build KuGouMusicApi 手动选择版本构建
+name: Build KuGouMusicApi
+
 on:
   workflow_dispatch:
     inputs:
-      git_ref:
-        description: '构建版本：分支名 / tag / commit hash (例如 main 或者某个commitID)'
+      tag:
+        description: "KuGouMusicApi 的 Git Tag，例如 15.1 或 v15.1"
         required: true
-        default: 'main'
+        default: "15.1"
+        type: string
 
 jobs:
   build:
+    name: Build and Push KuGouMusicApi
     runs-on: ubuntu-latest
+
     steps:
-      - name: "拉取KuGouMusicApi源码，版本: ${{ github.event.inputs.git_ref }}"
+      - name: Checkout KuGouMusicApi Tag
         uses: actions/checkout@v4
         with:
           repository: MakcRe/KuGouMusicApi
-          ref: ${{ github.event.inputs.git_ref }}
+          ref: ${{ inputs.tag }}
           fetch-depth: 1
 
-      - name: 登录阿里云容器镜像仓库
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Aliyun Container Registry
         uses: aliyun/acr-login@v1
         with:
           registry: registry.cn-hangzhou.aliyuncs.com
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build & Push Docker镜像
-        uses: docker/build-push-action@v5
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v6
         with:
           context: .
           push: true
           tags: |
-            registry.cn-hangzhou.aliyuncs.com/sqdockler/kugoumusicapi:${{ github.event.inputs.git_ref }}
+            registry.cn-hangzhou.aliyuncs.com/sqdockler/kugoumusicapi:${{ inputs.tag }}
             registry.cn-hangzhou.aliyuncs.com/sqdockler/kugoumusicapi:latest
           build-args: |
             NPM_REGISTRY=https://registry.npmmirror.com
+          provenance: false
