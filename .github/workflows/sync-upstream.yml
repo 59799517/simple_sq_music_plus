@@ -1,0 +1,95 @@
+name: Sync Upstream
+
+# 每周一 UTC 03:00 自动跟踪上游 59799517/simple_sq_music_plus 的 3.0 分支；
+# 可合并则合并并推送，随后自动触发 GHCR 镜像构建；有冲突则开 issue 通知人工处理
+on:
+  schedule:
+    - cron: "0 3 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+  actions: write
+
+concurrency:
+  group: sync-upstream
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    name: Merge upstream/3.0
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: 3.0
+          fetch-depth: 0
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Add upstream and fetch
+        run: |
+          git remote add upstream https://github.com/59799517/simple_sq_music_plus.git
+          git fetch upstream 3.0 --no-tags
+
+      - name: Check for upstream changes
+        id: check
+        run: |
+          if git merge-base --is-ancestor upstream/3.0 HEAD; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "上游无新提交，跳过同步"
+          else
+            COUNT=$(git rev-list --count HEAD..upstream/3.0)
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "上游有 $COUNT 个新提交"
+          fi
+
+      - name: Merge upstream/3.0
+        id: merge
+        if: steps.check.outputs.changed == 'true'
+        continue-on-error: true
+        run: |
+          git merge upstream/3.0 --no-edit -m "Merge upstream 3.0 into 3.0 (auto-sync $(date -u +%F))"
+          echo "merged=true" >> $GITHUB_OUTPUT
+
+      - name: Push merged result
+        if: steps.merge.outputs.merged == 'true' && steps.merge.outcome == 'success'
+        run: git push origin 3.0
+
+      # 注意：GITHUB_TOKEN 发起的 push 事件不会触发其他 workflow，
+      # 所以合并成功后需显式通过 workflow_dispatch 触发镜像构建
+      - name: Trigger GHCR image build
+        if: steps.merge.outputs.merged == 'true' && steps.merge.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh workflow run docker-ghcr.yml --ref 3.0 -R ${{ github.repository }}
+
+      - name: Create issue on merge conflict
+        if: steps.merge.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git merge --abort 2>/dev/null || true
+          git diff --name-only HEAD...upstream/3.0 > /tmp/changed.txt || true
+          {
+            echo "本周上游自动同步发生合并冲突，需要人工处理。"
+            echo ""
+            echo "- 上游：\`59799517/simple_sq_music_plus@3.0\`"
+            echo "- 本仓：\`${{ github.repository }}@3.0\`"
+            echo ""
+            echo "处理方式：本地 \`git remote add upstream https://github.com/59799517/simple_sq_music_plus.git && git fetch upstream && git merge upstream/3.0\`；"
+            echo "\`.github/workflows/\` 下的冲突一律保留本仓（ours）版本。"
+            echo ""
+            echo "上游本轮变更的文件："
+            echo '```'
+            cat /tmp/changed.txt
+            echo '```'
+          } > /tmp/body.md
+          gh issue create -R ${{ github.repository }} \
+            --title "上游同步冲突：需人工合并 $(date -u +%F)" \
+            --body-file /tmp/body.md

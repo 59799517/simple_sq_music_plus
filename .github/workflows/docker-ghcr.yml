@@ -1,0 +1,163 @@
+name: Build & Publish GHCR Image
+
+on:
+  push:
+    branches: [ 3.0 ]
+    paths-ignore:
+      - '**.md'
+      - 'img/**'
+      - '.gitignore'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build:
+    name: Maven Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'maven'
+          cache-dependency-path: 'pom.xml'
+
+      - name: Install yq
+        run: |
+          wget -q https://github.com/mikefarah/yq/releases/download/v4.44.3/yq_linux_amd64 -O /usr/local/bin/yq
+          chmod +x /usr/local/bin/yq
+
+      - name: Read application version
+        run: |
+          VERSION=$(cd src/main/resources && yq e '.version' application.yml)
+          echo "APP_VERSION=$VERSION" >> $GITHUB_ENV
+          echo "$VERSION" > version.txt
+          echo "APP_VERSION: $VERSION"
+
+      - name: Build with Maven
+        run: mvn -B package -T 4 --file pom.xml -DskipTests
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: java-artifact
+          path: |
+            target/simple_sq_music_plus.jar
+            version.txt
+          retention-days: 3
+
+  build-images:
+    name: Docker Image (${{ matrix.tag_suffix }})
+    needs: build
+    strategy:
+      matrix:
+        include:
+          - platform: linux/amd64
+            tag_suffix: amd64
+            runner: ubuntu-latest
+          - platform: linux/arm64
+            tag_suffix: arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: java-artifact
+
+      - name: Read version
+        run: |
+          VERSION=$(cat version.txt)
+          echo "APP_VERSION=$VERSION" >> $GITHUB_ENV
+          echo "APP_VERSION: $VERSION"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push per-arch image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile
+          platforms: ${{ matrix.platform }}
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}:v${{ env.APP_VERSION }}-${{ matrix.tag_suffix }}
+            ghcr.io/${{ github.repository }}:latest-${{ matrix.tag_suffix }}
+          build-args: |
+            JAR_FILE=target/simple_sq_music_plus.jar
+          labels: |
+            org.opencontainers.image.source=${{ github.repositoryUrl }}
+            org.opencontainers.image.version=v${{ env.APP_VERSION }}
+          provenance: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  manifest:
+    name: Create Multi-Arch Manifest
+    needs: build-images
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: java-artifact
+
+      - name: Read version
+        run: |
+          VERSION=$(cat version.txt)
+          echo "APP_VERSION=$VERSION" >> $GITHUB_ENV
+          echo "APP_VERSION: $VERSION"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # 在 registry 端直接合成 manifest list，不下载任何镜像层 blob；
+      # 版本 manifest 由 v版本-arch 合成，latest 由 latest-arch 合成，
+      # sha-XXXX 由同一组 arch 镜像合成，保证每次构建可溯源到具体 commit
+      - name: Create and push manifest lists
+        run: |
+          IMAGE=ghcr.io/${{ github.repository }}
+          SHA_TAG="sha-${GITHUB_SHA::7}"
+
+          docker buildx imagetools create \
+            -t $IMAGE:v${{ env.APP_VERSION }} \
+            $IMAGE:v${{ env.APP_VERSION }}-amd64 \
+            $IMAGE:v${{ env.APP_VERSION }}-arm64
+
+          docker buildx imagetools create \
+            -t $IMAGE:latest \
+            $IMAGE:latest-amd64 \
+            $IMAGE:latest-arm64
+
+          docker buildx imagetools create \
+            -t $IMAGE:$SHA_TAG \
+            $IMAGE:v${{ env.APP_VERSION }}-amd64 \
+            $IMAGE:v${{ env.APP_VERSION }}-arm64
+
+      - name: Verify manifest list
+        run: docker buildx imagetools inspect ghcr.io/${{ github.repository }}:latest
