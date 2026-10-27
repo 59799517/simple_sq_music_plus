@@ -16,6 +16,17 @@ emby,jellyfin识别请参考如下配置 https://support.emby.media/support/solu
 - 默认账号：admin
 - 默认密码：admin  （登录后设置自行修改）
 
+---
+
+## 本仓库与上游的差异（Fork 说明）
+
+本仓库 fork 自 [59799517/simple_sq_music_plus](https://github.com/59799517/simple_sq_music_plus)（3.0 分支），在原项目基础上增加：
+
+- **PostgreSQL 部署支持**：MySQL / PostgreSQL 双数据库，通过环境变量切换，应用启动时自动识别并执行对应的建表和初始化脚本（用法见下方 [1.1 使用 PostgreSQL 数据库](#11-使用-postgresql-数据库)）
+- docker-compose 的 PostgreSQL 服务角色说明与配置模板
+- 自维护 CI：push 到 `3.0` 自动构建 amd64/arm64 多架构镜像发布到 GHCR（`ghcr.io/onlymykazari/simple_sq_music_plus:latest`），并每周自动跟踪上游合并
+
+---
 
 
 
