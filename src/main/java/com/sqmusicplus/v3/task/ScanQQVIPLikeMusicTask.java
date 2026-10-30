@@ -286,9 +286,15 @@ public class ScanQQVIPLikeMusicTask {
 //如果收藏的有多余的页码
             Long total = data.getTotal();
             Long number = data.getNumber();
-            Long totalPage = total % number == 0 ? total / number : total / number + 1;
-            for (int i = 2; i <= totalPage; i++) {
-                CgiGetPlaylistFavInfo userFavSongList1 = qQvipHander.getUserFavSongList(i);
+            long favTotal = total == null ? 0L : total;
+            long favPageSize = number == null ? 0L : number;
+            long totalPage = favPageSize <= 0 ? 1L : (favTotal + favPageSize - 1) / favPageSize;
+            for (long i = 2; i <= totalPage; i++) {
+                CgiGetPlaylistFavInfo userFavSongList1 = qQvipHander.getUserFavSongList((int) i);
+                if (userFavSongList1 == null || userFavSongList1.getData() == null || userFavSongList1.getData().getVList() == null) {
+                    log.warn("QQVIP同步收藏歌单第{}页数据为空，跳过", i);
+                    continue;
+                }
                 CgiGetPlaylistFavInfo.DataDTO data1 = userFavSongList1.getData();
                 for (CgiGetPlaylistFavInfo.DataDTO.VListDTO vListDTO : data1.getVList()) {
                     Long dirId = vListDTO.getDirId();
@@ -344,25 +350,40 @@ public class ScanQQVIPLikeMusicTask {
         Long code = dissInfo.getCode();
         if (code != null && code == 0L) {
             DissInfo.DataDTO data = dissInfo.getData();
+            if (data == null) {
+                log.warn("QQVIP同步歌单{}获取歌单详情为空", dissname);
+                return;
+            }
             Long totalSongNum = data.getTotalSongNum();
             Long songlistSize = data.getSonglistSize();
-            List<DissInfo.DataDTO.SonglistDTO> songlist = data.getSonglist();
+            List<DissInfo.DataDTO.SonglistDTO> rawSonglist = data.getSonglist();
+            List<DissInfo.DataDTO.SonglistDTO> songlist = rawSonglist == null ? new ArrayList<>() : new ArrayList<>(rawSonglist);
             songids = songlist.stream().map(e -> e.getId().toString()).collect(Collectors.toCollection(ArrayList::new));
-            //看总数是否能获取全部的  songlistSize 是每页长度
-            if (totalSongNum.longValue() > songlistSize.longValue()) {
-                //计算还需要的页数
-                Long pageNum = totalSongNum.longValue() / songlistSize.longValue();
-                //计算是否有余数
-                if (totalSongNum.longValue() % songlistSize.longValue() > 0) {
-                    pageNum++;
-                }
-                for (int i = 2; i <= pageNum; i++) {
-                    DissInfo dissInfo1 = qQvipHander.songListInfo(tid, dirid, Long.parseLong(i + ""));
-                    DissInfo.DataDTO data1 = dissInfo1.getData();
-                    List<DissInfo.DataDTO.SonglistDTO> songlist1 = data1.getSonglist();
+            long total = totalSongNum == null ? 0L : totalSongNum;
+            // songlistSize 是接口返回的每页长度，可能为 null 或 0，此时用实际返回条数兜底
+            long pageSize = songlistSize == null ? 0L : songlistSize;
+            if (pageSize <= 0) {
+                pageSize = songlist.size();
+            }
+            //看总数是否能获取全部的
+            if (pageSize > 0 && total > pageSize) {
+                //计算还需要的页数（向上取整）
+                long pageNum = (total + pageSize - 1) / pageSize;
+                for (long i = 2; i <= pageNum; i++) {
+                    DissInfo dissInfo1 = qQvipHander.songListInfo(tid, dirid, i);
+                    if (dissInfo1 == null || dissInfo1.getData() == null) {
+                        log.warn("QQVIP同步歌单{}第{}页数据为空，跳过", dissname, i);
+                        continue;
+                    }
+                    List<DissInfo.DataDTO.SonglistDTO> songlist1 = dissInfo1.getData().getSonglist();
+                    if (songlist1 == null || songlist1.isEmpty()) {
+                        break;
+                    }
                     songlist.addAll(songlist1);
                     songids.addAll(songlist1.stream().map(e -> e.getId().toString()).collect(Collectors.toCollection(ArrayList::new)));
                 }
+            } else if (pageSize <= 0 && total > 0) {
+                log.warn("QQVIP同步歌单{}共{}首但每页长度未知且首页无数据，无法翻页", dissname, total);
             }
             ArrayList<String> addSongIds = new ArrayList<>();
             String playListSha1 = DigestUtil.sha1Hex(dissname);
