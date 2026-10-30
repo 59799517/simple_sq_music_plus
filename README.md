@@ -17,6 +17,17 @@ emby,jellyfin识别请参考如下配置 https://support.emby.media/support/solu
 - 默认账号：admin
 - 默认密码：admin  （登录后设置自行修改）
 
+---
+
+## 本仓库与上游的差异（Fork 说明）
+
+本仓库 fork 自 [59799517/simple_sq_music_plus](https://github.com/59799517/simple_sq_music_plus)（3.0 分支），在原项目基础上增加：
+
+- **PostgreSQL 部署支持**：MySQL / PostgreSQL 双数据库，通过环境变量切换，应用启动时自动识别并执行对应的建表和初始化脚本（用法见下方 [1.1 使用 PostgreSQL 数据库](#11-使用-postgresql-数据库)）
+- docker-compose 的 PostgreSQL 服务角色说明与配置模板
+- 自维护 CI：push 到 `3.0` 自动构建 amd64/arm64 多架构镜像发布到 GHCR（`ghcr.io/onlymykazari/simple_sq_music_plus:latest`），并每周自动跟踪上游合并
+
+---
 
 
 
@@ -50,6 +61,19 @@ https://59799517.github.io/simple_sq_music_plus/#/README
 ### 运行项目
 #### 1. docker-compose（推荐--mysql启动慢导致报错可以多运行几次）
     运行docker-compose文件即可（本地编译使用docker-compose-local）
+#### 1.1 使用 PostgreSQL 数据库
+支持 MySQL 和 PostgreSQL 两种数据库，通过环境变量切换，应用启动时自动识别并执行对应的建表和初始化脚本：
+- 默认 MySQL：设置 `DB_IP`/`DB_PORT`/`DB_NAME`/`DB_USERNAME`/`DB_PASSWORD`（或完整 `DB_URL`）
+- 切换 PostgreSQL：
+  ```yaml
+  environment:
+    - DB_URL=jdbc:postgresql://postgres:5432/sqmusicv3
+    - DB_DRIVER=org.postgresql.Driver
+    - DB_USERNAME=sqmusic
+    - DB_PASSWORD=sqmusicv3password
+  ```
+- docker-compose 方式直接运行 [docker-compose-postgres.yml](docker-compose-postgres.yml) 即可（自带 postgres:16 服务，数据持久化在 ./postgres_data）
+- 注意：切换数据库不会自动迁移原有 MySQL 数据，老数据需自行迁移（可使用 pgloader）
 #### 2.docker启动请参考docker-compose配置手动启动
 1. 启动mysql
 ```dockerfile
