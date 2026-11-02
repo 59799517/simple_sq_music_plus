@@ -13,6 +13,11 @@ permissions:
   contents: read
   packages: write
 
+# 同一分支新构建触发时取消在途旧构建，保证 latest 始终对应最新提交（避免旧构建后完成覆盖镜像）
+concurrency:
+  group: docker-ghcr-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     name: Maven Build
