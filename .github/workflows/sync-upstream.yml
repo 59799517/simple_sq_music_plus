@@ -24,7 +24,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          ref: 3.0
+          ref: "3.0"
           fetch-depth: 0
 
       - name: Configure git
