@@ -8,7 +8,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 
 import java.util.List;
@@ -20,7 +19,6 @@ import java.util.List;
  * @Date 2024/8/14 9:36
  * @Created by SQ
  */
-@Configuration
 @Order(1)
 public class SQDdlApplicationRunner extends DdlApplicationRunner {
 
